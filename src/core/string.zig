@@ -1,10 +1,31 @@
 const gd = @import("api.zig");
 const c = gd.c;
 
+const NodePath = @import("node_path.zig").NodePath;
 const Variant = @import("variant.zig").Variant;
 const Array = @import("array.zig").Array;
 const PoolArrays = @import("pool_arrays.zig");
 const PoolByteArray = PoolArrays.PoolByteArray;
+
+pub const CharString = struct { // This is not meant to be constructed directly
+
+    godot_char_string: c.godot_char_string,
+
+    const Self = @This();
+
+    pub fn deinit(self: *Self) void {
+        gd.api.*.godot_char_string_destroy.?(&self.godot_char_string);
+    }
+
+    pub fn length(self: *const Self) i32 {
+        return gd.api.*.godot_char_string_length.?(&self.godot_char_string);
+    }
+
+    pub fn getData(self: *const Self) [*:0]u8 {
+        return gd.api.*.godot_char_string_get_data.?(&self.godot_char_string);
+    }
+
+};
 
 pub const String = struct {
 
@@ -27,11 +48,11 @@ pub const String = struct {
     }
 
     pub fn initGodotString(p_godot_string: c.godot_string) Self {
-        const string = String {
+        const self = Self {
             .godot_string = p_godot_string,
         };
 
-        return string;
+        return self;
     }
 
     pub fn initUtf8(chars: []const u8) Self {
@@ -55,8 +76,49 @@ pub const String = struct {
         return self;
     }
 
-    pub fn length(self: *const Self) i32 {
-        return gd.api.*.godot_string_length.?(&self.godot_string);
+    pub fn initNodePath(node_path: *const NodePath) Self {
+        var self = Self {
+            .godot_string = undefined,
+        };
+
+        self.godot_string = gd.api.*.godot_node_path_as_string.?(&node_path.godot_node_path);
+
+        return self;
+    }
+
+    pub fn num(p_num: f64, p_decimals: i32) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_num.?(p_num, p_decimals);
+        return String.initGodotString(godot_string);
+    }
+
+    pub fn numScientific(p_num: f64) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_num_scientific.?(p_num);
+        return String.initGodotString(godot_string);
+    }
+
+    pub fn numReal(p_num: f64) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_num_real.?(p_num);
+        return String.initGodotString(godot_string);
+    }
+
+    pub fn numInt64(p_num: i64, base: i32, capitalize_hex: bool) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_num_int64_capitalized.?(p_num, base, capitalize_hex);
+        return String.initGodotString(godot_string);
+    }
+
+    pub fn chr(p_char: c.godot_char_type) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_chr.?(p_char);
+        return String.initGodotString(godot_string);
+    }
+
+    pub fn md5(p_md5: [*:0]const u8) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_md5.?(p_md5);
+        return String.initGodotString(godot_string);
+    }
+
+    pub fn hexEncodeBuffer(p_buffer: [*]const u8, p_len: i32) Self { // Make sure you call .deinit() on returned struct
+        const godot_string = gd.api.*.godot_string_hex_encode_buffer.?(p_buffer, p_len);
+        return String.initGodotString(godot_string);
     }
 
     pub fn equal(self: *const Self, other: *const String) bool { // Operator ==
@@ -88,11 +150,63 @@ pub const String = struct {
         return String.initGodotString(godot_string);
     }
 
+    pub fn plusAssign(self: *Self, other: *const String) String { // Operator +=
+        const godot_string = gd.api.*.godot_string_operator_plus.?(&self.godot_string, &other.godot_string);
+        gd.api.*.godot_string_destroy.?(&self.godot_string);
+        self.godot_string = godot_string;
+    }
+
+    pub fn length(self: *const Self) i32 {
+        return gd.api.*.godot_string_length.?(&self.godot_string);
+    }
+
+    pub fn unicodeStr(self: *const Self) [*:0]u16 { // Make sure you call api.godot_free() on returned ptr
+        return gd.api.*.godot_string_wide_str.?(&self.godot_string);
+    }
+
+    pub fn allocCString(self: *const Self) [*:0]u8 { // Make sure you call api.godot_free() on returned ptr
+        const contents = gd.api.*.godot_string_utf8.?(&self.godot_string);
+        const len = gd.api.*.godot_char_string_length.?(&contents);
+        const result = @ptrCast([*:0]u8, gd.api.*.godot_alloc.?(len + 1));
+
+        if (result != null) {
+            const data = gd.api.*.godot_char_string_get_data.?(&contents);
+            @memcpy(result, data, len + 1);
+        }
+
+        gd.api.*.godot_char_string_destroy.?(&contents);
+
+        return result;
+    }
+
+    pub fn utf8(self: *const Self) CharString { // Make sure you call .deinit() on returned struct
+        const char_string = CharString {
+            .godot_char_string = gd.api.*.godot_string_utf8.?(&self.godot_string),
+        };
+
+        return char_string;
+    }
+
+    pub fn ascii(self: *const Self, extended: bool) CharString { // Make sure you call .deinit() on returned struct
+        var char_string = CharString {
+            .godot_char_string = undefined,
+        };
+
+        if (extended) {
+            char_string.godot_char_string = gd.api.*.godot_string_ascii_extended.?(&self.godot_string);
+        }
+        else {
+            char_string.godot_char_string = gd.api.*.godot_string_ascii.?(&self.godot_string);
+        }
+
+        return char_string;
+    }
+
     pub fn beginsWith(self: *const Self, p_string: *const String) bool {
         return gd.api.*.godot_string_begins_with.?(&self.godot_string, &p_string.godot_string);
     }
 
-    pub fn beginsWithCharArray(self: *const Self, p_char_array: [*]const u8) bool {
+    pub fn beginsWithCharArray(self: *const Self, p_char_array: [*:0]const u8) bool {
         return gd.api.*.godot_string_begins_with_char_array.?(&self.godot_string, p_char_array);
     }
 

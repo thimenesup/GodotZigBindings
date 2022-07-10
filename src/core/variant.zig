@@ -80,6 +80,14 @@ pub const Variant = struct {
         return self;
     }
 
+    pub fn initGodotVariant(godot_variant: c.godot_variant) Self {
+        const self = Self {
+            .godot_variant = godot_variant,
+        };
+
+        return self;
+    }
+
     pub fn initCopy(other: *const Variant) Self {
         var self = Self {
             .godot_variant = undefined,
@@ -140,7 +148,7 @@ pub const Variant = struct {
         return self;
     }
 
-    pub fn initCstring(chars: []const u8) Self {
+    pub fn initCstring(chars: [*:0]const u8) Self {
         var self = Self {
             .godot_variant = undefined,
         };

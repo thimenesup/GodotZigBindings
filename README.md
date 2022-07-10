@@ -16,6 +16,6 @@ Core variant and array bindings done
 
 TODO:
 
-Core math, misc and object bindings
+Core math and object bindings
 
 Generation of object class bindings
