@@ -42,7 +42,7 @@ pub const Dictonary = struct {
         return gd.api.*.godot_dictionary_has.?(&self.godot_dictionary, &key.godot_variant);
     }
 
-    pub fn has_all(self: *const Self, p_keys: *const Array) bool {
+    pub fn hasAll(self: *const Self, p_keys: *const Array) bool {
         return gd.api.*.godot_dictionary_has_all.?(&self.godot_dictionary, &p_keys.godot_array);
     }
 
