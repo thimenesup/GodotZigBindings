@@ -1,23 +1,29 @@
 const gd = @import("core/api.zig");
 const c = gd.c;
 
+const ClassDB = @import("core/class_db.zig");
 const Godot = @import("core/godot_global.zig").Godot;
 const String = @import("core/string.zig").String;
 
-const PoolByteArray = @import("core/pool_arrays.zig").PoolByteArray;
+const std = @import("std");
 
 pub const TestNode2D = struct {
 
-    data: u32,
+    data: i64,
 
-    const InheritedClassName = "Node2D";
-    const ClassName = "TestNode2D";
+    const Node2D = struct {};
+    pub const GodotClass = ClassDB.defineGodotClass(TestNode2D, Node2D);
+
+    const Self = @This();
 
     pub fn constructor(p_instance: ?*c.godot_object, p_method_data: ?*anyopaque) callconv(.C) ?*anyopaque {
         _ = p_instance;
         _ = p_method_data;
 
         var user_data = gd.api.*.godot_alloc.?(@sizeOf(@This()));
+
+        var self = @ptrCast(*Self, @alignCast(@alignOf(*Self), user_data));
+        self.data = 0;
 
         return user_data;
     }
@@ -29,48 +35,25 @@ pub const TestNode2D = struct {
         gd.api.*.godot_free.?(p_user_data);
     }
 
-    pub fn process(obj: ?*c.godot_object, method_data: ?*anyopaque, user_data: ?*anyopaque, num_args: c_int, args: [*c][*c]c.godot_variant) callconv(.C) c.godot_variant {
-        _ = obj;
-        _ = method_data;
-        _ = user_data;
-        _ = num_args;
-        _ = args;
-
-        var string = String.initUtf8("Hello from TestNode2D zig");
-        defer string.deinit();
-        Godot.print(&string);
-
-        var ret: c.godot_variant = undefined;
-        gd.api.*.godot_variant_new_nil.?(&ret);
-        return ret;
+    pub fn registerMembers(handle: ?*anyopaque) void {
+        ClassDB.registerMethod(handle, Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(handle, Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(handle, Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
     }
 
-    pub fn registerClass(nativescript_api: [*c]const c.godot_gdnative_ext_nativescript_api_struct, p_handle: ?*anyopaque) void {
-        var create = c.godot_instance_create_func {
-            .create_func = constructor,
-            .method_data = null,
-            .free_func = null,
-        };
-        
-        var destroy = c.godot_instance_destroy_func {
-            .destroy_func = destructor,
-            .method_data = null,
-            .free_func = null,
-        };
+    pub fn _process(self: *const Self, delta: f64) void {
+        _ = self;
+        _ = delta;
+    }
 
-        nativescript_api.*.godot_nativescript_register_class.?(p_handle, ClassName, InheritedClassName, create, destroy);
+    pub fn test_method(self: *const Self, a: i64, b: bool) void {
+        _ = self;
+        std.debug.print("test_method a:{} b:{}\n", .{a, b});
+    }
 
-        var method_attributes = c.godot_method_attributes {
-            .rpc_type = c.GODOT_METHOD_RPC_MODE_DISABLED,
-        };
-
-        var process_method = c.godot_instance_method {
-            .method = process,
-            .method_data = null,
-            .free_func = null,
-        };
-
-        nativescript_api.*.godot_nativescript_register_method.?(p_handle, ClassName, "_process", method_attributes, process_method);
+    pub fn test_return(self: *Self, a: i64) i64 {
+        self.data += a;
+        return self.data;
     }
 
 };
