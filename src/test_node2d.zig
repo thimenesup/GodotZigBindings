@@ -39,6 +39,7 @@ pub const TestNode2D = struct {
         ClassDB.registerMethod(handle, Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
         ClassDB.registerMethod(handle, Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
         ClassDB.registerMethod(handle, Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerFunction(handle, Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
     }
 
     pub fn _process(self: *const Self, delta: f64) void {
@@ -54,6 +55,10 @@ pub const TestNode2D = struct {
     pub fn test_return(self: *Self, a: i64) i64 {
         self.data += a;
         return self.data;
+    }
+
+    pub fn test_static_function(a: i64) void {
+        std.debug.print("static_function:{}\n", .{a});
     }
 
 };

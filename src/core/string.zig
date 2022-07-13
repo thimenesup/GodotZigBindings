@@ -55,7 +55,7 @@ pub const String = struct {
         return self;
     }
 
-    pub fn initUtf8(chars: []const u8) Self {
+    pub fn initUtf8(chars: [*:0]const u8) Self {
         var self = Self {
             .godot_string = undefined,
         };
@@ -71,7 +71,7 @@ pub const String = struct {
             .godot_string = undefined,
         };
 
-        gd.api.*.godot_string_new_copy.?(&self.godot_string, other.godot_string);
+        gd.api.*.godot_string_new_copy.?(&self.godot_string, &other.godot_string);
 
         return self;
     }

@@ -1,3 +1,6 @@
 zig-cache
 zig-out
+
 .gdignore
+
+.vscode
