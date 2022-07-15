@@ -19,3 +19,7 @@ TODO:
 Core math and object bindings
 
 Generation of object class bindings
+
+## Warning
+
+Due to a Zig bug with C ABI compatibility https://github.com/ziglang/zig/issues/1481 structs returned from functions with sizeof <= 16 will not be correct and cause undefined behaviour, crashes etc... so if your code is crashing this is likely why

@@ -1,8 +1,10 @@
 const gd = @import("api.zig");
 const c = gd.c;
 
-// This is used to declare your Godot Class like this: const GodotClass = defineGodotClass(MyNode, Node);
-pub fn defineGodotClass(comptime class: type, comptime base: type) type {
+const Variant = @import("variant.zig").Variant;
+
+// This is used to declare your Godot Class like this: const GodotClass = DefineGodotClass(MyNode, Node);
+pub fn DefineGodotClass(comptime class: type, comptime base: type) type {
     return struct {
 
         inline fn isClassScript() bool {
@@ -32,83 +34,27 @@ pub fn defineGodotClass(comptime class: type, comptime base: type) type {
     };
 }
 
-inline fn godotVariantAsBool(variant: [*c]c.godot_variant) bool {
-    return gd.api.*.godot_variant_as_bool.?(variant);
-}
 
-inline fn godotVariantAsI64(variant: [*c]c.godot_variant) i64 {
-    return gd.api.*.godot_variant_as_int.?(variant);
-}
+pub fn registerClass(comptime class: type, handle: ?*anyopaque) void {
+    comptime if (!class.GodotClass.isClassScript()) {
+        @compileError("This function must only be used on custom classes");
+    };
 
-inline fn godotVariantAsF64(variant: [*c]c.godot_variant) f64 {
-    return gd.api.*.godot_variant_as_real.?(variant);
-}
+    const create = c.godot_instance_create_func {
+        .create_func = class.constructor,
+        .method_data = null,
+        .free_func = null,
+    };
 
-fn typeArgAsVariant(comptime T: type) (fn([*c]c.godot_variant) callconv(.Inline) T) {
-    switch (T) {
-        bool => {
-            return godotVariantAsBool;
-        },
-        i64 => {
-            return godotVariantAsI64;
-        },
-        f64 => {
-            return godotVariantAsF64;
-        },
-        else => {
-            @compileError("Variant can't be converted as that type");
-        },
-    }
+    const destroy = c.godot_instance_destroy_func {
+        .destroy_func = class.destructor,
+        .method_data = null,
+        .free_func = null,
+    };
 
-    return null;
-}
+    gd.nativescript_api.*.godot_nativescript_register_class.?(handle, class.GodotClass.getClassName(), class.GodotClass.getBaseClassName(), create, destroy);
 
-
-inline fn voidAsGodotVariant(value: void) c.godot_variant {
-    _ = value;
-    var variant: c.godot_variant = undefined;
-    gd.api.*.godot_variant_new_nil.?(&variant);
-    return variant;
-}
-
-inline fn boolAsGodotVariant(value: bool) c.godot_variant {
-    var variant: c.godot_variant = undefined;
-    gd.api.*.godot_variant_new_bool.?(&variant, value);
-    return variant;
-}
-
-inline fn i64AsGodotVariant(value: i64) c.godot_variant {
-    var variant: c.godot_variant = undefined;
-    gd.api.*.godot_variant_new_int.?(&variant, value);
-    return variant;
-}
-
-inline fn f64AsGodotVariant(value: f64) c.godot_variant {
-    var variant: c.godot_variant = undefined;
-    gd.api.*.godot_variant_new_real.?(&variant, value);
-    return variant;
-}
-
-fn typeReturnAsVariant(comptime T: type) (fn(T) callconv(.Inline) c.godot_variant) {
-    switch (T) {
-        void => {
-            return voidAsGodotVariant;
-        },
-        bool => {
-            return boolAsGodotVariant;
-        },
-        i64 => {
-            return i64AsGodotVariant;
-        },
-        f64 => {
-            return f64AsGodotVariant;
-        },
-        else => {
-            @compileError("Unsupported return type");
-        },
-    }
-
-    return null;
+    class.registerMembers(handle);
 }
 
 
@@ -126,48 +72,48 @@ fn FunctionWrapper(comptime function: anytype) type {
             switch(fn_info.args.len) { //TODO: Find if its possible to this automatically
                 1 => {
                     const result = @call(.{}, function, .{
-                        typeArgAsVariant(fn_info.args[0].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
                     });
                     
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 2 => {
                     const result = @call(.{}, function, .{
-                        typeArgAsVariant(fn_info.args[0].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
                     });
                     
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 3 => {
                     const result = @call(.{}, function, .{
-                        typeArgAsVariant(fn_info.args[0].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[1]),
-                        typeArgAsVariant(fn_info.args[2].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
                     });
                     
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 4 => {
                     const result = @call(.{}, function, .{
-                        typeArgAsVariant(fn_info.args[0].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[1]),
-                        typeArgAsVariant(fn_info.args[2].arg_type.?)(args[2]),
-                        typeArgAsVariant(fn_info.args[3].arg_type.?)(args[3]),
+                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[3]),
                     });
 
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 5 => {
                     const result = @call(.{}, function, .{
-                        typeArgAsVariant(fn_info.args[0].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[1]),
-                        typeArgAsVariant(fn_info.args[2].arg_type.?)(args[2]),
-                        typeArgAsVariant(fn_info.args[3].arg_type.?)(args[3]),
-                        typeArgAsVariant(fn_info.args[4].arg_type.?)(args[4]),
+                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[3]),
+                        Variant.variantAsType(fn_info.args[4].arg_type.?)(args[4]),
                     });
 
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 else => {
                     @compileError("Unsupported arg count");
@@ -177,6 +123,27 @@ fn FunctionWrapper(comptime function: anytype) type {
 
     };
 }
+
+pub fn registerFunction(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
+    comptime if (!class.GodotClass.isClassScript()) {
+        @compileError("This function must only be used on custom classes");
+    };
+
+    const function_wrapper = FunctionWrapper(method);
+
+    const instance = c.godot_instance_method {
+        .method = function_wrapper.functionWrap,
+        .method_data = null,
+        .free_func = null,
+    };
+
+    const attributes = c.godot_method_attributes {
+        .rpc_type = rpc_type,
+    };
+
+    gd.nativescript_api.*.godot_nativescript_register_method.?(handle, class.GodotClass.getClassName(), name, attributes, instance);
+}
+
 
 fn MethodWrapper(comptime class: type, comptime function: anytype) type {
     return extern struct {
@@ -203,45 +170,45 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
                         struct_instance,
                     });
                     
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 2 => {
                     const result = @call(.{}, function, .{
                         struct_instance,
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
                     });
                     
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 3 => {
                     const result = @call(.{}, function, .{
                         struct_instance,
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[2].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
                     });
                     
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 4 => {
                     const result = @call(.{}, function, .{
                         struct_instance,
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[2].arg_type.?)(args[1]),
-                        typeArgAsVariant(fn_info.args[3].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[2]),
                     });
 
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 5 => {
                     const result = @call(.{}, function, .{
                         struct_instance,
-                        typeArgAsVariant(fn_info.args[1].arg_type.?)(args[0]),
-                        typeArgAsVariant(fn_info.args[2].arg_type.?)(args[1]),
-                        typeArgAsVariant(fn_info.args[3].arg_type.?)(args[2]),
-                        typeArgAsVariant(fn_info.args[4].arg_type.?)(args[3]),
+                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.args[4].arg_type.?)(args[3]),
                     });
 
-                    return typeReturnAsVariant(fn_info.return_type.?)(result);
+                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 else => {
                     @compileError("Unsupported arg count");
@@ -250,49 +217,6 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
         }
 
     };
-}
-
-
-pub fn registerClass(comptime class: type, handle: ?*anyopaque) void {
-    comptime if (!class.GodotClass.isClassScript()) {
-        @compileError("This function must only be used on custom classes");
-    };
-
-    const create = c.godot_instance_create_func {
-        .create_func = class.constructor, //godotClassInstanceFunc(class),
-        .method_data = null,
-        .free_func = null,
-    };
-
-    const destroy = c.godot_instance_destroy_func {
-        .destroy_func = class.destructor, //godotClassDestroyFunc(class),
-        .method_data = null,
-        .free_func = null,
-    };
-
-    gd.nativescript_api.*.godot_nativescript_register_class.?(handle, class.GodotClass.getClassName(), class.GodotClass.getBaseClassName(), create, destroy);
-
-    class.registerMembers(handle);
-}
-
-pub fn registerFunction(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
-    comptime if (!class.GodotClass.isClassScript()) {
-        @compileError("This function must only be used on custom classes");
-    };
-
-    const function_wrapper = FunctionWrapper(method);
-
-    const instance = c.godot_instance_method {
-        .method = function_wrapper.functionWrap,
-        .method_data = null,
-        .free_func = null,
-    };
-
-    const attributes = c.godot_method_attributes {
-        .rpc_type = rpc_type,
-    };
-
-    gd.nativescript_api.*.godot_nativescript_register_method.?(handle, class.GodotClass.getClassName(), name, attributes, instance);
 }
 
 pub fn registerMethod(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
@@ -313,4 +237,107 @@ pub fn registerMethod(handle: ?*anyopaque, comptime class: type, name: [*:0]cons
     };
 
     gd.nativescript_api.*.godot_nativescript_register_method.?(handle, class.GodotClass.getClassName(), name, attributes, instance);
+}
+
+
+fn PropertyDefaultSetWrapper(comptime class: type, comptime field_name: []const u8) type {
+    return extern struct {
+
+        fn functionWrap(godot_object: ?*c.godot_object, method_data: ?*const anyopaque, user_data: ?*anyopaque, variant_value: [*c]c.godot_variant) callconv(.C) void {
+            _ = godot_object;
+            _ = method_data;
+
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const field_type = @TypeOf(@field(struct_instance, field_name));
+            const value = Variant.variantAsType(field_type)(variant_value);
+            @field(struct_instance, field_name) = value;
+        }
+
+    };
+}
+
+fn PropertyDefaultGetWrapper(comptime class: type, comptime field_name: []const u8) type {
+    return extern struct {
+        
+        fn functionWrap(godot_object: ?*c.godot_object, method_data: ?*const anyopaque, user_data: ?*anyopaque) callconv(.C) c.godot_variant {
+            _ = godot_object;
+            _ = method_data;
+
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const field_type = @TypeOf(@field(struct_instance, field_name));
+            const value = @field(struct_instance, field_name);
+            return Variant.typeAsVariant(field_type)(value);
+        }
+
+    };
+}
+
+fn PropertySetWrapper(comptime class: type, comptime function: anytype) type {
+    return extern struct {
+
+        fn functionWrap(godot_object: ?*c.godot_object, method_data: ?*const anyopaque, user_data: ?*anyopaque, variant_value: [*c]c.godot_variant) callconv(.C) void {
+            _ = godot_object;
+            _ = method_data;
+
+            const fn_info = @typeInfo(@TypeOf(function)).Fn;
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+
+            _ = @call(.{}, function, .{ struct_instance, Variant.variantAsType(fn_info.args[1].arg_type.?)(variant_value) });
+        }
+
+    };
+}
+
+fn PropertyGetWrapper(comptime class: type, comptime function: anytype) type {
+    return extern struct {
+
+        fn functionWrap(godot_object: ?*c.godot_object, method_data: ?*const anyopaque, user_data: ?*anyopaque) callconv(.C) c.godot_variant {
+            _ = godot_object;
+            _ = method_data;
+
+            const fn_info = @typeInfo(@TypeOf(function)).Fn;
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+
+            const result = @call(.{}, function, .{ struct_instance });
+            return Variant.typeAsVariant(fn_info.return_type.?)(result);
+        }
+
+    };
+}
+
+pub fn registerProperty(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime field_name: []const u8, default_value: anytype, comptime setter: anytype, comptime getter: anytype, rpc_mode: c.godot_method_rpc_mode, usage: c.godot_property_usage_flags, hint: c.godot_property_hint, hint_string: [*:0]const u8) void {
+    comptime if (!class.GodotClass.isClassScript()) {
+        @compileError("This function must only be used on custom classes");
+    };
+
+    const godot_variant = Variant.typeAsVariant(@TypeOf(default_value))(default_value);
+
+    var godot_string_hint: c.godot_string = undefined;
+    gd.api.*.godot_string_new.?(&godot_string_hint);
+    _ = gd.api.*.godot_string_parse_utf8.?(&godot_string_hint, hint_string);
+    defer gd.api.*.godot_string_destroy.?(&godot_string_hint);
+
+    var attributes: c.godot_property_attributes = undefined;
+    attributes.type = @intCast(c_int, gd.api.*.godot_variant_get_type.?(&godot_variant));
+    attributes.default_value = godot_variant;
+    attributes.hint = hint;
+    attributes.rset_type = rpc_mode;
+    attributes.usage = usage;
+    attributes.hint_string = godot_string_hint;
+
+    const set_wrapper = if (@TypeOf(setter) == @TypeOf(null)) PropertyDefaultSetWrapper(class, field_name) else PropertySetWrapper(class, setter);
+
+    var set_func: c.godot_property_set_func = undefined;
+    set_func.set_func = set_wrapper.functionWrap;
+    set_func.method_data = null;
+    set_func.free_func = null;
+
+    const get_wrapper = if (@TypeOf(getter) == @TypeOf(null)) PropertyDefaultGetWrapper(class, field_name) else PropertyGetWrapper(class, getter);
+
+    var get_func: c.godot_property_get_func = undefined;
+    get_func.get_func = get_wrapper.functionWrap;
+    get_func.method_data = null;
+    get_func.free_func = null;
+
+    gd.nativescript_api.*.godot_nativescript_register_property.?(handle, class.GodotClass.getClassName(), name, &attributes, set_func, get_func);
 }

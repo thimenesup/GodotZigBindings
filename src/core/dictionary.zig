@@ -5,14 +5,14 @@ const Variant = @import("variant.zig").Variant;
 const Array = @import("array.zig").Array;
 const String = @import("string.zig").String;
 
-pub const Dictonary = struct {
+pub const Dictionary = struct {
 
     godot_dictionary: c.godot_dictionary,
 
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
-        gd.api.*.godot_dictonary_destroy.?(&self.godot_dictionary);
+        gd.api.*.godot_dictionary_destroy.?(&self.godot_dictionary);
     }
 
     pub fn init() Self {
@@ -25,7 +25,7 @@ pub const Dictonary = struct {
         return self;
     }
 
-    pub fn assign(self: *Self, other: *const Dictonary) void {
+    pub fn assign(self: *Self, other: *const Dictionary) void {
         gd.api.*.godot_dictionary_destroy.?(&self.godot_dictionary);
         gd.api.*.godot_dictionary_new_copy.?(&self.godot_dictionary, other.godot_dictionary);
     }

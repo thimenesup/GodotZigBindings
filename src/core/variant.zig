@@ -148,12 +148,12 @@ pub const Variant = struct {
         return self;
     }
 
-    pub fn initCstring(chars: [*:0]const u8) Self {
+    pub fn initCString(chars: [*:0]const u8) Self {
         var self = Self {
             .godot_variant = undefined,
         };
 
-        var string = String.init_utf8(chars);
+        var string = String.initUtf8(chars);
         gd.api.*.godot_variant_new_string.?(&self.godot_variant, &string.godot_string);
 
         return self;
@@ -548,6 +548,493 @@ pub const Variant = struct {
 
     pub fn hashCompare(self: *const Self, other: *const Variant) bool {
         return gd.api.*.godot_variant_hash_compare.?(&self.godot_variant, &other.godot_variant);
+    }
+
+
+    inline fn godotVariantAsBool(variant: [*c]c.godot_variant) bool {
+        return gd.api.*.godot_variant_as_bool.?(variant);
+    }
+
+    inline fn godotVariantAsI64(variant: [*c]c.godot_variant) i64 {
+        return gd.api.*.godot_variant_as_int.?(variant);
+    }
+
+    inline fn godotVariantAsF64(variant: [*c]c.godot_variant) f64 {
+        return gd.api.*.godot_variant_as_real.?(variant);
+    }
+
+    // NOTE: These are not working properly! Due to a Zig bug with C ABI compatibility https://github.com/ziglang/zig/issues/1481
+    // any struct returned from a function with sizeof <= 16 will not be correct and cause undefined behaviour, crashes etc
+
+    inline fn godotVariantAsString(variant: [*c]c.godot_variant) String {
+        return String.initGodotString(gd.api.*.godot_variant_as_string.?(variant));
+    }
+
+    inline fn godotVariantAsVector2(variant: [*c]c.godot_variant) Vector2 {
+        return Vector2.initGodotVector2(gd.api.*.godot_variant_as_vector2.?(variant));
+    }
+
+    inline fn godotVariantAsRect2(variant: [*c]c.godot_variant) Rect2 {
+        return Rect2.initGodotRect2(gd.api.*.godot_variant_as_rect2.?(variant));
+    }
+
+    inline fn godotVariantAsVector3(variant: [*c]c.godot_variant) Vector3 {
+        return Vector3.initGodotVector3(gd.api.*.godot_variant_as_vector3.?(variant));
+    }
+
+    inline fn godotVariantAsTransform2D(variant: [*c]c.godot_variant) Transform2D {
+        return Transform2D.initGodotTransform2D(gd.api.*.godot_variant_as_transform2d.?(variant));
+    }
+
+    inline fn godotVariantAsPlane(variant: [*c]c.godot_variant) Plane {
+        return Plane.initGodotPlane(gd.api.*.godot_variant_as_plane.?(variant));
+    }
+
+    inline fn godotVariantAsQuat(variant: [*c]c.godot_variant) Quat {
+        return Quat.initGodotQuat(gd.api.*.godot_variant_as_quat.?(variant));
+    }
+
+    inline fn godotVariantAsAABB(variant: [*c]c.godot_variant) AABB {
+        return AABB.initGodotAABB(gd.api.*.godot_variant_as_aabb.?(variant));
+    }
+
+    inline fn godotVariantAsBasis(variant: [*c]c.godot_variant) Basis {
+        return Basis.initGodotBasis(gd.api.*.godot_variant_as_basis.?(variant));
+    }
+
+    inline fn godotVariantAsTransform(variant: [*c]c.godot_variant) Transform {
+        return Transform.initGodotTransform(gd.api.*.godot_variant_as_transform.?(variant));
+    }
+
+    inline fn godotVariantAsColor(variant: [*c]c.godot_variant) Color {
+        return Color.initGodotColor(gd.api.*.godot_variant_as_color.?(variant));
+    }
+
+    inline fn godotVariantAsNodePath(variant: [*c]c.godot_variant) NodePath {
+        return NodePath.initGodotNodePath(gd.api.*.godot_variant_as_node_path.?(variant));
+    }
+
+    inline fn godotVariantAsRID(variant: [*c]c.godot_variant) RID {
+        return RID.initGodotRID(gd.api.*.godot_variant_as_rid.?(variant));
+    }
+
+    // inline fn godotVariantAsObject(variant: [*c]c.godot_variant) Object {
+    //     return Object.initGodotObject(gd.api.*.godot_variant_as_object.?(variant));
+    // }
+
+    inline fn godotVariantAsDictionary(variant: [*c]c.godot_variant) Dictionary {
+        return Dictionary.initGodotDictionary(gd.api.*.godot_variant_as_dictionary.?(variant));
+    }
+
+    inline fn godotVariantAsArray(variant: [*c]c.godot_variant) Array {
+        return Array.initGodotArray(gd.api.*.godot_variant_as_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolByteArray(variant: [*c]c.godot_variant) PoolByteArray {
+        return PoolByteArray.initGodotPoolByteArray(gd.api.*.godot_variant_as_pool_byte_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolIntArray(variant: [*c]c.godot_variant) PoolIntArray {
+        return PoolIntArray.initGodotPoolIntArray(gd.api.*.godot_variant_as_pool_int_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolRealArray(variant: [*c]c.godot_variant) PoolRealArray {
+        return PoolRealArray.initGodotPoolRealArray(gd.api.*.godot_variant_as_pool_real_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolStringArray(variant: [*c]c.godot_variant) PoolStringArray {
+        return PoolStringArray.initGodotPoolStringArray(gd.api.*.godot_variant_as_pool_string_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolVector2Array(variant: [*c]c.godot_variant) PoolVector2Array {
+        return PoolVector2Array.initGodotPoolVector2Array(gd.api.*.godot_variant_as_pool_vector2_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolVector3Array(variant: [*c]c.godot_variant) PoolVector3Array {
+        return PoolVector3Array.initGodotPoolVector3Array(gd.api.*.godot_variant_as_pool_vector3_array.?(variant));
+    }
+
+    inline fn godotVariantAsPoolColorArray(variant: [*c]c.godot_variant) PoolColorArray {
+        return PoolColorArray.initGodotPoolColorArray(gd.api.*.godot_variant_as_pool_color_array.?(variant));
+    }
+
+    pub fn variantAsType(comptime T: type) (fn([*c]c.godot_variant) callconv(.Inline) T) {
+        switch (T) {
+            bool => {
+                return godotVariantAsBool;
+            },
+            i64 => {
+                return godotVariantAsI64;
+            },
+            f64 => {
+                return godotVariantAsF64;
+            },
+            String => {
+                return godotVariantAsString;
+            },
+            Vector2 => {
+                return godotVariantAsVector2;
+            },
+            Rect2 => {
+                return godotVariantAsRect2;
+            },
+            Vector3 => {
+                return godotVariantAsVector3;
+            },
+            Transform2D => {
+                return godotVariantAsTransform2D;
+            },
+            Plane => {
+                return godotVariantAsPlane;
+            },
+            Quat => {
+                return godotVariantAsQuat;
+            },
+            AABB => {
+                return godotVariantAsAABB;
+            },
+            Basis => {
+                return godotVariantAsBasis;
+            },
+            Transform => {
+                return godotVariantAsTransform;
+            },
+            Color => {
+                return godotVariantAsColor;
+            },
+            NodePath => {
+                return godotVariantAsNodePath;
+            },
+            RID => {
+                return godotVariantAsRID;
+            },
+            // Object => {
+            //     return godotVariantAsObject;
+            // },
+            Dictionary => {
+                return godotVariantAsDictionary;
+            },
+            Array => {
+                return godotVariantAsArray;
+            },
+            PoolByteArray => {
+                return godotVariantAsPoolByteArray;
+            },
+            PoolIntArray => {
+                return godotVariantAsPoolIntArray;
+            },
+            PoolRealArray => {
+                return godotVariantAsPoolRealArray;
+            },
+            PoolStringArray => {
+                return godotVariantAsPoolStringArray;
+            },
+            PoolVector2Array => {
+                return godotVariantAsPoolVector2Array;
+            },
+            PoolVector3Array => {
+                return godotVariantAsPoolVector3Array;
+            },
+            PoolColorArray => {
+                return godotVariantAsPoolColorArray;
+            },
+            else => {
+                @compileError("Variant can't be converted as that type");
+            },
+        }
+
+        return null;
+    }
+
+
+    inline fn voidAsGodotVariant(value: void) c.godot_variant {
+        _ = value;
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_nil.?(&variant);
+        return variant;
+    }
+
+    inline fn boolAsGodotVariant(value: bool) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_bool.?(&variant, value);
+        return variant;
+    }
+
+    inline fn i64AsGodotVariant(value: i64) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_int.?(&variant, value);
+        return variant;
+    }
+
+    inline fn f64AsGodotVariant(value: f64) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_real.?(&variant, value);
+        return variant;
+    }
+
+    inline fn stringAsGodotVariant(value: String) c.godot_variant {
+        var mutable_value = value; //So deinit can be called
+        defer mutable_value.deinit(); //This will be copied when converted to a godot variant, so deinit to free any allocated memory, or it will leak
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_string.?(&variant, &mutable_value.godot_string);
+        return variant;
+    }
+
+    inline fn vector2AsGodotVariant(value: Vector2) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_vector2.?(&variant, @ptrCast(*c.godot_vector2, &value));
+        return variant;
+    }
+
+    inline fn rect2AsGodotVariant(value: Rect2) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_rect2.?(&variant, @ptrCast(*c.godot_rect2, &value));
+        return variant;
+    }
+
+    inline fn vector3AsGodotVariant(value: Vector3) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_vector3.?(&variant, @ptrCast(*c.godot_vector3, &value));
+        return variant;
+    }
+
+    inline fn transform2DAsGodotVariant(value: Transform2D) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_transform2d.?(&variant, @ptrCast(*c.godot_transform2d, &value));
+        return variant;
+    }
+
+    inline fn planeAsGodotVariant(value: Plane) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_plane.?(&variant, @ptrCast(*c.godot_plane, &value));
+        return variant;
+    }
+
+    inline fn quatAsGodotVariant(value: Quat) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_quat.?(&variant, @ptrCast(*c.godot_quat, &value));
+        return variant;
+    }
+
+    inline fn aabbAsGodotVariant(value: AABB) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_aabb.?(&variant, @ptrCast(*c.godot_aabb, &value));
+        return variant;
+    }
+
+    inline fn basisAsGodotVariant(value: Basis) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_basis.?(&variant, @ptrCast(*c.godot_basis, &value));
+        return variant;
+    }
+
+    inline fn transformAsGodotVariant(value: Transform) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_transform.?(&variant, @ptrCast(*c.godot_transform, &value));
+        return variant;
+    }
+
+    inline fn colorAsGodotVariant(value: Color) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_color.?(&variant, @ptrCast(*c.godot_color, &value));
+        return variant;
+    }
+
+    inline fn nodePathAsGodotVariant(value: NodePath) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_node_path.?(&variant, &mutable_value.godot_node_path);
+        return variant;
+    }
+
+    inline fn ridAsGodotVariant(value: RID) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_rid.?(&variant, &mutable_value.godot_rid);
+        return variant;
+    }
+
+    // inline fn objectAsGodotVariant(value: Object) c.godot_variant {
+    //     var variant: c.godot_variant = undefined;
+    //     gd.api.*.godot_variant_new_object.?(&variant, @ptrCast(*c.godot_object, &value));
+    //     return variant;
+    // }
+
+    inline fn dictionaryAsGodotVariant(value: Dictionary) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_dictionary.?(&variant, &mutable_value.godot_dictionary);
+        return variant;
+    }
+
+    inline fn arrayAsGodotVariant(value: Array) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolByteArrayAsGodotVariant(value: PoolByteArray) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_byte_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolIntArrayAsGodotVariant(value: PoolIntArray) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_int_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolRealArrayAsGodotVariant(value: PoolRealArray) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_real_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolStringArrayAsGodotVariant(value: PoolStringArray) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_string_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolVector2ArrayAsGodotVariant(value: PoolVector2Array) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_vector2_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolVector3ArrayAsGodotVariant(value: PoolVector3Array) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_vector3_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    inline fn poolColorArrayAsGodotVariant(value: PoolColorArray) c.godot_variant {
+        var mutable_value = value;
+        defer mutable_value.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_pool_color_array.?(&variant, &mutable_value.godot_array);
+        return variant;
+    }
+
+    pub fn typeAsVariant(comptime T: type) (fn(T) callconv(.Inline) c.godot_variant) {
+        switch (T) {
+            void => {
+                return voidAsGodotVariant;
+            },
+            bool => {
+                return boolAsGodotVariant;
+            },
+            i64 => {
+                return i64AsGodotVariant;
+            },
+            f64 => {
+                return f64AsGodotVariant;
+            },
+            String => {
+                return stringAsGodotVariant;
+            },
+            Vector2 => {
+                return vector2AsGodotVariant;
+            },
+            Rect2 => {
+                return rect2AsGodotVariant;
+            },
+            Vector3 => {
+                return vector3AsGodotVariant;
+            },
+            Transform2D => {
+                return transform2DAsGodotVariant;
+            },
+            Plane => {
+                return planeAsGodotVariant;
+            },
+            Quat => {
+                return quatAsGodotVariant;
+            },
+            AABB => {
+                return aabbAsGodotVariant;
+            },
+            Basis => {
+                return basisAsGodotVariant;
+            },
+            Transform => {
+                return transformAsGodotVariant;
+            },
+            Color => {
+                return colorAsGodotVariant;
+            },
+            NodePath => {
+                return nodePathAsGodotVariant;
+            },
+            RID => {
+                return ridAsGodotVariant;
+            },
+            // Object => {
+            //     return objectAsGodotVariant;
+            // },
+            Dictionary => {
+                return dictionaryAsGodotVariant;
+            },
+            Array => {
+                return arrayAsGodotVariant;
+            },
+            PoolByteArray => {
+                return poolByteArrayAsGodotVariant;
+            },
+            PoolIntArray => {
+                return poolIntArrayAsGodotVariant;
+            },
+            PoolRealArray => {
+                return poolRealArrayAsGodotVariant;
+            },
+            PoolStringArray => {
+                return poolStringArrayAsGodotVariant;
+            },
+            PoolVector2Array => {
+                return poolVector2ArrayAsGodotVariant;
+            },
+            PoolVector3Array => {
+                return poolVector3ArrayAsGodotVariant;
+            },
+            PoolColorArray => {
+                return poolColorArrayAsGodotVariant;
+            },
+            else => {
+                @compileError("Unsupported return type");
+            },
+        }
+
+        return null;
     }
 
 };
