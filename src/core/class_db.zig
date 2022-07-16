@@ -341,3 +341,44 @@ pub fn registerProperty(handle: ?*anyopaque, comptime class: type, name: [*:0]co
 
     gd.nativescript_api.*.godot_nativescript_register_property.?(handle, class.GodotClass.getClassName(), name, &attributes, set_func, get_func);
 }
+
+pub fn registerSignal(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime args: anytype) void {
+    comptime if (!class.GodotClass.isClassScript()) {
+        @compileError("This function must only be used on custom classes");
+    };
+
+    var signal_name: c.godot_string = undefined;
+    gd.api.*.godot_string_new.?(&signal_name);
+    _ = gd.api.*.godot_string_parse_utf8.?(&signal_name, name);
+    defer gd.api.*.godot_string_destroy.?(&signal_name);
+
+    var signal: c.godot_signal = undefined;
+    signal.name = signal_name;
+    signal.num_args = args.len;
+    signal.args = null;
+    signal.num_default_args = 0;
+    signal.default_args = null;
+
+    if (args.len > 0) {
+        const arg_data_size = signal.num_args * @sizeOf(c.godot_signal_argument);
+        const arg_data = gd.api.*.godot_alloc.?(arg_data_size);
+        signal.args = @ptrCast([*c]c.godot_signal_argument, @alignCast(@alignOf([*c]c.godot_signal_argument), arg_data));
+        defer gd.api.*.godot_free.?(signal.args);
+        @memset(@ptrCast([*]u8, arg_data), 0, @intCast(usize, arg_data_size));
+
+        inline for (args) |arg, i| {
+            const arg_name = arg[0];
+            const arg_type = arg[1];
+            
+            var arg_name_string: c.godot_string = undefined;
+            gd.api.*.godot_string_new.?(&arg_name_string);
+            _ = gd.api.*.godot_string_parse_utf8.?(&arg_name_string, arg_name);
+            //Allocated string memory handled/freed by Godot
+
+            signal.args[i].name = arg_name_string;
+            signal.args[i].type = arg_type;
+        }
+    }
+
+    gd.nativescript_api.*.godot_nativescript_register_signal.?(handle, class.GodotClass.getClassName(), &signal);
+}

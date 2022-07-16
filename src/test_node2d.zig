@@ -57,6 +57,8 @@ pub const TestNode2D = struct {
         ClassDB.registerProperty(handle, Self, "setget_property", "setget_property", @as(i64, 0), set_setget_property, get_setget_property,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
+
+        ClassDB.registerSignal(handle, Self, "test_signal", .{ .{"arg0", c.GODOT_VARIANT_TYPE_INT}, .{"arg1", c.GODOT_VARIANT_TYPE_REAL}, });
     }
 
     pub fn _process(self: *const Self, delta: f64) void {
