@@ -1,6 +1,8 @@
 const gd = @import("api.zig");
 const c = gd.c;
 
+const std = @import("std");
+
 const AABB = @import("aabb.zig").AABB;
 const Basis = @import("basis.zig").Basis;
 const Plane = @import("plane.zig").Plane;
@@ -555,12 +557,28 @@ pub const Variant = struct {
         return gd.api.*.godot_variant_as_bool.?(variant);
     }
 
-    inline fn godotVariantAsI64(variant: [*c]c.godot_variant) i64 {
-        return gd.api.*.godot_variant_as_int.?(variant);
+    fn GodotVariantAsInt(comptime T: type) type {
+        return struct {
+            inline fn function(variant: [*c]c.godot_variant) T {
+                return @intCast(T, gd.api.*.godot_variant_as_int.?(variant));
+            }
+        };
     }
 
-    inline fn godotVariantAsF64(variant: [*c]c.godot_variant) f64 {
-        return gd.api.*.godot_variant_as_real.?(variant);
+    fn GodotVariantAsUint(comptime T: type) type {
+        return struct {
+            inline fn function(variant: [*c]c.godot_variant) T {
+                return @intCast(T, gd.api.*.godot_variant_as_uint.?(variant));
+            }
+        };
+    }
+
+    fn GodotVariantAsFloat(comptime T: type) type {
+        return struct {
+            inline fn function(variant: [*c]c.godot_variant) T {
+                return @floatCast(T, gd.api.*.godot_variant_as_real.?(variant));
+            }
+        };
     }
 
     // NOTE: These are not working properly! Due to a Zig bug with C ABI compatibility https://github.com/ziglang/zig/issues/1481
@@ -659,15 +677,27 @@ pub const Variant = struct {
     }
 
     pub fn variantAsType(comptime T: type) (fn([*c]c.godot_variant) callconv(.Inline) T) {
+        const type_info = @typeInfo(T);
+        const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+
+        switch (type_info) {
+            type_tag.Int => {
+                if (type_info.Int.signedness == std.builtin.Signedness.signed) {
+                    return GodotVariantAsInt(T).function;
+                }
+                else {
+                    return GodotVariantAsUint(T).function;
+                }
+            },
+            type_tag.Float => {
+                return GodotVariantAsFloat(T).function;
+            },
+            else => {},
+        }
+
         switch (T) {
             bool => {
                 return godotVariantAsBool;
-            },
-            i64 => {
-                return godotVariantAsI64;
-            },
-            f64 => {
-                return godotVariantAsF64;
             },
             String => {
                 return godotVariantAsString;
@@ -760,16 +790,34 @@ pub const Variant = struct {
         return variant;
     }
 
-    inline fn i64AsGodotVariant(value: i64) c.godot_variant {
-        var variant: c.godot_variant = undefined;
-        gd.api.*.godot_variant_new_int.?(&variant, value);
-        return variant;
+    fn IntAsGodotVariant(comptime T: type) type {
+        return struct {
+            inline fn function(value: T) c.godot_variant {
+                var variant: c.godot_variant = undefined;
+                gd.api.*.godot_variant_new_int.?(&variant, value);
+                return variant;
+            }
+        };
     }
 
-    inline fn f64AsGodotVariant(value: f64) c.godot_variant {
-        var variant: c.godot_variant = undefined;
-        gd.api.*.godot_variant_new_real.?(&variant, value);
-        return variant;
+    fn UintAsGodotVariant(comptime T: type) type {
+        return struct {
+            inline fn function(value: T) c.godot_variant {
+                var variant: c.godot_variant = undefined;
+                gd.api.*.godot_variant_new_uint.?(&variant, value);
+                return variant;
+            }
+        };
+    }
+
+    fn FloatAsGodotVariant(comptime T: type) type {
+        return struct {
+            inline fn function(value: T) c.godot_variant {
+                var variant: c.godot_variant = undefined;
+                gd.api.*.godot_variant_new_real.?(&variant, value);
+                return variant;
+            }
+        };
     }
 
     inline fn stringAsGodotVariant(value: String) c.godot_variant {
@@ -947,18 +995,30 @@ pub const Variant = struct {
     }
 
     pub fn typeAsVariant(comptime T: type) (fn(T) callconv(.Inline) c.godot_variant) {
+        const type_info = @typeInfo(T);
+        const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+
+        switch (type_info) {
+            type_tag.Int => {
+                if (type_info.Int.signedness == std.builtin.Signedness.signed) {
+                    return IntAsGodotVariant(T).function;
+                }
+                else {
+                    return UintAsGodotVariant(T).function;
+                }
+            },
+            type_tag.Float => {
+                return FloatAsGodotVariant(T).function;
+            },
+            else => {},
+        }
+
         switch (T) {
             void => {
                 return voidAsGodotVariant;
             },
             bool => {
                 return boolAsGodotVariant;
-            },
-            i64 => {
-                return i64AsGodotVariant;
-            },
-            f64 => {
-                return f64AsGodotVariant;
             },
             String => {
                 return stringAsGodotVariant;

@@ -13,8 +13,8 @@ const std = @import("std");
 pub const TestNode2D = struct {
 
     data: i64,
-    test_property: f64,
-    setget_property: i64,
+    test_property: f32,
+    setget_property: u16,
 
     const Node2D = struct {};
     pub const GodotClass = ClassDB.DefineGodotClass(TestNode2D, Node2D);
@@ -51,10 +51,10 @@ pub const TestNode2D = struct {
 
         ClassDB.registerFunction(handle, Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
-        ClassDB.registerProperty(handle, Self, "test_property", "test_property", @as(f64, 0), null, null,
+        ClassDB.registerProperty(handle, Self, "test_property", "test_property", @as(f32, 0), null, null,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
-        ClassDB.registerProperty(handle, Self, "setget_property", "setget_property", @as(i64, 0), set_setget_property, get_setget_property,
+        ClassDB.registerProperty(handle, Self, "setget_property", "setget_property", @as(u16, 0), set_setget_property, get_setget_property,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
 
@@ -66,7 +66,7 @@ pub const TestNode2D = struct {
         _ = delta;
     }
 
-    pub fn test_method(self: *const Self, a: i64, b: bool) void {
+    pub fn test_method(self: *const Self, a: i32, b: bool) void {
         _ = self;
         std.debug.print("test_method a:{} b:{}\n", .{a, b});
     }
@@ -109,11 +109,11 @@ pub const TestNode2D = struct {
         std.debug.print("static_function:{}\n", .{a});
     }
 
-    pub fn set_setget_property(self: *Self, value: i64) void {
+    pub fn set_setget_property(self: *Self, value: u16) void {
         self.setget_property += value * 2;
     }
 
-    pub fn get_setget_property(self: *const Self) i64 {
+    pub fn get_setget_property(self: *const Self) u16 {
         return self.setget_property + 1;
     }
 
