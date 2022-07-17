@@ -1097,4 +1097,102 @@ pub const Variant = struct {
         return null;
     }
 
+    pub fn typeToVariantType(comptime T: type) Type {
+        const type_info = @typeInfo(T);
+        const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+
+        switch (type_info) {
+            type_tag.Int => {
+                return Type.int;
+            },
+            type_tag.Float => {
+                return Type.real;
+            },
+            else => {},
+        }
+
+        switch (T) {
+            @TypeOf(null) => {
+                return Type.nil;
+            },
+            bool => {
+                return Type.bool;
+            },
+            String => {
+                return Type.string;
+            },
+            Vector2 => {
+                return Type.vector2;
+            },
+            Rect2 => {
+                return Type.rect2;
+            },
+            Vector3 => {
+                return Type.vector3;
+            },
+            Transform2D => {
+                return Type.transform2d;
+            },
+            Plane => {
+                return Type.plane;
+            },
+            Quat => {
+                return Type.quat;
+            },
+            AABB => {
+                return Type.aabb;
+            },
+            Basis => {
+                return Type.basis;
+            },
+            Transform => {
+                return Type.transform;
+            },
+            Color => {
+                return Type.color;
+            },
+            NodePath => {
+                return Type.node_path;
+            },
+            RID => {
+                return Type.rid;
+            },
+            // Object => {
+            //     return Type.object;
+            // },
+            Dictionary => {
+                return Type.dictionary;
+            },
+            Array => {
+                return Type.array;
+            },
+            PoolByteArray => {
+                return Type.pool_byte_array;
+            },
+            PoolIntArray => {
+                return Type.pool_int_array;
+            },
+            PoolRealArray => {
+                return Type.pool_real_array;
+            },
+            PoolStringArray => {
+                return Type.pool_string_array;
+            },
+            PoolVector2Array => {
+                return Type.pool_vector2_array;
+            },
+            PoolVector3Array => {
+                return Type.pool_vector3_array;
+            },
+            PoolColorArray => {
+                return Type.pool_color_array;
+            },
+            else => {
+                @compileError("Unknown type");
+            },
+        }
+
+        return Type.variant_max;
+    }
+
 };

@@ -58,7 +58,7 @@ pub const TestNode2D = struct {
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
 
-        ClassDB.registerSignal(Self, "test_signal", .{ .{"arg0", c.GODOT_VARIANT_TYPE_INT}, .{"arg1", c.GODOT_VARIANT_TYPE_REAL}, });
+        ClassDB.registerSignal(Self, "test_signal", .{ .{"arg0", i32}, .{"arg1", f32}, });
     }
 
     pub fn _process(self: *Self, delta: f64) void {
