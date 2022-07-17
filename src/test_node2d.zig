@@ -4,6 +4,8 @@ const c = gd.c;
 const ClassDB = @import("core/class_db.zig");
 const Godot = @import("core/godot_global.zig").Godot;
 
+const Node2D = @import("gen/node2d.zig").Node2D;
+
 const String = @import("core/string.zig").String;
 const Array = @import("core/array.zig").Array;
 const Variant = @import("core/variant.zig").Variant;
@@ -12,27 +14,25 @@ const std = @import("std");
 
 pub const TestNode2D = struct {
 
+    base: Node2D,
     data: i64,
     test_property: f32,
     setget_property: u16,
 
-    const Node2D = struct {};
     pub const GodotClass = ClassDB.DefineGodotClass(TestNode2D, Node2D);
 
     const Self = @This();
 
     pub fn constructor(p_instance: ?*c.godot_object, p_method_data: ?*anyopaque) callconv(.C) ?*anyopaque {
-        _ = p_instance;
         _ = p_method_data;
 
-        var user_data = gd.api.*.godot_alloc.?(@sizeOf(@This()));
-
-        var self = @ptrCast(*Self, @alignCast(@alignOf(*Self), user_data));
+        var self = @ptrCast(*Self, @alignCast(@alignOf(*Self), gd.api.*.godot_alloc.?(@sizeOf(Self))));
+        self.base.base.base.base.owner = p_instance; //TODO: Improve this
         self.data = 0;
         self.test_property = 0;
         self.setget_property = 0;
 
-        return user_data;
+        return self;
     }
 
     pub fn destructor(p_instance: ?*c.godot_object, p_method_data: ?*anyopaque, p_user_data: ?*anyopaque) callconv(.C) void {
@@ -42,28 +42,29 @@ pub const TestNode2D = struct {
         gd.api.*.godot_free.?(p_user_data);
     }
 
-    pub fn registerMembers(handle: ?*anyopaque) void {
-        ClassDB.registerMethod(handle, Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(handle, Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(handle, Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(handle, Self, "test_return_string", test_return_string, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(handle, Self, "test_return_array", test_return_array, c.GODOT_METHOD_RPC_MODE_DISABLED);
+    pub fn registerMembers() void {
+        ClassDB.registerMethod(Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(Self, "test_return_string", test_return_string, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(Self, "test_return_array", test_return_array, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
-        ClassDB.registerFunction(handle, Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerFunction(Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
-        ClassDB.registerProperty(handle, Self, "test_property", "test_property", @as(f32, 0), null, null,
+        ClassDB.registerProperty(Self, "test_property", "test_property", @as(f32, 0), null, null,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
-        ClassDB.registerProperty(handle, Self, "setget_property", "setget_property", @as(u16, 0), set_setget_property, get_setget_property,
+        ClassDB.registerProperty(Self, "setget_property", "setget_property", @as(u16, 0), set_setget_property, get_setget_property,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
 
-        ClassDB.registerSignal(handle, Self, "test_signal", .{ .{"arg0", c.GODOT_VARIANT_TYPE_INT}, .{"arg1", c.GODOT_VARIANT_TYPE_REAL}, });
+        ClassDB.registerSignal(Self, "test_signal", .{ .{"arg0", c.GODOT_VARIANT_TYPE_INT}, .{"arg1", c.GODOT_VARIANT_TYPE_REAL}, });
     }
 
-    pub fn _process(self: *const Self, delta: f64) void {
+    pub fn _process(self: *Self, delta: f64) void {
         _ = self;
-        _ = delta;
+
+        self.base.rotate(delta);
     }
 
     pub fn test_method(self: *const Self, a: i32, b: bool) void {

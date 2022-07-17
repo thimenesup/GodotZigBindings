@@ -1,41 +1,46 @@
 const gd = @import("api.zig");
 const c = gd.c;
 
+const Wrapped = @import("wrapped.zig").Wrapped;
 const Variant = @import("variant.zig").Variant;
 
 // This is used to declare your Godot Class like this: const GodotClass = DefineGodotClass(MyNode, Node);
 pub fn DefineGodotClass(comptime class: type, comptime base: type) type {
     return struct {
 
-        inline fn isClassScript() bool {
+        pub inline fn isClassScript() bool {
             return true;
         }
 
-        inline fn getClassName() [*:0]const u8 {
+        pub inline fn getClassName() [*:0]const u8 {
             return @typeName(class);
         }
 
-        inline fn getBaseClassName() [*:0]const u8 {
-            return @typeName(base); //base.getClassName();
+        pub inline fn getBaseClassName() [*:0]const u8 {
+            return base.GodotClass.getClassName();
         }
 
-        inline fn getGodotBaseClassName() [*:0]const u8 {
-            return ""; //base.getGodotClassName();
+        pub inline fn getGodotBaseClassName() [*:0]const u8 {
+            return base.GodotClass.getGodotClassName();
         }
 
-        inline fn getId() usize {
-            return 0; //TODO: Figure out how to do it
+        pub inline fn getId() usize {
+            return @ptrToInt(&struct { var x: u8 = 0; }.x); //Hacky way to do it
         }
 
-        inline fn getBaseId() usize {
-            return 0; //base.getId();
+        pub inline fn getBaseId() usize {
+            return base.GodotClass.getId();
+        }
+
+        pub inline fn newInstance() *class {
+            return createCustomClassInstance(class);
         }
 
     };
 }
 
 
-pub fn registerClass(comptime class: type, handle: ?*anyopaque) void {
+pub fn registerClass(comptime class: type) void {
     comptime if (!class.GodotClass.isClassScript()) {
         @compileError("This function must only be used on custom classes");
     };
@@ -52,9 +57,13 @@ pub fn registerClass(comptime class: type, handle: ?*anyopaque) void {
         .free_func = null,
     };
 
-    gd.nativescript_api.*.godot_nativescript_register_class.?(handle, class.GodotClass.getClassName(), class.GodotClass.getBaseClassName(), create, destroy);
+    //registerType(class.GodotClass.getId(), class.GodotClass.getBaseId());
 
-    class.registerMembers(handle);
+    gd.nativescript_api.*.godot_nativescript_register_class.?(gd.nativescript_handle, class.GodotClass.getClassName(), class.GodotClass.getBaseClassName(), create, destroy);
+
+    gd.nativescript_1_1_api.*.godot_nativescript_set_type_tag.?(gd.nativescript_handle, class.GodotClass.getClassName(), @intToPtr(?*anyopaque, class.GodotClass.getId()));
+
+    class.registerMembers();
 }
 
 
@@ -124,7 +133,7 @@ fn FunctionWrapper(comptime function: anytype) type {
     };
 }
 
-pub fn registerFunction(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
+pub fn registerFunction(comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
     comptime if (!class.GodotClass.isClassScript()) {
         @compileError("This function must only be used on custom classes");
     };
@@ -141,7 +150,7 @@ pub fn registerFunction(handle: ?*anyopaque, comptime class: type, name: [*:0]co
         .rpc_type = rpc_type,
     };
 
-    gd.nativescript_api.*.godot_nativescript_register_method.?(handle, class.GodotClass.getClassName(), name, attributes, instance);
+    gd.nativescript_api.*.godot_nativescript_register_method.?(gd.nativescript_handle, class.GodotClass.getClassName(), name, attributes, instance);
 }
 
 
@@ -219,7 +228,7 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
     };
 }
 
-pub fn registerMethod(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
+pub fn registerMethod(comptime class: type, name: [*:0]const u8, comptime method: anytype, rpc_type: c.godot_method_rpc_mode) void {
     comptime if (!class.GodotClass.isClassScript()) {
         @compileError("This function must only be used on custom classes");
     };
@@ -236,7 +245,7 @@ pub fn registerMethod(handle: ?*anyopaque, comptime class: type, name: [*:0]cons
         .rpc_type = rpc_type,
     };
 
-    gd.nativescript_api.*.godot_nativescript_register_method.?(handle, class.GodotClass.getClassName(), name, attributes, instance);
+    gd.nativescript_api.*.godot_nativescript_register_method.?(gd.nativescript_handle, class.GodotClass.getClassName(), name, attributes, instance);
 }
 
 
@@ -305,7 +314,7 @@ fn PropertyGetWrapper(comptime class: type, comptime function: anytype) type {
     };
 }
 
-pub fn registerProperty(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime field_name: []const u8, default_value: anytype, comptime setter: anytype, comptime getter: anytype, rpc_mode: c.godot_method_rpc_mode, usage: c.godot_property_usage_flags, hint: c.godot_property_hint, hint_string: [*:0]const u8) void {
+pub fn registerProperty(comptime class: type, name: [*:0]const u8, comptime field_name: []const u8, default_value: anytype, comptime setter: anytype, comptime getter: anytype, rpc_mode: c.godot_method_rpc_mode, usage: c.godot_property_usage_flags, hint: c.godot_property_hint, hint_string: [*:0]const u8) void {
     comptime if (!class.GodotClass.isClassScript()) {
         @compileError("This function must only be used on custom classes");
     };
@@ -339,10 +348,10 @@ pub fn registerProperty(handle: ?*anyopaque, comptime class: type, name: [*:0]co
     get_func.method_data = null;
     get_func.free_func = null;
 
-    gd.nativescript_api.*.godot_nativescript_register_property.?(handle, class.GodotClass.getClassName(), name, &attributes, set_func, get_func);
+    gd.nativescript_api.*.godot_nativescript_register_property.?(gd.nativescript_handle, class.GodotClass.getClassName(), name, &attributes, set_func, get_func);
 }
 
-pub fn registerSignal(handle: ?*anyopaque, comptime class: type, name: [*:0]const u8, comptime args: anytype) void {
+pub fn registerSignal(comptime class: type, name: [*:0]const u8, comptime args: anytype) void {
     comptime if (!class.GodotClass.isClassScript()) {
         @compileError("This function must only be used on custom classes");
     };
@@ -368,7 +377,7 @@ pub fn registerSignal(handle: ?*anyopaque, comptime class: type, name: [*:0]cons
 
         inline for (args) |arg, i| {
             const arg_name = arg[0];
-            const arg_type = arg[1];
+            const arg_type = @enumToInt(Variant.typeToVariantType(arg[1]));
             
             var arg_name_string: c.godot_string = undefined;
             gd.api.*.godot_string_new.?(&arg_name_string);
@@ -380,5 +389,49 @@ pub fn registerSignal(handle: ?*anyopaque, comptime class: type, name: [*:0]cons
         }
     }
 
-    gd.nativescript_api.*.godot_nativescript_register_signal.?(handle, class.GodotClass.getClassName(), &signal);
+    gd.nativescript_api.*.godot_nativescript_register_signal.?(gd.nativescript_handle, class.GodotClass.getClassName(), &signal);
+}
+
+
+pub fn getCustomClassInstance(comptime class: type, object: *const Wrapped) *class {
+    if (gd.nativescript_api.*.godot_nativescript_get_userdata.?(object.owner) != null) {
+        return @ptrCast(*class, object);
+    }
+    return null;
+}
+
+pub fn createCustomClassInstance(comptime class: type) *class { //TODO: The method binds could be cached
+    comptime if (!class.GodotClass.isClassScript()) {
+        @compileError("This function must only be used on custom classes");
+    };
+
+    const script_constructor = gd.api.*.godot_get_class_constructor.?("NativeScript");
+    const mb_set_library = gd.api.*.godot_get_class_constructor.?("NativeScript", "set_library");
+    const mb_set_class_name = gd.api.*.godot_get_class_constructor.?("NativeScript", "set_class_name");
+
+    const script = script_constructor.?();
+    {
+        const args = [_]?*anyopaque { gd.gndlib };
+        gd.api.*.godot_method_bind_ptrcall.?(mb_set_library, script, args, null);
+    }
+    {
+        var godot_string: c.godot_string = undefined;
+        gd.api.*.godot_string_new.?(&godot_string);
+        _ = gd.api.*.godot_string_parse_utf8.?(&godot_string, class.GodotClass.getClassName());
+        defer gd.api.*.godot_string_destroy.?(&godot_string);
+
+        const args = [_]?*anyopaque { godot_string };
+        gd.api.*.godot_method_bind_ptrcall.?(mb_set_class_name, script, args, null);
+    }
+
+    const base_constructor = gd.api.*.godot_get_class_constructor.?(class.GodotClass.getGodotClassName());
+    const mb_set_script = gd.api.*.godot_method_bind_get_method.?("Object", "set_script");
+
+    const base_object = base_constructor.?();
+    {
+        const args = [_]?*anyopaque { script };
+        gd.api.*.godot_method_bind_ptrcall.?(mb_set_script, base_object, args, null);
+    }
+
+    return @ptrCast(*class, gd.api.*.godot_nativescript_get_userdata.?(base_object));
 }

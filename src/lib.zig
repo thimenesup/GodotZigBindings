@@ -13,6 +13,12 @@ export fn godot_gdnative_terminate(p_options: [*c]c.godot_gdnative_terminate_opt
 }
 
 export fn godot_nativescript_init(p_handle: ?*anyopaque) callconv(.C) void {
-    // Register classes
-    ClassDB.registerClass(TestNode2D, p_handle);
+    gdapi.nativescript_init(p_handle);
+
+    // Register custom classes
+    ClassDB.registerClass(TestNode2D);
+}
+
+export fn godot_nativescript_terminate(p_handle: ?*anyopaque) callconv(.C) void {
+    gdapi.nativescript_terminate(p_handle);
 }
