@@ -4,6 +4,8 @@ const c = gd.c;
 const ClassDB = @import("core/class_db.zig");
 const Godot = @import("core/godot_global.zig").Godot;
 
+const Wrapped = @import("core/wrapped.zig").Wrapped;
+const Node = @import("gen/node.zig").Node;
 const Node2D = @import("gen/node2d.zig").Node2D;
 
 const String = @import("core/string.zig").String;
@@ -28,6 +30,8 @@ pub const TestNode2D = struct {
 
         var self = @ptrCast(*Self, @alignCast(@alignOf(*Self), gd.api.*.godot_alloc.?(@sizeOf(Self))));
         self.base.base.base.base.owner = p_instance; //TODO: Improve this
+        self.base.base.base.base.type_tag = GodotClass.getId();
+
         self.data = 0;
         self.test_property = 0;
         self.setget_property = 0;
@@ -48,6 +52,7 @@ pub const TestNode2D = struct {
         ClassDB.registerMethod(Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
         ClassDB.registerMethod(Self, "test_return_string", test_return_string, c.GODOT_METHOD_RPC_MODE_DISABLED);
         ClassDB.registerMethod(Self, "test_return_array", test_return_array, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        ClassDB.registerMethod(Self, "test_memnew_and_cast", test_memnew_and_cast, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
         ClassDB.registerFunction(Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
@@ -116,6 +121,34 @@ pub const TestNode2D = struct {
 
     pub fn get_setget_property(self: *const Self) u16 {
         return self.setget_property + 1;
+    }
+
+    pub fn test_memnew_and_cast(self: *const Self) void {
+        {
+            var custom_node = TestNode2D.GodotClass.memnew();
+            //defer custom_node.free();
+            const cast = ClassDB.castTo(Node2D, &custom_node.base.base.base.base);
+            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Node2D
+        }
+
+        {
+            var node = Node.GodotClass.memnew();
+            //defer node.free();
+            const cast = ClassDB.castTo(Node2D, &node.base.base);
+            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Null
+        }
+
+        {
+            var child_node = self.base.base.getChild(0);
+            const cast = ClassDB.castTo(Node2D, &child_node.?.base.base);
+            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
+        }
+
+        {
+            var child_node = self.base.base.getChild(0);
+            const cast = ClassDB.castTo(TestNode2D, &child_node.?.base.base);
+            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
+        }
     }
 
 };
