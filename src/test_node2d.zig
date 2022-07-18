@@ -125,28 +125,28 @@ pub const TestNode2D = struct {
 
     pub fn test_memnew_and_cast(self: *const Self) void {
         {
-            var custom_node = TestNode2D.GodotClass.memnew();
+            const custom_node = TestNode2D.GodotClass.memnew();
             //defer custom_node.free();
-            const cast = ClassDB.castTo(Node2D, &custom_node.base.base.base.base);
+            const cast = ClassDB.castTo(TestNode2D, custom_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Node2D
         }
 
         {
-            var node = Node.GodotClass.memnew();
+            const node = Node.GodotClass.memnew();
             //defer node.free();
-            const cast = ClassDB.castTo(Node2D, &node.base.base);
+            const cast = ClassDB.castTo(Node2D, node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Null
         }
 
         {
-            var child_node = self.base.base.getChild(0);
-            const cast = ClassDB.castTo(Node2D, &child_node.?.base.base);
+            const child_node = self.base.base.getChild(0);
+            const cast = ClassDB.castTo(Node2D, child_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
 
         {
-            var child_node = self.base.base.getChild(0);
-            const cast = ClassDB.castTo(TestNode2D, &child_node.?.base.base);
+            const child_node = self.base.base.getChild(0);
+            const cast = ClassDB.castTo(TestNode2D, child_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
     }

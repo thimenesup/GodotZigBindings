@@ -17,7 +17,51 @@ pub fn deinitTypeTagRegistry() void {
     type_tag_parent_registry.deinit();
 }
 
-pub fn castTo(comptime class: type, object: ?*const Wrapped) ?*class {
+pub fn ensureTypeIsGodotClassPointer(comptime T: type) void {
+    const type_info = @typeInfo(T);
+    const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+
+    switch (type_info) {
+        type_tag.Pointer => {
+            const ptr_info = @typeInfo(type_info.Pointer.child);
+            switch (ptr_info) {
+                type_tag.Struct => {
+                    if (!@hasDecl(type_info.Pointer.child, "GodotClass")) {
+                        @compileError("Expected pointer to a Godot Class");
+                    }
+                },
+                else => {
+                    @compileError("Expected pointer to struct");
+                },
+            }
+        },
+        type_tag.Optional => {
+            const optional_info = @typeInfo(type_info.Optional.child);
+            const ptr_info = @typeInfo(optional_info.Pointer.child);
+            switch (ptr_info) {
+                type_tag.Struct => {
+                    if (!@hasDecl(optional_info.Pointer.child, "GodotClass")) {
+                        @compileError("Expected pointer to a Godot Class");
+                    }
+                },
+                else => {
+                    @compileError("Expected pointer to struct");
+                },
+            }
+        },
+        else => {
+            @compileError("Expected pointer");
+        },
+    }
+}
+
+pub fn castTo(comptime class: type, object: anytype) ?*class { //This makes it less annoying to cast godot objects, without needing to dig for class.base:wrapped
+    comptime ensureTypeIsGodotClassPointer(@TypeOf(object)); //While also still having compile time safety checks
+    const wrapped = @ptrCast(?*Wrapped, object);
+    return wrappedCastTo(class, wrapped);
+}
+
+pub fn wrappedCastTo(comptime class: type, object: ?*const Wrapped) ?*class {
     if (object == null) {
         return null;
     }
