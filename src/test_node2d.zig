@@ -1,12 +1,11 @@
 const gd = @import("core/api.zig");
 const c = gd.c;
 
-const ClassDB = @import("core/class_db.zig");
+const Classes = @import("core/classes.zig");
 const Godot = @import("core/godot_global.zig").Godot;
 
-const Wrapped = @import("core/wrapped.zig").Wrapped;
-const Node = @import("gen/node.zig").Node;
-const Node2D = @import("gen/node2d.zig").Node2D;
+const Node = @import("test_gen/node.zig").Node;
+const Node2D = @import("test_gen/node2d.zig").Node2D;
 
 const String = @import("core/string.zig").String;
 const Array = @import("core/array.zig").Array;
@@ -21,7 +20,7 @@ pub const TestNode2D = struct {
     test_property: f32,
     setget_property: u16,
 
-    pub const GodotClass = ClassDB.DefineGodotClass(TestNode2D, Node2D);
+    pub const GodotClass = Classes.DefineGodotClass(TestNode2D, Node2D);
 
     const Self = @This();
 
@@ -29,8 +28,8 @@ pub const TestNode2D = struct {
         _ = p_method_data;
 
         var self = @ptrCast(*Self, @alignCast(@alignOf(*Self), gd.api.*.godot_alloc.?(@sizeOf(Self))));
-        self.base.base.base.base.owner = p_instance; //TODO: Improve this
-        self.base.base.base.base.type_tag = GodotClass.getId();
+        self.base.base.base.base.base.owner = p_instance; //TODO: Improve this
+        self.base.base.base.base.base.type_tag = GodotClass.getId();
 
         self.data = 0;
         self.test_property = 0;
@@ -47,23 +46,23 @@ pub const TestNode2D = struct {
     }
 
     pub fn registerMembers() void {
-        ClassDB.registerMethod(Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(Self, "test_return_string", test_return_string, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(Self, "test_return_array", test_return_array, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        ClassDB.registerMethod(Self, "test_memnew_and_cast", test_memnew_and_cast, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_return_string", test_return_string, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_return_array", test_return_array, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_memnew_and_cast", test_memnew_and_cast, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
-        ClassDB.registerFunction(Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerFunction(Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
 
-        ClassDB.registerProperty(Self, "test_property", "test_property", @as(f32, 0), null, null,
+        Classes.registerProperty(Self, "test_property", "test_property", @as(f32, 0), null, null,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
-        ClassDB.registerProperty(Self, "setget_property", "setget_property", @as(u16, 0), set_setget_property, get_setget_property,
+        Classes.registerProperty(Self, "setget_property", "setget_property", @as(u16, 0), set_setget_property, get_setget_property,
             c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
         );
 
-        ClassDB.registerSignal(Self, "test_signal", .{ .{"arg0", i32}, .{"arg1", f32}, });
+        Classes.registerSignal(Self, "test_signal", .{ .{"arg0", i32}, .{"arg1", f32}, });
     }
 
     pub fn _process(self: *Self, delta: f64) void {
@@ -127,26 +126,26 @@ pub const TestNode2D = struct {
         {
             const custom_node = TestNode2D.GodotClass.memnew();
             //defer custom_node.free();
-            const cast = ClassDB.castTo(TestNode2D, custom_node);
+            const cast = Classes.castTo(TestNode2D, custom_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Node2D
         }
 
         {
             const node = Node.GodotClass.memnew();
             //defer node.free();
-            const cast = ClassDB.castTo(Node2D, node);
+            const cast = Classes.castTo(Node2D, node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Null
         }
 
         {
-            const child_node = self.base.base.getChild(0);
-            const cast = ClassDB.castTo(Node2D, child_node);
+            const child_node = self.base.base.base.get_child(0);
+            const cast = Classes.castTo(Node2D, child_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
 
         {
-            const child_node = self.base.base.getChild(0);
-            const cast = ClassDB.castTo(TestNode2D, child_node);
+            const child_node = self.base.base.base.get_child(0);
+            const cast = Classes.castTo(TestNode2D, child_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
     }

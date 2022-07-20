@@ -5,9 +5,9 @@ pub const c = @cImport({
 const std = @import("std");
 
 const Wrapped = @import("wrapped.zig").Wrapped;
-const ClassDB = @import("class_db.zig");
-const GenTypes = @import("../gen/_register_types.zig");
-const GenBindings = @import("../gen/_init_bindings.zig");
+const Classes = @import("classes.zig");
+const GenTypes = @import("../test_gen/_register_types.zig");
+const GenBindings = @import("../test_gen/_init_bindings.zig");
 
 pub var api: [*c]const c.godot_gdnative_core_api_struct = null;
 pub var api_1_1: [*c]const c.godot_gdnative_core_1_1_api_struct = null;
@@ -74,7 +74,7 @@ pub fn gdnative_init(p_options: [*c]c.godot_gdnative_init_options) void {
 
     language_index = nativescript_1_1_api.*.godot_nativescript_register_instance_binding_data_functions.?(binding_funcs);
 
-    ClassDB.initTypeTagRegistry();
+    Classes.initTypeTagRegistry();
     GenTypes.registerTypes(); // Register Godot generated class types
     GenBindings.initBindings(); // Init Godot generated class bindings
 }
@@ -82,7 +82,7 @@ pub fn gdnative_init(p_options: [*c]c.godot_gdnative_init_options) void {
 pub fn gdnative_terminate(p_options: [*c]c.godot_gdnative_terminate_options) void {
     _ = p_options;
 
-    ClassDB.deinitTypeTagRegistry();
+    Classes.deinitTypeTagRegistry();
 }
 
 pub fn nativescript_init(p_handle: ?*anyopaque) void {

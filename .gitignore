@@ -4,3 +4,5 @@ zig-out
 .gdignore
 
 .vscode
+
+src/test_gen
