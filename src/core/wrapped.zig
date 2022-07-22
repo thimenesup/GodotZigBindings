@@ -9,26 +9,27 @@ pub const Wrapped = struct {
 };
 
 
+// Functions start with _underscore to avoid conflicting with other godot class body functions to allow usingnamespace to make calling them less verbose
 pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime singleton: bool) type {
     return struct {
 
-        pub inline fn isClassScript() bool {
+        pub inline fn _isClassScript() bool {
             return false;
         }
 
-        pub inline fn getClassName() [*:0]const u8 {
+        pub inline fn _getClassName() [*:0]const u8 {
             return @typeName(class);
         }
 
-        pub inline fn getGodotClassName() [*:0]const u8 {
+        pub inline fn _getGodotClassName() [*:0]const u8 {
             return @typeName(class);
         }
 
-        pub inline fn getId() usize {
+        pub inline fn _getClassId() usize {
             return typeId(class);
         }
 
-        pub inline fn memnew() *class {
+        pub inline fn _memnew() *class {
             comptime if (!instanciable) {
                 @compileError("This class isn't instanciable");
             };
@@ -39,7 +40,7 @@ pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime
             return @ptrCast(*class, @alignCast(@alignOf(*class), instance_data));
         }
 
-        pub inline fn getSingleton() *class {
+        pub inline fn _getClassSingleton() *class {
             comptime if (!singleton) {
                 @compileError("This class isn't a singleton");
             };

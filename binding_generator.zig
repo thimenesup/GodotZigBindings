@@ -349,7 +349,8 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
     try string.appendSlice("    const Self = @This();\n\n");
 
-    try std.fmt.format(string.writer(), "    pub const GodotClass = GenGodotClass(Self, {s}, {s});\n\n", .{ class_is_instanciable, class_is_singleton });
+    try std.fmt.format(string.writer(), "    pub const GodotClass = GenGodotClass(Self, {s}, {s});\n", .{ class_is_instanciable, class_is_singleton });
+    try string.appendSlice("    pub usingnamespace GodotClass;\n\n"); // Not necessary, but makes calling its nested functions less verbose
 
     // Enums
 
@@ -443,7 +444,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         defer return_gd_type.deinit();
 
         const is_const = method.get("is_const").?.Bool;
-        //const has_varargs = method.get("has_varargs").?.Bool;
+        const has_varargs = method.get("has_varargs").?.Bool;
         const arguments = method.get("arguments").?.Array;
 
         { // Method signature
@@ -469,51 +470,119 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 try std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, arg_gd_type.items });
             }
 
+            if (has_varargs) {
+                try signature_args.appendSlice(", p_var_args: *const Array");
+            }
+
             try std.fmt.format(string.writer(), "    pub fn {s}(self: *{s}Self{s}) {s} {{\n", 
                 .{ camel_method_name.items, constness.items, signature_args.items, return_gd_type.items });
         }
 
-        // Method content //TODO: Support var_args
-        var bind_args = String.init(std.heap.page_allocator); defer bind_args.deinit();
-        for (arguments.items) |arguments_item| {
-            const argument = arguments_item.Object;
+        // Method content
 
-            const arg_name = argument.get("name").?.String;
-            const arg_type = argument.get("type").?.String;
-            if (isClassType(arg_type)) {
-                try std.fmt.format(bind_args.writer(), " @ptrCast(*Wrapped, p_{s}).owner,", .{ arg_name }); // Trailing comma is fine
+        if (has_varargs) {
+            try std.fmt.format(string.writer(), 
+                "        const total_arg_count = {} + p_var_args.size();\n\n", 
+                .{ arguments.items.len });
+
+            try string.appendSlice(
+                "        var _bind_args = @ptrCast([*c][*c]c.godot_variant, @alignCast(@alignOf([*c][*c]c.godot_variant), gd.api.*.godot_alloc.?(@sizeOf([*c]c.godot_variant) * total_arg_count)));\n\n");
+
+            for (arguments.items) |arguments_item, i| {
+                const argument = arguments_item.Object;
+
+                const arg_name = argument.get("name").?.String;
+                try std.fmt.format(string.writer(), 
+                    "        var _variant_{s} = Variant.init(p_{s});\n" ++ 
+                    "        defer _variant_{s}.deinit();\n" ++ 
+                    "        _bind_args[{}] = &_variant_{s}.godot_variant;\n\n", 
+                    .{ arg_name, arg_name, arg_name, i, arg_name });
+            }
+
+            try std.fmt.format(string.writer(), 
+                "        var i: usize = 0;\n" ++ 
+                "        while (i < p_var_args.size()) : (i += 1) {{\n" ++ 
+                "            _bind_args[i + {}] = &p_var_args.get(@intCast(i32, i)).godot_variant;\n" ++ 
+                "        }}\n\n",
+                .{ arguments.items.len });
+
+            try std.fmt.format(string.writer(), 
+                "        const result = gd.api.*.godot_method_bind_call.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, _bind_args, total_arg_count, null);\n\n", 
+                .{ escaped_method_name.items });
+            
+            //try string.appendSlice("        gd.api.*.godot_free.?(@ptrCast(?*anyopaque, _bind_args));\n\n"); //NOTE: The CPP bindings dont free this, not sure if intended or its a leak
+
+            if (std.mem.eql(u8, return_type, "void")) {
+                try string.appendSlice("        _ = result;\n");
             }
             else {
-                try std.fmt.format(bind_args.writer(), " &p_{s},", .{ arg_name }); // Trailing comma is fine
+                try string.appendSlice(
+                    "        const ret = Variant.initGodotVariant(result);\n" ++ 
+                    "        return ret;\n");
             }
-        }
-        if (bind_args.items.len == 0) {
-            try bind_args.appendSlice(" null");
-        }
 
-        if (std.mem.eql(u8, return_type, "void")) { //No return
-            try std.fmt.format(string.writer(), "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", .{ bind_args.items });
-            
-            try std.fmt.format(string.writer(), "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", .{ escaped_method_name.items });
+            // Method end
+            try string.appendSlice("    }\n\n");
         }
         else {
-            try std.fmt.format(string.writer(), "        var ret: {s} = undefined;\n", .{ return_gd_type.items });
-            try std.fmt.format(string.writer(), "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", .{ bind_args.items });
+            var bind_args = String.init(std.heap.page_allocator);
+            defer bind_args.deinit();
 
-            try std.fmt.format(string.writer(), "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", .{ escaped_method_name.items });
-            
-            if (isClassType(return_type)) { //Must use instance binding
-                try string.appendSlice("        if (ret != null) {\n");
-                try string.appendSlice("            const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, ret);\n");
-                try std.fmt.format(string.writer(), "            ret = @ptrCast({s}, @alignCast(@alignOf({s}), instance_data));\n", .{ return_gd_type.items, return_gd_type.items });
-                try string.appendSlice("        }\n");
+            for (arguments.items) |arguments_item| {
+                const argument = arguments_item.Object;
+
+                const arg_name = argument.get("name").?.String;
+                const arg_type = argument.get("type").?.String;
+                if (isClassType(arg_type)) {
+                    try std.fmt.format(bind_args.writer(), " @ptrCast(*Wrapped, p_{s}).owner,", .{ arg_name }); // Trailing comma is fine
+                }
+                else {
+                    try std.fmt.format(bind_args.writer(), " &p_{s},", .{ arg_name }); // Trailing comma is fine
+                }
+            }
+            if (bind_args.items.len == 0) {
+                try bind_args.appendSlice(" null");
             }
 
-            try string.appendSlice("        return ret;\n");
-        }
+            if (std.mem.eql(u8, return_type, "void")) { //No return
+                try std.fmt.format(string.writer(), 
+                    "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", 
+                    .{ bind_args.items });
+                
+                try std.fmt.format(string.writer(), 
+                    "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", 
+                    .{ escaped_method_name.items });
+            }
+            else {
+                try std.fmt.format(string.writer(), 
+                    "        var ret: {s} = undefined;\n", 
+                    .{ return_gd_type.items });
+                    
+                try std.fmt.format(string.writer(), 
+                    "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", 
+                    .{ bind_args.items });
 
-        // Method end
-        try string.appendSlice("    }\n\n");
+                try std.fmt.format(string.writer(), 
+                    "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", 
+                    .{ escaped_method_name.items });
+                
+                if (isClassType(return_type)) { //Must use instance binding
+                    try string.appendSlice("        if (ret != null) {\n");
+                    try string.appendSlice("            const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, ret);\n");
+
+                    try std.fmt.format(string.writer(), 
+                        "            ret = @ptrCast({s}, @alignCast(@alignOf({s}), instance_data));\n", 
+                        .{ return_gd_type.items, return_gd_type.items });
+
+                    try string.appendSlice("        }\n");
+                }
+
+                try string.appendSlice("        return ret;\n");
+            }
+
+            // Method end
+            try string.appendSlice("    }\n\n");
+        }
     }
 
     // Class struct end
@@ -636,8 +705,7 @@ pub fn generateBindings(api_path: []const u8) !void {
 
         var class_file_name = String.init(std.heap.page_allocator);
         defer class_file_name.deinit();
-        try class_file_name.appendSlice(convention_name.items);
-        try class_file_name.appendSlice(".zig");
+        try std.fmt.format(class_file_name.writer(), "{s}.zig", .{convention_name.items});
 
         const file_string = try generateClass(&class);
 

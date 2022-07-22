@@ -10,6 +10,9 @@ const PoolStringArray = PoolArrays.PoolStringArray;
 const PoolVector2Array = PoolArrays.PoolVector2Array;
 const PoolVector3Array = PoolArrays.PoolVector3Array;
 const PoolColorArray = PoolArrays.PoolColorArray;
+const String = @import("string.zig").String;
+
+const Object = @import("../gen/object.zig").Object;
 
 pub const Array = struct {
 
@@ -119,11 +122,15 @@ pub const Array = struct {
         return self;
     }
 
+    pub fn set(self: *Self, index: i32, value: *const Variant) void {
+        gd.api.*.godot_array_set.?(&self.godot_array, index, value.godot_variant);
+    }
+
     pub fn get(self: *const Self, index: i32) Variant {
-        const godot_variant = gd.api.*.godot_array_operator_index.?(&self.godot_array, index);
+        const godot_variant = gd.api.*.godot_array_get.?(&self.godot_array, index);
 
         const variant = Variant {
-            .godot_variant = godot_variant.*,
+            .godot_variant = godot_variant,
         };
 
         return variant;
@@ -241,17 +248,17 @@ pub const Array = struct {
         gd.api.*.godot_array_sort.?(&self.godot_array);
     }
 
-    // pub fn sortCustom(self: *Self, obj: *Object, func: *const String) void {
-    //     gd.api.*.godot_array_sort_custom.?(&self.godot_array, @ptrCast(*c.godot_object, obj), &func.godot_string);
-    // }
+    pub fn sortCustom(self: *Self, object: *Object, func: *const String) void {
+        gd.api.*.godot_array_sort_custom.?(&self.godot_array, object.base.owner, &func.godot_string);
+    }
 
     pub fn bsearch(self: *const Self, variant: *const Variant, before: bool) i32 {
         return gd.api.*.godot_array_bsearch.?(&self.godot_array, &variant.godot_variant, before);
     }
 
-    // pub fn bsearchCustom(self: *const Self, variant: *const Variant, obj: *Object, func: *const String, before: bool) i32 {
-    //     return gd.api.*.godot_array_bsearch_custom.?(&self.godot_array, &variant.godot_variant, @ptrCast(*c.godot_object, obj), &func.godot_string, before);
-    // }
+    pub fn bsearchCustom(self: *const Self, variant: *const Variant, object: *Object, func: *const String, before: bool) i32 {
+        return gd.api.*.godot_array_bsearch_custom.?(&self.godot_array, &variant.godot_variant, object.base.owner, &func.godot_string, before);
+    }
 
     pub fn duplicate(self: *const Self, deep: bool) Array {
         const godot_array = gd.api_1_1.*.godot_array_duplicate.?(&self.godot_array, deep);

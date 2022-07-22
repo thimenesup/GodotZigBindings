@@ -1,6 +1,8 @@
 const gd = @import("api.zig");
 const c = gd.c;
 
+const Object = @import("../gen/object.zig").Object;
+
 pub const RID = struct {
 
     godot_rid: c.godot_rid,
@@ -17,15 +19,15 @@ pub const RID = struct {
         return self;
     }
 
-    // pub fn newObject(obj: *const Object) Self {
-    //     var self = Self {
-    //         .godot_rid = undefined,
-    //     };
+    pub fn newObject(object: *const Object) Self {
+        var self = Self {
+            .godot_rid = undefined,
+        };
 
-    //     gd.api.*.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast([*c]c.godot_object, obj));
+        gd.api.*.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast([*c]c.godot_object, object.base.owner));
 
-    //     return self;
-    // }
+        return self;
+    }
 
     pub fn getId(self: *const Self) i32 {
         return gd.api.*.godot_rid_get_id.?(&self.godot_rid);

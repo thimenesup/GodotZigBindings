@@ -21,28 +21,18 @@ pub const TestNode2D = struct {
     setget_property: u16,
 
     pub const GodotClass = Classes.DefineGodotClass(TestNode2D, Node2D);
+    pub usingnamespace GodotClass;
 
     const Self = @This();
 
-    pub fn constructor(p_instance: ?*c.godot_object, p_method_data: ?*anyopaque) callconv(.C) ?*anyopaque {
-        _ = p_method_data;
-
-        var self = @ptrCast(*Self, @alignCast(@alignOf(*Self), gd.api.*.godot_alloc.?(@sizeOf(Self))));
-        self.base.base.base.base.base.owner = p_instance; //TODO: Improve this
-        self.base.base.base.base.base.type_tag = GodotClass.getId();
-
+    pub fn constructor(self: *Self) void {
         self.data = 0;
         self.test_property = 0;
         self.setget_property = 0;
-
-        return self;
     }
 
-    pub fn destructor(p_instance: ?*c.godot_object, p_method_data: ?*anyopaque, p_user_data: ?*anyopaque) callconv(.C) void {
-        _ = p_instance;
-        _ = p_method_data;
-
-        gd.api.*.godot_free.?(p_user_data);
+    pub fn destructor(self: *Self) void {
+        _ = self;
     }
 
     pub fn registerMembers() void {
@@ -124,14 +114,14 @@ pub const TestNode2D = struct {
 
     pub fn test_memnew_and_cast(self: *const Self) void {
         {
-            const node = TestNode2D.GodotClass.memnew();
+            const node = TestNode2D._memnew();
             defer node.base.base.base.queueFree();
             const cast = Classes.castTo(Node2D, node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
 
         {
-            const node = Node.GodotClass.memnew();
+            const node = Node._memnew();
             defer node.queueFree();
             const cast = Classes.castTo(Node2D, node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Null

@@ -27,6 +27,8 @@ const PoolVector2Array = PoolArrays.PoolVector2Array;
 const PoolVector3Array = PoolArrays.PoolVector3Array;
 const PoolColorArray = PoolArrays.PoolColorArray;
 
+const Object = @import("../gen/object.zig").Object;
+
 pub const Variant = struct {
 
     godot_variant: c.godot_variant,
@@ -72,12 +74,12 @@ pub const Variant = struct {
         gd.api.*.godot_variant_destroy.?(&self.godot_variant);
     }
 
-    pub fn init() Self {
+    pub fn init(any: anytype) Self {
         var self = Self {
             .godot_variant = undefined,
         };
 
-        gd.api.*.godot_variant_new_nil.?(&self.godot_variant);
+        self.godot_variant = typeAsVariant(@TypeOf(any))(any);
 
         return self;
     }
@@ -96,6 +98,16 @@ pub const Variant = struct {
         };
 
         gd.api.*.godot_variant_new_copy.?(&self.godot_variant, &other.godot_variant);
+
+        return self;
+    }
+
+    pub fn initNil() Self {
+        var self = Self {
+            .godot_variant = undefined,
+        };
+
+        gd.api.*.godot_variant_new_nil.?(&self.godot_variant);
 
         return self;
     }
@@ -281,15 +293,15 @@ pub const Variant = struct {
         return self;
     }
 
-    // pub fn initObject(p_object: *const Object) Self {
-    //     var self = Self {
-    //         .godot_variant = undefined,
-    //     };
+    pub fn initObject(p_object: *const Object) Self {
+        var self = Self {
+            .godot_variant = undefined,
+        };
 
-    //     gd.api.*.godot_variant_new_object.?(&self.godot_variant, p_object.owner);
+        gd.api.*.godot_variant_new_object.?(&self.godot_variant, p_object.base.owner);
 
-    //     return self;
-    // }
+        return self;
+    }
 
     pub fn initDictionary(p_dictionary: *const Dictionary) Self {
         var self = Self {
@@ -507,9 +519,11 @@ pub const Variant = struct {
         return PoolColorArray.initGodotPoolColorArray(godot_value);
     }
 
-    // pub fn asObject(self: *const Self) Object {
-    //     return gd.api.*.godot_variant_as_object.?(&self.godot_variant);
-    // }
+    pub fn asObject(self: *const Self) ?*Object {
+        const godot_object = gd.api.*.godot_variant_as_object.?(&self.godot_variant);
+        const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, godot_object);
+        return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), instance_data));
+    }
 
     pub fn getType(self: *const Self) Type {
         return @intToEnum(Type, gd.api.*.godot_variant_get_type.?(&self.godot_variant));
@@ -636,9 +650,11 @@ pub const Variant = struct {
         return RID.initGodotRID(gd.api.*.godot_variant_as_rid.?(variant));
     }
 
-    // inline fn godotVariantAsObject(variant: [*c]c.godot_variant) Object {
-    //     return Object.initGodotObject(gd.api.*.godot_variant_as_object.?(variant));
-    // }
+    inline fn godotVariantAsObject(variant: [*c]c.godot_variant) ?*Object {
+        const godot_object = gd.api.*.godot_variant_as_object.?(variant);
+        const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, godot_object);
+        return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), instance_data));
+    }
 
     inline fn godotVariantAsDictionary(variant: [*c]c.godot_variant) Dictionary {
         return Dictionary.initGodotDictionary(gd.api.*.godot_variant_as_dictionary.?(variant));
@@ -681,6 +697,11 @@ pub const Variant = struct {
         const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
 
         switch (type_info) {
+            type_tag.Struct => {
+                if (@hasDecl(T, "GodotClass")) {
+                    return godotVariantAsObject;
+                }
+            },
             type_tag.Int => {
                 if (type_info.Int.signedness == std.builtin.Signedness.signed) {
                     return GodotVariantAsInt(T).function;
@@ -738,9 +759,6 @@ pub const Variant = struct {
             RID => {
                 return godotVariantAsRID;
             },
-            // Object => {
-            //     return godotVariantAsObject;
-            // },
             Dictionary => {
                 return godotVariantAsDictionary;
             },
@@ -907,11 +925,11 @@ pub const Variant = struct {
         return variant;
     }
 
-    // inline fn objectAsGodotVariant(value: Object) c.godot_variant {
-    //     var variant: c.godot_variant = undefined;
-    //     gd.api.*.godot_variant_new_object.?(&variant, @ptrCast(*c.godot_object, &value));
-    //     return variant;
-    // }
+    inline fn objectAsGodotVariant(value: *const Object) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_object.?(&variant, value.base.owner);
+        return variant;
+    }
 
     inline fn dictionaryAsGodotVariant(value: Dictionary) c.godot_variant {
         var mutable_value = value;
@@ -999,6 +1017,11 @@ pub const Variant = struct {
         const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
 
         switch (type_info) {
+            type_tag.Struct => {
+                if (@hasDecl(T, "GodotClass")) {
+                    return godotVariantAsObject;
+                }
+            },
             type_tag.Int => {
                 if (type_info.Int.signedness == std.builtin.Signedness.signed) {
                     return IntAsGodotVariant(T).function;
@@ -1059,9 +1082,6 @@ pub const Variant = struct {
             RID => {
                 return ridAsGodotVariant;
             },
-            // Object => {
-            //     return objectAsGodotVariant;
-            // },
             Dictionary => {
                 return dictionaryAsGodotVariant;
             },
@@ -1102,6 +1122,11 @@ pub const Variant = struct {
         const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
 
         switch (type_info) {
+            type_tag.Struct => {
+                if (@hasDecl(T, "GodotClass")) {
+                    return godotVariantAsObject;
+                }
+            },
             type_tag.Int => {
                 return Type.int;
             },
@@ -1157,9 +1182,6 @@ pub const Variant = struct {
             RID => {
                 return Type.rid;
             },
-            // Object => {
-            //     return Type.object;
-            // },
             Dictionary => {
                 return Type.dictionary;
             },

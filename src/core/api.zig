@@ -25,7 +25,7 @@ pub var gndlib: ?*anyopaque = null;
 pub var nativescript_handle: ?*anyopaque = null;
 pub var language_index: i32 = 0;
 
-pub fn gdnative_init(p_options: [*c]c.godot_gdnative_init_options) void {
+pub fn gdnativeInit(p_options: [*c]c.godot_gdnative_init_options) void {
     api = p_options.*.api_struct;
     gndlib = p_options.*.gd_native_library;
 
@@ -69,8 +69,8 @@ pub fn gdnative_init(p_options: [*c]c.godot_gdnative_init_options) void {
     }
 
     var binding_funcs = std.mem.zeroInit(c.godot_instance_binding_functions, .{});
-    binding_funcs.alloc_instance_binding_data = wrapper_create;
-    binding_funcs.free_instance_binding_data = wrapper_destroy;
+    binding_funcs.alloc_instance_binding_data = wrapperCreate;
+    binding_funcs.free_instance_binding_data = wrapperDestroy;
 
     language_index = nativescript_1_1_api.*.godot_nativescript_register_instance_binding_data_functions.?(binding_funcs);
 
@@ -79,23 +79,23 @@ pub fn gdnative_init(p_options: [*c]c.godot_gdnative_init_options) void {
     GenBindings.initBindings(); // Init Godot generated class bindings
 }
 
-pub fn gdnative_terminate(p_options: [*c]c.godot_gdnative_terminate_options) void {
+pub fn gdnativeTerminate(p_options: [*c]c.godot_gdnative_terminate_options) void {
     _ = p_options;
 
     Classes.deinitTypeTagRegistry();
 }
 
-pub fn nativescript_init(p_handle: ?*anyopaque) void {
+pub fn nativescriptInit(p_handle: ?*anyopaque) void {
     nativescript_handle = p_handle;
 }
 
-pub fn nativescript_terminate(p_handle: ?*anyopaque) void {
+pub fn nativescriptTerminate(p_handle: ?*anyopaque) void {
     _ = p_handle;
     nativescript_1_1_api.*.godot_nativescript_unregister_instance_binding_data_functions.?(language_index);
 }
 
 
-fn wrapper_create(data: ?*anyopaque, type_tag: ?*const anyopaque, instance: ?*c.godot_object) callconv(.C) ?*anyopaque {
+fn wrapperCreate(data: ?*anyopaque, type_tag: ?*const anyopaque, instance: ?*c.godot_object) callconv(.C) ?*anyopaque {
     _ = data;
 
     const wrapper_data = api.*.godot_alloc.?(@sizeOf(Wrapped));
@@ -110,7 +110,7 @@ fn wrapper_create(data: ?*anyopaque, type_tag: ?*const anyopaque, instance: ?*c.
     return @ptrCast(?*anyopaque, wrapper);
 }
 
-fn wrapper_destroy(data: ?*anyopaque, wrapper: ?*anyopaque) callconv(.C) void {
+fn wrapperDestroy(data: ?*anyopaque, wrapper: ?*anyopaque) callconv(.C) void {
     _ = data;
     
     if (wrapper != null) {
