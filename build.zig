@@ -34,6 +34,4 @@ pub fn build(b: *std.build.Builder) !void {
     lib.addIncludeDir(gdnative_headers);
 
     lib.install();
-
-    std.debug.print("Done building\n", .{});
 }

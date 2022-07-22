@@ -6,8 +6,8 @@ const std = @import("std");
 
 const Wrapped = @import("wrapped.zig").Wrapped;
 const Classes = @import("classes.zig");
-const GenTypes = @import("../test_gen/_register_types.zig");
-const GenBindings = @import("../test_gen/_init_bindings.zig");
+const GenTypes = @import("../gen/_register_types.zig");
+const GenBindings = @import("../gen/_init_bindings.zig");
 
 pub var api: [*c]const c.godot_gdnative_core_api_struct = null;
 pub var api_1_1: [*c]const c.godot_gdnative_core_1_1_api_struct = null;

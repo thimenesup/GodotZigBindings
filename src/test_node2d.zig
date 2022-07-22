@@ -4,8 +4,8 @@ const c = gd.c;
 const Classes = @import("core/classes.zig");
 const Godot = @import("core/godot_global.zig").Godot;
 
-const Node = @import("test_gen/node.zig").Node;
-const Node2D = @import("test_gen/node2d.zig").Node2D;
+const Node = @import("gen/node.zig").Node;
+const Node2D = @import("gen/node2d.zig").Node2D;
 
 const String = @import("core/string.zig").String;
 const Array = @import("core/array.zig").Array;
@@ -124,27 +124,27 @@ pub const TestNode2D = struct {
 
     pub fn test_memnew_and_cast(self: *const Self) void {
         {
-            const custom_node = TestNode2D.GodotClass.memnew();
-            //defer custom_node.free();
-            const cast = Classes.castTo(TestNode2D, custom_node);
-            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Node2D
+            const node = TestNode2D.GodotClass.memnew();
+            defer node.base.base.base.queueFree();
+            const cast = Classes.castTo(Node2D, node);
+            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
 
         {
             const node = Node.GodotClass.memnew();
-            //defer node.free();
+            defer node.queueFree();
             const cast = Classes.castTo(Node2D, node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Null
         }
 
         {
-            const child_node = self.base.base.base.get_child(0);
+            const child_node = self.base.base.base.getChild(0);
             const cast = Classes.castTo(Node2D, child_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }
 
         {
-            const child_node = self.base.base.base.get_child(0);
+            const child_node = self.base.base.base.getChild(0);
             const cast = Classes.castTo(TestNode2D, child_node);
             std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
         }

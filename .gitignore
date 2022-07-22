@@ -5,4 +5,4 @@ zig-out
 
 .vscode
 
-src/test_gen
+src/gen

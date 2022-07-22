@@ -2,6 +2,68 @@ const std = @import("std");
 
 const String = std.ArrayList(u8);
 
+fn toSnakeCase(string: []const u8) String { //Must deinit string
+    var snake_case = String.init(std.heap.page_allocator);
+
+    var i: usize = 0;
+    while (i < string.len) : (i += 1) {
+        const char = string[i];
+        if (i > 0) {
+            if (i + 1 < string.len) {
+                const next = string[i + 1];
+                if (std.ascii.isLower(char)) {
+                    if (std.ascii.isUpper(next)) {
+                        snake_case.append(std.ascii.toLower(char)) catch {};
+                        snake_case.append('_') catch {};
+                        continue;
+                    }
+                }
+                else {
+                    const previous = string[i - 1];
+                    if (std.ascii.isLower(next) and std.ascii.isUpper(previous) and previous != '_') {
+                        snake_case.append('_') catch {};
+                        snake_case.append(std.ascii.toLower(char)) catch {};
+                        continue;
+                    }
+                }
+            }
+        }
+
+        snake_case.append(std.ascii.toLower(char)) catch {};
+    }
+
+    return snake_case;
+}
+
+fn toCamelCase(string: []const u8) String { //Must deinit string
+    var camel_case = String.init(std.heap.page_allocator);
+    
+    var capitalize_next = false;
+
+    var i: usize = 0;
+    while (i < string.len) : (i += 1) {
+        const char = string[i];
+        if (i > 0 and char == '_' or char == ' ') {
+            capitalize_next = true;
+            continue;
+        }
+        if (capitalize_next) {
+            capitalize_next = false;
+            camel_case.append(std.ascii.toUpper(char)) catch {};
+        }
+        else {
+            camel_case.append(char) catch {};
+        }
+    }
+
+    if (camel_case.items.len > 0) {
+        camel_case.items[0] = std.ascii.toLower(camel_case.items[0]);
+    }
+
+    return camel_case;
+}
+
+
 fn isEnum(string: []const u8) bool {
     const index = std.mem.indexOf(u8, string, "enum.");
     if (index == null) {
@@ -91,8 +153,9 @@ fn escapeFunctionName(string: []const u8) String { //Must deinit string
     return escaped;
 }
 
-fn enumGetClass(string: []const u8) String { //Must deinit string //Assumes parameter isEnum()
+fn enumGetClass(string: []const u8) String { //Must deinit string //Assumes parameter isEnum() //enum.Class.Value -> Class
     var converted = String.init(std.heap.page_allocator);
+    defer converted.deinit();
 
     const class_index = std.mem.indexOf(u8, string, ".");
     if (class_index != null) {
@@ -105,7 +168,7 @@ fn enumGetClass(string: []const u8) String { //Must deinit string //Assumes para
         }
     }
 
-    return converted;
+    return stripName(converted.items);
 }
 
 fn enumToZigEnum(string: []const u8) String { //Must deinit string //Assumes parameter isEnum()
@@ -153,11 +216,13 @@ fn makeGDNativeType(string: []const u8) String { //Must deinit string
     return stripped;
 }
 
-fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //Must deinit hashmap
+fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //Must deinit hashmap, key strings too //Names are stripped, CoreTypes not included
     var classes = std.StringHashMap(void).init(std.heap.page_allocator);
-
+    
     const base_class_name = class.get("base_class").?.String;
-    classes.put(base_class_name, {}) catch {};
+    if (base_class_name.len > 0) {
+        classes.put(base_class_name, {}) catch {};
+    }
 
     const methods = class.get("methods").?.Array;
     for (methods.items) |item| {
@@ -166,12 +231,12 @@ fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //
         
         if (isEnum(return_type)) {
             const enum_class = enumGetClass(return_type);
-            //defer enum_class.deinit();
-            classes.put(enum_class.items, {}) catch {};
+            if (!isCoreType(enum_class.items)) {
+                classes.put(enum_class.items, {}) catch {};
+            }
         }
         else if (isClassType(return_type)) {
             const stripped_class = stripName(return_type);
-            //defer stripped_class.deinit();
             classes.put(stripped_class.items, {}) catch {};
         }
 
@@ -182,12 +247,12 @@ fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //
 
             if (isEnum(arg_type)){
                 const enum_class = enumGetClass(arg_type);
-                //defer enum_class.deinit();
-                classes.put(enum_class.items, {}) catch {};
+                if (!isCoreType(enum_class.items)) {
+                    classes.put(enum_class.items, {}) catch {};
+                }
             }
             else if (isClassType(arg_type)) {
                 const stripped_class = stripName(arg_type);
-                //defer stripped_class.deinit();
                 classes.put(stripped_class.items, {}) catch {};
             }
         }
@@ -200,8 +265,22 @@ fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //
 fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit string
     var string = String.init(std.heap.page_allocator);
 
-    const _class_name = stripName(class.get("name").?.String); defer _class_name.deinit(); const class_name = _class_name.items;
-    var _base_class_name = stripName(class.get("base_class").?.String); defer _base_class_name.deinit(); var base_class_name = _base_class_name.items;
+    const class_name = class.get("name").?.String;
+    const stripped_class_name = stripName(class_name);
+    defer stripped_class_name.deinit();
+
+    var base_class_name = class.get("base_class").?.String;
+    var stripped_base_name = stripName(base_class_name);
+    defer stripped_base_name.deinit();
+
+    if (base_class_name.len == 0) { // Base class is Wrapped
+        stripped_base_name.clearRetainingCapacity();
+        try stripped_base_name.appendSlice("Wrapped");
+        base_class_name = stripped_base_name.items;
+    }
+
+    const class_is_instanciable = class.get("instanciable").?.Bool;
+    const class_is_singleton = class.get("singleton").?.Bool;
 
     // Import api
 
@@ -244,46 +323,33 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     // Import any other classes used by this one // While also making sure that they get imported only once
 
     var used_classes = getUsedClasses(class);
-    defer used_classes.deinit();
+    defer used_classes.deinit(); //TODO: Deinit key strings
 
     var iterator = used_classes.iterator();
     while (iterator.next()) |entry| {
-        const used_class = entry.key_ptr.*;
+        const used_class_name = entry.key_ptr.*;
 
-        if (used_class.len == 0) {
+        if (std.mem.eql(u8, used_class_name, stripped_class_name.items)) { // Dont import self
             continue;
         }
 
-        if (isCoreType(used_class)) { // Core type imported already //TODO: Should be done in getUsedClasses()
-            continue;
-        }
+        const convention_class_name = toSnakeCase(used_class_name);
+        defer convention_class_name.deinit();
 
-        const _stripped_class = stripName(used_class); defer _stripped_class.deinit(); const stripped_class = _stripped_class.items; //TODO: Should be done in getUsedClasses()
-
-        if (std.mem.eql(u8, stripped_class, class_name)) { // Dont import self
-            continue;
-        }
-
-        try std.fmt.format(string.writer(), "const {s} = @import(\"{s}.zig\").{s};\n", .{ stripped_class, stripped_class, stripped_class });
+        try std.fmt.format(string.writer(), "const {s} = @import(\"{s}.zig\").{s};\n", .{ used_class_name, convention_class_name.items, used_class_name });
     }
 
     try string.appendSlice("\n");
 
-    if (base_class_name.len == 0) { // Base class is Wrapped
-        _base_class_name.clearRetainingCapacity();
-        try _base_class_name.appendSlice("Wrapped");
-        base_class_name = _base_class_name.items;
-    }
-
     // Class struct definition
 
-    try std.fmt.format(string.writer(), "pub const {s} = struct {{\n\n", .{ class_name }); // Extra { to escape it
+    try std.fmt.format(string.writer(), "pub const {s} = struct {{\n\n", .{ stripped_class_name.items }); // Extra { to escape it
 
     try std.fmt.format(string.writer(), "    base: {s},\n\n", .{ base_class_name });
 
     try string.appendSlice("    const Self = @This();\n\n");
 
-    try string.appendSlice("    pub const GodotClass = GenGodotClass(Self);\n\n");
+    try std.fmt.format(string.writer(), "    pub const GodotClass = GenGodotClass(Self, {s}, {s});\n\n", .{ class_is_instanciable, class_is_singleton });
 
     // Enums
 
@@ -298,7 +364,11 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         while (value_iterator.next()) |entry| {
             const entry_name = entry.key_ptr.*;
             const entry_value = entry.value_ptr.*;
-            try std.fmt.format(string.writer(), "        {s} = {},\n", .{ entry_name, entry_value.Integer });
+
+            const convention_name = toSnakeCase(entry_name);
+            defer convention_name.deinit();
+
+            try std.fmt.format(string.writer(), "        {s} = {},\n", .{ convention_name.items, entry_value.Integer });
         }
 
         // Enum end
@@ -312,10 +382,16 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     while (const_iterator.next()) |entry| {
         const entry_name = entry.key_ptr.*;
         const entry_value = entry.value_ptr.*;
-        try std.fmt.format(string.writer(), "    pub const {s} = {};\n", .{ entry_name, entry_value.Integer });
+
+        const convention_name = toSnakeCase(entry_name);
+        defer convention_name.deinit();
+
+        try std.fmt.format(string.writer(), "    pub const {s} = {};\n", .{ convention_name.items, entry_value.Integer });
     }
 
-    try string.appendSlice("\n");
+    if (constants.count() > 0) {
+        try string.appendSlice("\n");
+    }
 
     // Define method binds
 
@@ -325,11 +401,16 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     for (methods.items) |item| {
         const method = item.Object;
 
-        const _method_name = escapeFunctionName(method.get("name").?.String); defer _method_name.deinit(); const method_name = _method_name.items;
-        try std.fmt.format(string.writer(), "        pub var {s}: [*c]c.godot_method_bind = null;\n", .{ method_name });
+        const method_name = method.get("name").?.String;
+        const escaped_method_name = escapeFunctionName(method_name);
+        defer escaped_method_name.deinit();
+
+        try std.fmt.format(string.writer(), "        {s}: [*c]c.godot_method_bind,\n", .{ escaped_method_name.items });
     }
 
     try string.appendSlice("    };\n\n");
+
+    try string.appendSlice("    var binds: Binds = undefined;\n\n");
 
     // Init method binds
 
@@ -338,8 +419,12 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     for (methods.items) |item| {
         const method = item.Object;
 
-        const _method_name = escapeFunctionName(method.get("name").?.String); defer _method_name.deinit(); const method_name = _method_name.items;
-        try std.fmt.format(string.writer(), "        Binds.{s} = gd.api.*.godot_method_bind_get_method.?(@typeName(Self), \"{s}\");\n", .{ method_name, method_name });
+        const method_name = method.get("name").?.String;
+        const escaped_method_name = escapeFunctionName(method_name);
+        defer escaped_method_name.deinit();
+
+        try std.fmt.format(string.writer(), "        binds.{s} = gd.api.*.godot_method_bind_get_method.?(\"{s}\", \"{s}\");\n", 
+            .{ escaped_method_name.items, class_name, method_name });
     }
 
     try string.appendSlice("    }\n\n");
@@ -349,30 +434,44 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     for (methods.items) |item| {
         const method = item.Object;
 
-        const _method_name = escapeFunctionName(method.get("name").?.String); defer _method_name.deinit(); const method_name = _method_name.items;
-        const _return_type = makeGDNativeType(method.get("return_type").?.String); defer _return_type.deinit(); const return_type = _return_type.items;
+        const method_name = method.get("name").?.String;
+        const escaped_method_name = escapeFunctionName(method_name);
+        defer escaped_method_name.deinit();
+
+        const return_type = method.get("return_type").?.String;
+        const return_gd_type = makeGDNativeType(return_type);
+        defer return_gd_type.deinit();
+
         const is_const = method.get("is_const").?.Bool;
         //const has_varargs = method.get("has_varargs").?.Bool;
         const arguments = method.get("arguments").?.Array;
 
-        var constness = String.init(std.heap.page_allocator); defer constness.deinit();
-        if (is_const) {
-            try constness.appendSlice("const ");
+        { // Method signature
+            const camel_method_name = toCamelCase(escaped_method_name.items);
+            defer camel_method_name.deinit();
+
+            var constness = String.init(std.heap.page_allocator); defer constness.deinit();
+            if (is_const) {
+                try constness.appendSlice("const ");
+            }
+
+            var signature_args = String.init(std.heap.page_allocator); defer signature_args.deinit();
+            for (arguments.items) |arguments_item| {
+                const argument = arguments_item.Object;
+
+                const arg_name = argument.get("name").?.String;
+                const arg_type = argument.get("type").?.String;
+                const arg_gd_type = makeGDNativeType(arg_type);
+                defer arg_gd_type.deinit();
+
+                // const arg_has_default = argument.get("has_default_value").?.Bool;
+                // const arg_default_value = argument.get("default_value").?.String;
+                try std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, arg_gd_type.items });
+            }
+
+            try std.fmt.format(string.writer(), "    pub fn {s}(self: *{s}Self{s}) {s} {{\n", 
+                .{ camel_method_name.items, constness.items, signature_args.items, return_gd_type.items });
         }
-
-        var signature_args = String.init(std.heap.page_allocator); defer signature_args.deinit();
-        for (arguments.items) |arguments_item| {
-            const argument = arguments_item.Object;
-
-            const arg_name = argument.get("name").?.String;
-            const _arg_type = makeGDNativeType(argument.get("type").?.String); defer _arg_type.deinit(); const arg_type = _arg_type.items;
-            // const arg_has_default = argument.get("has_default_value").?.Bool;
-            // const arg_default_value = argument.get("default_value").?.String;
-            try std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, arg_type });
-        }
-
-        // Method signature
-        try std.fmt.format(string.writer(), "    pub fn {s}(self: *{s}Self{s}) {s} {{\n", .{ method_name, constness.items, signature_args.items, return_type });
 
         // Method content //TODO: Support var_args
         var bind_args = String.init(std.heap.page_allocator); defer bind_args.deinit();
@@ -380,7 +479,13 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
             const argument = arguments_item.Object;
 
             const arg_name = argument.get("name").?.String;
-            try std.fmt.format(bind_args.writer(), " &p_{s},", .{ arg_name }); // Trailing comma is fine
+            const arg_type = argument.get("type").?.String;
+            if (isClassType(arg_type)) {
+                try std.fmt.format(bind_args.writer(), " @ptrCast(*Wrapped, p_{s}).owner,", .{ arg_name }); // Trailing comma is fine
+            }
+            else {
+                try std.fmt.format(bind_args.writer(), " &p_{s},", .{ arg_name }); // Trailing comma is fine
+            }
         }
         if (bind_args.items.len == 0) {
             try bind_args.appendSlice(" null");
@@ -388,12 +493,22 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
         if (std.mem.eql(u8, return_type, "void")) { //No return
             try std.fmt.format(string.writer(), "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", .{ bind_args.items });
-            try std.fmt.format(string.writer(), "        gd.api.*.godot_method_bind_ptrcall.?(Binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", .{ method_name });
+            
+            try std.fmt.format(string.writer(), "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", .{ escaped_method_name.items });
         }
         else {
-            try std.fmt.format(string.writer(), "        var ret: {s} = undefined;\n", .{ return_type });
+            try std.fmt.format(string.writer(), "        var ret: {s} = undefined;\n", .{ return_gd_type.items });
             try std.fmt.format(string.writer(), "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", .{ bind_args.items });
-            try std.fmt.format(string.writer(), "        gd.api.*.godot_method_bind_ptrcall.?(Binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", .{ method_name });
+
+            try std.fmt.format(string.writer(), "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", .{ escaped_method_name.items });
+            
+            if (isClassType(return_type)) { //Must use instance binding
+                try string.appendSlice("        if (ret != null) {\n");
+                try string.appendSlice("            const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, ret);\n");
+                try std.fmt.format(string.writer(), "            ret = @ptrCast({s}, @alignCast(@alignOf({s}), instance_data));\n", .{ return_gd_type.items, return_gd_type.items });
+                try string.appendSlice("        }\n");
+            }
+
             try string.appendSlice("        return ret;\n");
         }
 
@@ -418,9 +533,14 @@ fn generateTypeRegistry(classes: *const std.json.Array) !String { //Must deinit 
     for (classes.items) |item| {
         const class = item.Object;
         
-        const _class_name = stripName(class.get("name").?.String); defer _class_name.deinit(); const class_name = _class_name.items;
+        const class_name = class.get("name").?.String;
+        const stripped_name = stripName(class_name);
+        defer stripped_name.deinit();
+
+        const convention_name = toSnakeCase(stripped_name.items);
+        defer convention_name.deinit();
         
-        try std.fmt.format(string.writer(), "const {s} = @import(\"{s}.zig\").{s};\n", .{ class_name, class_name, class_name });
+        try std.fmt.format(string.writer(), "const {s} = @import(\"{s}.zig\").{s};\n", .{ stripped_name.items, convention_name.items, stripped_name.items });
     }
 
     try string.appendSlice("\n");
@@ -431,14 +551,20 @@ fn generateTypeRegistry(classes: *const std.json.Array) !String { //Must deinit 
     for (classes.items) |item| {
         const class = item.Object;
         
-        const _class_name = stripName(class.get("name").?.String); defer _class_name.deinit(); const class_name = _class_name.items;
-        const _base_class_name = stripName(class.get("base_class").?.String); defer _base_class_name.deinit(); const base_class_name = _base_class_name.items;
+        const class_name = class.get("name").?.String;
+        const stripped_name = stripName(class_name);
+        defer stripped_name.deinit();
+
+        const base_class_name = class.get("base_class").?.String;
+        const stripped_base_name = stripName(base_class_name);
+        defer stripped_base_name.deinit();
         
         if (base_class_name.len == 0) {
-            try std.fmt.format(string.writer(), "    Classes.registerGlobalType(\"{s}\", typeId({s}), 0);\n", .{ class_name, class_name});
+            try std.fmt.format(string.writer(), "    Classes.registerGlobalType(\"{s}\", typeId({s}), 0);\n", .{ class_name, stripped_name.items});
         }
         else {
-            try std.fmt.format(string.writer(), "    Classes.registerGlobalType(\"{s}\", typeId({s}), typeId({s}));\n", .{ class_name, class_name, base_class_name });
+            try std.fmt.format(string.writer(), "    Classes.registerGlobalType(\"{s}\", typeId({s}), typeId({s}));\n", 
+                .{ class_name, stripped_name.items, stripped_base_name.items });
         }
     }
 
@@ -454,9 +580,14 @@ fn generateInitBindings(classes: *const std.json.Array) !String { //Must deinit 
     for (classes.items) |item| {
         const class = item.Object;
         
-        const _class_name = stripName(class.get("name").?.String); defer _class_name.deinit(); const class_name = _class_name.items;
-        
-        try std.fmt.format(string.writer(), "const {s} = @import(\"{s}.zig\").{s};\n", .{ class_name, class_name, class_name });
+        const class_name = class.get("name").?.String;
+        const stripped_name = stripName(class_name);
+        defer stripped_name.deinit();
+
+        const convention_name = toSnakeCase(stripped_name.items);
+        defer convention_name.deinit();
+
+        try std.fmt.format(string.writer(), "const {s} = @import(\"{s}.zig\").{s};\n", .{ stripped_name.items, convention_name.items, stripped_name.items });
     }
 
     try string.appendSlice("\n");
@@ -467,9 +598,11 @@ fn generateInitBindings(classes: *const std.json.Array) !String { //Must deinit 
     for (classes.items) |item| {
         const class = item.Object;
 
-        const _class_name = stripName(class.get("name").?.String); defer _class_name.deinit(); const class_name = _class_name.items;
+        const class_name = class.get("name").?.String;
+        const stripped_name = stripName(class_name);
+        defer stripped_name.deinit();
 
-        try std.fmt.format(string.writer(), "    {s}.initBindings();\n", .{ class_name });
+        try std.fmt.format(string.writer(), "    {s}.initBindings();\n", .{ stripped_name.items });
     }
 
     try string.appendSlice("}\n");
@@ -490,16 +623,20 @@ pub fn generateBindings(api_path: []const u8) !void {
     var tree = try parser.parse(api_file_buffer);
     defer tree.deinit();
 
-    const gen_dir = try std.fs.cwd().makeOpenPath("src/test_gen", .{});
+    const gen_dir = try std.fs.cwd().makeOpenPath("src/gen", .{});
 
     for (tree.root.Array.items) |item| {
         const class = item.Object;
 
-        const _class_name = stripName(class.get("name").?.String); defer _class_name.deinit(); const class_name = _class_name.items;
+        const class_name = class.get("name").?.String;
+        const stripped_name = stripName(class_name);
+        defer stripped_name.deinit();
+        const convention_name = toSnakeCase(stripped_name.items);
+        defer convention_name.deinit();
 
         var class_file_name = String.init(std.heap.page_allocator);
         defer class_file_name.deinit();
-        try class_file_name.appendSlice(class_name);
+        try class_file_name.appendSlice(convention_name.items);
         try class_file_name.appendSlice(".zig");
 
         const file_string = try generateClass(&class);

@@ -4,19 +4,23 @@
 
 Add the "GDNATIVE_HEADERS" environment variable pointing to your header path
 
+For the first time, you must generate the class files too with this option
+
+```
+zig build -Dgenerate_bindings=true
+```
+
+After they are generated you can use the regular
+
 ```
 zig build
 ```
 
 ## Progress
 
-Interfacing with godot done
-
-Core variant and array bindings done
-
 TODO:
 
-Core math
+Core math utility functions (annoying without operator overloading...)
 
 ## Warning
 
