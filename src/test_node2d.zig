@@ -80,22 +80,7 @@ pub const TestNode2D = struct {
         _ = self;
 
         var array = Array.init();
-
-        var v0 = Variant.initBool(true);
-        defer v0.deinit();
-        array.pushBack(&v0);
-
-        var v1 = Variant.initInt(1337);
-        defer v1.deinit();
-        array.pushBack(&v1);
-
-        var v2 = Variant.initReal(420.69);
-        defer v2.deinit();
-        array.pushBack(&v2);
-
-        var v3 = Variant.initCString("My Variant String");
-        defer v3.deinit();
-        array.pushBack(&v3);
+        array.pushBackVars(.{ true, 1337, 420.69, "My Variant String" });
 
         return array;
     }

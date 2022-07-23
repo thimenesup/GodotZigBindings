@@ -410,119 +410,95 @@ pub const Variant = struct {
     }
 
     pub fn asString(self: *const Self) String {
-        const godot_value = gd.api.*.godot_variant_as_string.?(&self.godot_variant);
-        return String.initGodotString(godot_value);
+        return godotVariantAsString(&self.godot_variant);
     }
 
     pub fn asVector2(self: *const Self) Vector2 {
-        const godot_value = gd.api.*.godot_variant_as_vector2.?(&self.godot_variant);
-        return @ptrCast(*Vector2, &godot_value).*;
+        return godotVariantAsVector2(&self.godot_variant);
     }
 
     pub fn asRect2(self: *const Self) Rect2 {
-        const godot_value = gd.api.*.godot_variant_as_rect2.?(&self.godot_variant);
-        return @ptrCast(*Rect2, &godot_value).*;
+        return godotVariantAsRect2(&self.godot_variant);
     }
 
     pub fn asVector3(self: *const Self) Vector3 {
-        const godot_value = gd.api.*.godot_variant_as_vector3.?(&self.godot_variant);
-        return @ptrCast(*Vector3, &godot_value).*;
+        return godotVariantAsVector3(&self.godot_variant);
     }
 
     pub fn asPlane(self: *const Self) Vector2 {
-        const godot_value = gd.api.*.godot_variant_as_plane.?(&self.godot_variant);
-        return @ptrCast(*Plane, &godot_value).*;
+        return godotVariantAsPlane(&self.godot_variant);
     }
 
     pub fn asAABB(self: *const Self) AABB {
-        const godot_value = gd.api.*.godot_variant_as_aabb.?(&self.godot_variant);
-        return @ptrCast(*AABB, &godot_value).*;
+        return godotVariantAsAABB(&self.godot_variant);
     }
 
     pub fn asQuat(self: *const Self) Quat {
-        const godot_value = gd.api.*.godot_variant_as_quat.?(&self.godot_variant);
-        return @ptrCast(*Quat, &godot_value).*;
+        return godotVariantAsQuat(&self.godot_variant);
     }
 
     pub fn asBasis(self: *const Self) Basis {
-        const godot_value = gd.api.*.godot_variant_as_basis.?(&self.godot_variant);
-        return @ptrCast(*Basis, &godot_value).*;
+        return godotVariantAsBasis(&self.godot_variant);
     }
 
     pub fn asTransform(self: *const Self) Transform {
-        const godot_value = gd.api.*.godot_variant_as_transform.?(&self.godot_variant);
-        return @ptrCast(*Transform, &godot_value).*;
+        return godotVariantAsTransform(&self.godot_variant);
     }
 
     pub fn asTransform2D(self: *const Self) Transform2D {
-        const godot_value = gd.api.*.godot_variant_as_transform2d.?(&self.godot_variant);
-        return @ptrCast(*Transform2D, &godot_value).*;
+        return godotVariantAsTransform2D(&self.godot_variant);
     }
 
     pub fn asColor(self: *const Self) Color {
-        const godot_value = gd.api.*.godot_variant_as_color.?(&self.godot_variant);
-        return @ptrCast(*Color, &godot_value).*;
+        return godotVariantAsColor(&self.godot_variant);
     }
 
     pub fn asNodePath(self: *const Self) NodePath {
-        const godot_value = gd.api.*.godot_variant_as_node_path.?(&self.godot_variant);
-        return NodePath.initGodotNodePath(godot_value);
+        return godotVariantAsNodePath(&self.godot_variant);
     }
 
     pub fn asRID(self: *const Self) RID {
-        const godot_value = gd.api.*.godot_variant_as_rid.?(&self.godot_variant);
-        return @ptrCast(*RID, &godot_value).*;
+        return godotVariantAsRID(&self.godot_variant);
     }
 
     pub fn asDictionary(self: *const Self) Dictionary {
-        const godot_value = gd.api.*.godot_variant_as_dictionary.?(&self.godot_variant);
-        return Dictionary.initGodotDictionary(godot_value);
+        return godotVariantAsDictionary(&self.godot_variant);
     }
 
     pub fn asArray(self: *const Self) Array {
-        const godot_value = gd.api.*.godot_variant_as_array.?(&self.godot_variant);
-        return Array.initGodotArray(godot_value);
+        return godotVariantAsArray(&self.godot_variant);
     }
 
     pub fn asPoolByteArray(self: *const Self) PoolByteArray {
-        const godot_value = gd.api.*.godot_variant_as_pool_byte_array.?(&self.godot_variant);
-        return PoolByteArray.initGodotPoolByteArray(godot_value);
+        return godotVariantAsPoolByteArray(&self.godot_variant);
     }
 
     pub fn asPoolIntArray(self: *const Self) PoolIntArray {
-        const godot_value = gd.api.*.godot_variant_as_pool_int_array.?(&self.godot_variant);
-        return PoolIntArray.initGodotPoolIntArray(godot_value);
+        return godotVariantAsPoolIntArray(&self.godot_variant);
     }
 
     pub fn asPoolRealArray(self: *const Self) PoolRealArray {
-        const godot_value = gd.api.*.godot_variant_as_pool_real_array.?(&self.godot_variant);
-        return PoolRealArray.initGodotPoolRealArray(godot_value);
+        return godotVariantAsPoolRealArray(&self.godot_variant);
     }
 
     pub fn asPoolStringArray(self: *const Self) PoolStringArray {
-        const godot_value = gd.api.*.godot_variant_as_pool_string_array.?(&self.godot_variant);
-        return PoolStringArray.initGodotPoolStringArray(godot_value);
+        return godotVariantAsPoolStringArray(&self.godot_variant);
     }
 
     pub fn asPoolVector2Array(self: *const Self) PoolVector2Array {
-        const godot_value = gd.api.*.godot_variant_as_pool_vector2_array.?(&self.godot_variant);
-        return PoolVector2Array.initGodotPoolVector2Array(godot_value);
+        return godotVariantAsPoolVector2Array(&self.godot_variant);
     }
 
     pub fn asPoolVector3Array(self: *const Self) PoolVector3Array {
-        const godot_value = gd.api.*.godot_variant_as_pool_vector3_array.?(&self.godot_variant);
-        return PoolVector3Array.initGodotPoolVector3Array(godot_value);
+        return godotVariantAsPoolVector3Array(&self.godot_variant);
     }
 
     pub fn asPoolColorArray(self: *const Self) PoolColorArray {
-        const godot_value = gd.api.*.godot_variant_as_pool_color_array.?(&self.godot_variant);
-        return PoolColorArray.initGodotPoolColorArray(godot_value);
+        return godotVariantAsPoolColorArray(&self.godot_variant);
     }
 
     pub fn asObject(self: *const Self) ?*Object {
-        const godot_object = gd.api.*.godot_variant_as_object.?(&self.godot_variant);
-        const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, godot_object);
-        return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), instance_data));
+        return godotVariantAsObject(&self.godot_variant);
     }
 
     pub fn getType(self: *const Self) Type {
@@ -650,10 +626,20 @@ pub const Variant = struct {
         return RID.initGodotRID(gd.api.*.godot_variant_as_rid.?(variant));
     }
 
-    inline fn godotVariantAsObject(variant: [*c]c.godot_variant) ?*Object {
+    inline fn godotVariantAsObject(variant: [*c]const c.godot_variant) ?*Object {
         const godot_object = gd.api.*.godot_variant_as_object.?(variant);
-        const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, godot_object);
-        return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), instance_data));
+        if (godot_object == null) {
+            return null;
+        }
+
+        const custom_instance_data = gd.nativescript_api.*.godot_nativescript_get_userdata.?(godot_object);
+        if (custom_instance_data != null) {
+            return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), custom_instance_data));
+        }
+        else {
+            var instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, godot_object);
+            return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), instance_data));
+        }
     }
 
     inline fn godotVariantAsDictionary(variant: [*c]c.godot_variant) Dictionary {
@@ -787,7 +773,7 @@ pub const Variant = struct {
                 return godotVariantAsPoolColorArray;
             },
             else => {
-                @compileError("Variant can't be converted as that type");
+                @compileLog("Variant can't be converted as type:", T);
             },
         }
 
@@ -836,6 +822,27 @@ pub const Variant = struct {
                 return variant;
             }
         };
+    }
+
+    inline fn comptimeIntAsGodotVariant(comptime value: comptime_int) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_int.?(&variant, @as(i64, value));
+        return variant;
+    }
+
+    inline fn comptimeFloatAsGodotVariant(comptime value: comptime_float) c.godot_variant {
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_real.?(&variant, @as(f64, value));
+        return variant;
+    }
+
+    inline fn cstringAsGodotVariant(value: [*:0]const u8) c.godot_variant {
+        var string = String.initUtf8(value);
+        defer string.deinit();
+
+        var variant: c.godot_variant = undefined;
+        gd.api.*.godot_variant_new_string.?(&variant, &string.godot_string);
+        return variant;
     }
 
     inline fn stringAsGodotVariant(value: String) c.godot_variant {
@@ -1033,6 +1040,15 @@ pub const Variant = struct {
             type_tag.Float => {
                 return FloatAsGodotVariant(T).function;
             },
+            type_tag.ComptimeInt => {
+                return comptimeIntAsGodotVariant;
+            },
+            type_tag.ComptimeFloat => {
+                return comptimeFloatAsGodotVariant;
+            },
+            type_tag.Pointer => { //NOTE: For now it assumes that pointer is a [*]u8 string
+                return @ptrCast((fn(T) callconv(.Inline) c.godot_variant), cstringAsGodotVariant); //Must cast since it will expect the param size to EXACTLY match
+            },
             else => {},
         }
 
@@ -1110,7 +1126,7 @@ pub const Variant = struct {
                 return poolColorArrayAsGodotVariant;
             },
             else => {
-                @compileError("Unsupported return type");
+                @compileLog("Unsupported return type:", T);
             },
         }
 
@@ -1124,7 +1140,7 @@ pub const Variant = struct {
         switch (type_info) {
             type_tag.Struct => {
                 if (@hasDecl(T, "GodotClass")) {
-                    return godotVariantAsObject;
+                    return Type.object;
                 }
             },
             type_tag.Int => {
@@ -1210,7 +1226,7 @@ pub const Variant = struct {
                 return Type.pool_color_array;
             },
             else => {
-                @compileError("Unknown type");
+                @compileLog("Unknown type:", T);
             },
         }
 

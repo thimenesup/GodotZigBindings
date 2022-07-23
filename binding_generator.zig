@@ -486,7 +486,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 .{ arguments.items.len });
 
             try string.appendSlice(
-                "        var _bind_args = @ptrCast([*c][*c]c.godot_variant, @alignCast(@alignOf([*c][*c]c.godot_variant), gd.api.*.godot_alloc.?(@sizeOf([*c]c.godot_variant) * total_arg_count)));\n\n");
+                "        var _bind_args: [64][*c]c.godot_variant = undefined;\n\n"); //Should be enough
 
             for (arguments.items) |arguments_item, i| {
                 const argument = arguments_item.Object;
@@ -507,10 +507,8 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 .{ arguments.items.len });
 
             try std.fmt.format(string.writer(), 
-                "        const result = gd.api.*.godot_method_bind_call.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, _bind_args, total_arg_count, null);\n\n", 
+                "        const result = gd.api.*.godot_method_bind_call.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, total_arg_count, null);\n\n", 
                 .{ escaped_method_name.items });
-            
-            //try string.appendSlice("        gd.api.*.godot_free.?(@ptrCast(?*anyopaque, _bind_args));\n\n"); //NOTE: The CPP bindings dont free this, not sure if intended or its a leak
 
             if (std.mem.eql(u8, return_type, "void")) {
                 try string.appendSlice("        _ = result;\n");

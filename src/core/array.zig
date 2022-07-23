@@ -294,4 +294,12 @@ pub const Array = struct {
         gd.api_1_1.*.godot_array_shuffle.?(&self.godot_array);
     }
 
+    pub fn pushBackVars(self: *Self, comptime values: anytype) void {
+        inline for (values) |any_value| {
+            var variant = Variant.init(any_value);
+            defer variant.deinit();
+            self.pushBack(&variant);
+        }
+    }
+
 };
