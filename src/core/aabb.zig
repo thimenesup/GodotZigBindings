@@ -1,8 +1,8 @@
-const gd = @import("api.zig");
-const c = gd.c;
+const Vector3 = @import("vector3.zig").Vector3;
 
-pub const AABB = struct {
+pub const AABB = extern struct {
 
-    godot_aabb: c.godot_aabb,
+    position: Vector3,
+    size: Vector3,
 
 };
