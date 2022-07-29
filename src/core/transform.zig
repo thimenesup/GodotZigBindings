@@ -92,45 +92,45 @@ pub const Transform = extern struct {
         return Plane.new(normal, d);
     }
 
-    // pub inline fn xformAABB(self: *const Self, aabb: *const AABB) AABB {
-    //     const x = basis.getAxis(0).mulScalar(aabb.size.x); //TODO: Depends on AABB
-    //     const y = basis.getAxis(1).mulScalar(aabb.size.y);
-    //     const z = basis.getAxis(2).mulScalar(aabb.size.z);
-    //     const pos = self.xformVector3(aabb.position);
+    pub inline fn xformAABB(self: *const Self, aabb: *const AABB) AABB {
+        const x = self.basis.getAxis(0).mulScalar(aabb.size.x);
+        const y = self.basis.getAxis(1).mulScalar(aabb.size.y);
+        const z = self.basis.getAxis(2).mulScalar(aabb.size.z);
+        const pos = self.xformVector3(aabb.position);
 
-    //     var new_aabb: AABB = undefined;
-    //     new_aabb.position = pos;
-    //     new_aabb.expandTo(pos.plus(x));
-    //     new_aabb.expandTo(pos.plus(y));
-    //     new_aabb.expandTo(pos.plus(z));
-    //     new_aabb.expandTo(pos.plus(x).plus(y));
-    //     new_aabb.expandTo(pos.plus(x).plus(z));
-    //     new_aabb.expandTo(pos.plus(y).plus(z));
-    //     new_aabb.expandTo(pos.plus(x).plus(y).plus(z));
-    //     return new_aabb;
-    // }
+        var new_aabb: AABB = undefined;
+        new_aabb.position = pos;
+        new_aabb.expandTo(pos.plus(x));
+        new_aabb.expandTo(pos.plus(y));
+        new_aabb.expandTo(pos.plus(z));
+        new_aabb.expandTo(pos.plus(x).plus(y));
+        new_aabb.expandTo(pos.plus(x).plus(z));
+        new_aabb.expandTo(pos.plus(y).plus(z));
+        new_aabb.expandTo(pos.plus(x).plus(y).plus(z));
+        return new_aabb;
+    }
 
-    // pub inline fn xformInvAABB(self: *const Self, aabb: *const AABB) AABB { //TODO: Depends on AABB
-    //     const vertices = [8]Vector3 {
-    //         Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
-    //         Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z),
-    //         Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z + aabb.size.z),
-    //         Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z),
-    //         Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
-    //         Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z),
-    //         Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z + aabb.size.z),
-    //         Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z)
-    //     };
+    pub inline fn xformInvAABB(self: *const Self, aabb: *const AABB) AABB {
+        const vertices = [8]Vector3 {
+            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
+            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z),
+            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z + aabb.size.z),
+            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z),
+            Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
+            Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z),
+            Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z + aabb.size.z),
+            Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z)
+        };
 
-    //     var new_aabb: AABB = undefined;
-    //     new_aabb.position = self.xformInvVector3(vertices[0]);
+        var new_aabb: AABB = undefined;
+        new_aabb.position = self.xformInvVector3(vertices[0]);
 
-    //     inline for (vertices) |vertex| {
-    //         new_aabb.expandTo(self.xformInvVector3(vertex));
-    //     }
+        inline for (vertices) |vertex| {
+            new_aabb.expandTo(self.xformInvVector3(vertex));
+        }
 
-    //     return new_aabb;
-    // }
+        return new_aabb;
+    }
 
     pub inline fn affineInvert(self: *Self) void {
         self.basis.invert();

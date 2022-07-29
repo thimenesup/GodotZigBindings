@@ -132,7 +132,7 @@ pub const Plane = extern struct {
         return self.normal.dot(point) > self.d;
     }
 
-    pub inline fn distanceTo(self: *const Self, point: *const Vector3) bool {
+    pub inline fn distanceTo(self: *const Self, point: *const Vector3) f32 {
         return self.normal.dot(point) - self.d;
     }
 

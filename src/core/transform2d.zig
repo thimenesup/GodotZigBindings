@@ -3,6 +3,7 @@ const acos = std.math.acos;
 const atan2 = std.math.atan2;
 
 const Vector2 = @import("vector2.zig").Vector2;
+const Rect2 = @import("rect2.zig").Rect2;
 
 pub const Transform2D = extern struct {
 
@@ -87,33 +88,33 @@ pub const Transform2D = extern struct {
         return Vector2.new(self.elements[0].dot(v), self.elements[1].dot(v));
     }
 
-    // pub inline fn xformRect(self: *const Self, rect: *const Rect2) Rect2 { //TODO: Depends on Rect2
-    //     const x = self.elements[0].mul(rect.size.x);
-    //     const y = self.elements[1].mul(rect.size.y);
-    //     const position = self.xformVector2(rect.position);
+    pub inline fn xformRect(self: *const Self, rect: *const Rect2) Rect2 {
+        const x = self.elements[0].mul(rect.size.x);
+        const y = self.elements[1].mul(rect.size.y);
+        const position = self.xformVector2(rect.position);
 
-    //     var new_rect = Rect2.new();
-    //     new_rect.position = position;
-    //     new_rect.expandTo(position.plus(x));
-    //     new_rect.expandTo(position.plus(y));
-    //     new_rect.expandTo(position.plus(x).plus(y));
-    //     return new_rect;
-    // }
+        var new_rect = Rect2.new();
+        new_rect.position = position;
+        new_rect.expandTo(position.plus(x));
+        new_rect.expandTo(position.plus(y));
+        new_rect.expandTo(position.plus(x).plus(y));
+        return new_rect;
+    }
 
-    // pub inline fn xformInvRect(self:* const Self, rect: *const Rect2) Rect2 {
-    //     var ends: [4]Vector2 = undefined;
-    //     ends[0] = self.xformInv(rect.position);
-    //     ends[1] = self.xformInv(Vector2.new(rect.position.x, rect.position.y + rect.size.y));
-    //     ends[2] = self.xformInv(Vector2.new(rect.position.x + rect.size.x, rect.position.y + rect.size.y));
-    //     ends[3] = self.xformInv(Vector2.new(rect.position.x + rect.size.x, rect.position.y));
+    pub inline fn xformInvRect(self:* const Self, rect: *const Rect2) Rect2 {
+        var ends: [4]Vector2 = undefined;
+        ends[0] = self.xformInv(rect.position);
+        ends[1] = self.xformInv(Vector2.new(rect.position.x, rect.position.y + rect.size.y));
+        ends[2] = self.xformInv(Vector2.new(rect.position.x + rect.size.x, rect.position.y + rect.size.y));
+        ends[3] = self.xformInv(Vector2.new(rect.position.x + rect.size.x, rect.position.y));
 
-    //     var new_rect = Rect2.new();
-    //     new_rect.position = ends[0];
-    //     new_rect.expandTo(ends[1]);
-    //     new_rect.expandTo(ends[2]);
-    //     new_rect.expandTo(ends[3]);
-    //     return new_rect;
-    // }
+        var new_rect = Rect2.new();
+        new_rect.position = ends[0];
+        new_rect.expandTo(ends[1]);
+        new_rect.expandTo(ends[2]);
+        new_rect.expandTo(ends[3]);
+        return new_rect;
+    }
 
     pub inline fn setRotationAndScale(self: *Self, rotation: f32, p_scale: *const Vector2) void {
         self.elements[0].x = @cos(rotation) * p_scale.x;
