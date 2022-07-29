@@ -27,7 +27,7 @@ pub const Transform = extern struct {
 
     pub inline fn newIdentity() Self {
         const self = Self {
-            //.basis = Basis.newIdentity(), //TODO: Depends on basis
+            .basis = Basis.newIdentity(),
             .origin = Vector3.new(0, 0, 0),
         };
 
@@ -93,7 +93,7 @@ pub const Transform = extern struct {
     }
 
     // pub inline fn xformAABB(self: *const Self, aabb: *const AABB) AABB {
-    //     const x = basis.getAxis(0).mulScalar(aabb.size.x); //TODO: Depends on Basis
+    //     const x = basis.getAxis(0).mulScalar(aabb.size.x); //TODO: Depends on AABB
     //     const y = basis.getAxis(1).mulScalar(aabb.size.y);
     //     const z = basis.getAxis(2).mulScalar(aabb.size.z);
     //     const pos = self.xformVector3(aabb.position);
@@ -133,10 +133,8 @@ pub const Transform = extern struct {
     // }
 
     pub inline fn affineInvert(self: *Self) void {
-        _ = self; //TODO: Depends on Basis
-        
-        // self.basis.invert();
-        // self.origin = basis.xformVector3(self.origin.negative());
+        self.basis.invert();
+        self.origin = self.basis.xformVector3(self.origin.negative());
     }
 
     pub inline fn affineInverse(self: *const Self) Self {
@@ -146,10 +144,8 @@ pub const Transform = extern struct {
     }
 
     pub inline fn invert(self: *Self) void {
-        _ = self; //TODO: Depends on Basis
-        
-        // self.basis.transpose();
-        // self.origin = basis.xformVector3(self.origin.negative());
+        self.basis.transpose();
+        self.origin = self.basis.xformVector3(self.origin.negative());
     }
 
     pub inline fn inverse(self: *const Self) Self {
@@ -163,19 +159,11 @@ pub const Transform = extern struct {
     }
 
     pub inline fn rotated(self: *const Self, axis: *const Vector3, phi: f32) Self {
-        _ = axis;
-        _ = phi;
-        return self.*;
-
-        // return Transform.new(Basis.new(axis, phi), Vector3.new(0, 0, 0)).mul(self); //TODO: Depends on Basis
+        return Transform.new(Basis.new(axis, phi), Vector3.new(0, 0, 0)).mul(self);
     }
 
     pub inline fn rotateBasis(self: *Self, axis: *const Vector3, phi: f32) void {
-        _ = self;
-        _ = axis;
-        _ = phi;
-
-        // self.basis.rotate(axis, phi); //TODO: Depends on basis
+        self.basis.rotate(axis, phi);
     }
 
     pub inline fn lookingAt(self: *const Self, target: *const Vector3, up: *const Vector3) Self {
@@ -196,9 +184,9 @@ pub const Transform = extern struct {
 
         v_x.normalize();
 
-        // self.basis.setAxis(0, v_x); //TODO: Depends on basis
-        // self.basis.setAxis(1, v_y);
-        // self.basis.setAxis(2, v_z);
+        self.basis.setAxis(0, v_x);
+        self.basis.setAxis(1, v_y);
+        self.basis.setAxis(2, v_z);
 
         self.origin = eye;
     }
@@ -208,23 +196,23 @@ pub const Transform = extern struct {
         _ = other;
         _ = p_c;
 
-        // const src_scale = self.basis.getScale(); //TODO: Depends on basis
-        // const src_rot = Quat.newBasis(self.basis);
-        // const src_loc = self.origin;
+        const src_scale = self.basis.getScale();
+        const src_rot = Quat.newBasis(self.basis);
+        const src_loc = self.origin;
 
-        // const dst_scale = other.basis.getScale();
-        // const dst_rot = Quat.newBasis(other.basis);
-        // const dst_loc = other.origin;
+        const dst_scale = other.basis.getScale();
+        const dst_rot = Quat.newBasis(other.basis);
+        const dst_loc = other.origin;
 
-        // var dst = Transform.newIdentity();
-        // dst.basis = src_rot.slerp(dst_rot, p_c);
-        // dst.basis.scale(src_scale.linearInterpolate(dst_scale), p_c);
-        // dst.origin = src_loc.linearInterpolate(dst_loc, p_c);
-        // return dst;
+        var dst = Transform.newIdentity();
+        dst.basis = src_rot.slerp(dst_rot, p_c);
+        dst.basis.scale(src_scale.linearInterpolate(dst_scale), p_c);
+        dst.origin = src_loc.linearInterpolate(dst_loc, p_c);
+        return dst;
     }
 
     pub inline fn scale(self: *Self, p_scale: *const Vector3) void {
-        // self.basis.scale(p_scale); //TODO: Depends on basis
+        self.basis.scale(p_scale);
         self.origin.mulAssign(p_scale);
     }
 
@@ -235,10 +223,7 @@ pub const Transform = extern struct {
     }
 
     pub inline fn scaleBasis(self: *Self, p_scale: *const Vector3) void {
-        _ = self;
-        _ = p_scale;
-
-        // self.basis.scale(p_scale); //TODO: Depends on basis
+        self.basis.scale(p_scale);
     }
 
     pub inline fn translate(self: *Self, translation: *const Vector3) void {
@@ -254,9 +239,7 @@ pub const Transform = extern struct {
     }
 
     pub inline fn orthonormalize(self: *Self) void {
-        _ = self;
-
-        // self.basis.orthonormalize(); //TODO: Depends on basis
+        self.basis.orthonormalize();
     }
 
     pub inline fn orthonormalized(self: *const Self) Self {
@@ -266,19 +249,11 @@ pub const Transform = extern struct {
     }
 
     pub inline fn equal(self: *const Self, other: *const Transform) bool { // Operator ==
-        _ = self;
-        _ = other;
-        return true;
-
-        // return self.basis.equal(other.basis) and self.origin.equal(other.origin); //TODO: Depends on basis
+        return self.basis.equal(other.basis) and self.origin.equal(other.origin);
     }
 
     pub inline fn notEqual(self: *const Self, other: *const Transform) bool { // Operator !=
-        _ = self;
-        _ = other;
-        return true;
-
-        // return self.basis.notEqual(other.basis) or self.origin.notEqual(other.origin); //TODO: Depends on basis
+        return self.basis.notEqual(other.basis) or self.origin.notEqual(other.origin);
     }
 
     pub inline fn mul(self: *const Self, other: *const Transform) Self { // Operator *
@@ -289,7 +264,7 @@ pub const Transform = extern struct {
 
     pub inline fn mulAssign(self: *Self, other: *const Transform) void { // Operator *=
         self.origin = self.xformVector3(other.origin);
-        //self.basis.mulAssign(other.basis); //TODO: Depends on basis
+        self.basis.mulAssign(other.basis);
     }
 
 };

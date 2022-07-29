@@ -3,6 +3,7 @@ const epsilon = std.math.epsilon(f32);
 const acos = std.math.acos;
 
 const Vector3 = @import("vector3.zig").Vector3;
+const Basis = @import("basis.zig").Basis;
 
 pub const Quat = struct {
 
@@ -124,10 +125,10 @@ pub const Quat = struct {
         self.w = -sin_a1 * sin_a2 * sin_a3 + cos_a1 * cos_a2 * cos_a3;
     }
 
-    // pub inline fn getEulerXyz(self: *const Self) Vector3 { //TODO: Depends on basis
-    //     const basis = Basis.newQuat(self);
-    //     return basis.getEulerXyz();
-    // }
+    pub inline fn getEulerXyz(self: *const Self) Vector3 {
+        const basis = Basis.newQuat(self);
+        return basis.getEulerXyz();
+    }
 
     pub inline fn setEulerYxz(self: *Self, euler: *const Vector3) void {
         const half_a1 = euler.x * 0.5;
@@ -147,10 +148,10 @@ pub const Quat = struct {
         self.w = sin_a1 * sin_a2 * sin_a3 + cos_a1 * cos_a2 * cos_a3;
     }
 
-    // pub inline fn getEulerYxz(self: *const Self) Vector3 { //TODO: Depends on basis
-    //     const basis = Basis.newQuat(self);
-    //     return basis.getEulerYxz();
-    // }
+    pub inline fn getEulerYxz(self: *const Self) Vector3 {
+        const basis = Basis.newQuat(self);
+        return basis.getEulerYxz();
+    }
 
     pub inline fn dot(self: *const Self, other: *const Quat) f32 {
         return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;

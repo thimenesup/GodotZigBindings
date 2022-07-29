@@ -78,11 +78,11 @@ pub const Transform2D = extern struct {
         return Vector2.new(self.elements[0].dot(v), self.elements[1].dot(v));
     }
 
-    pub inline fn xform(self: *const Self, v: *const Vector2) Vector2 {
+    pub inline fn xformVector2(self: *const Self, v: *const Vector2) Vector2 {
         return Vector2.new(self.tdotx(v), self.tdoty(v)).plus(self.elements[2]);
     }
 
-    pub inline fn xformInv(self: *const Self, p_v: *const Vector2) Vector2 {
+    pub inline fn xformInvVector2(self: *const Self, p_v: *const Vector2) Vector2 {
         const v = p_v.minus(self.elements[2]);
         return Vector2.new(self.elements[0].dot(v), self.elements[1].dot(v));
     }
@@ -90,7 +90,7 @@ pub const Transform2D = extern struct {
     // pub inline fn xformRect(self: *const Self, rect: *const Rect2) Rect2 { //TODO: Depends on Rect2
     //     const x = self.elements[0].mul(rect.size.x);
     //     const y = self.elements[1].mul(rect.size.y);
-    //     const position = self.xform(rect.position);
+    //     const position = self.xformVector2(rect.position);
 
     //     var new_rect = Rect2.new();
     //     new_rect.position = position;
@@ -240,7 +240,7 @@ pub const Transform2D = extern struct {
     }
 
     pub inline fn mulAssign(self: *Self, other: *const Transform2D) void { //Operator *=
-        self.elements[2] = self.xform(other.elements[2]);
+        self.elements[2] = self.xformVector2(other.elements[2]);
 
         const x0 = self.tdotx(other.elements[0]);
         const x1 = self.tdoty(other.elements[0]);

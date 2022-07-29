@@ -5,6 +5,8 @@ const atan2 = std.math.atan2;
 
 const math = @import("math.zig");
 
+const Basis = @import("basis.zig").Basis;
+
 pub const Vector3 = extern struct {
 
     const T = f32;
@@ -41,6 +43,20 @@ pub const Vector3 = extern struct {
         };
 
         return self;
+    }
+
+    pub inline fn axis(self: *const Self, p_axis: usize) *T { // Operator []
+        switch (p_axis) {
+            0 => {
+                return &self.x;
+            },
+            1 => {
+                return &self.y;
+            },
+            else => {
+                return &self.z;
+            },
+        }
     }
 
     pub inline fn plus(self: *const Self, other: *const Vector3) Self { // Operator +
@@ -304,17 +320,14 @@ pub const Vector3 = extern struct {
         return negative(self.minus(normal.mulScalar(normal.mulScalar(self.dot(normal)), 2.0)));
     }
 
-    pub inline fn rotated(self: *const Self, axis: *const Vector3, phi: T) Self {
+    pub inline fn rotated(self: *const Self, p_axis: *const Vector3, phi: T) Self {
         var ret = self.*;
-        ret.rotate(axis, phi);
+        ret.rotate(p_axis, phi);
         return ret;
     }
 
-    pub inline fn rotate(self: *Self, axis: *const Vector3, phi: T) void {
-        //TODO: This needs Basis
-        _ = self;
-        _ = axis;
-        _ = phi;
+    pub inline fn rotate(self: *Self, p_axis: *const Vector3, phi: T) void {
+        self.* = Basis.newRotation(p_axis, phi).xformVector3(self);
     }
 
     pub inline fn slide(self: *const Self, by: *const Vector3) Self {

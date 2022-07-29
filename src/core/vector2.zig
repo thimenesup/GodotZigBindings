@@ -38,6 +38,17 @@ pub const Vector2 = extern struct {
         return self;
     }
 
+    pub inline fn axis(self: *const Self, p_axis: usize) *T { // Operator []
+        switch (p_axis) {
+            0 => {
+                return &self.x;
+            },
+            else => {
+                return &self.y;
+            },
+        }
+    }
+
     pub inline fn plus(self: *const Self, other: *const Vector2) Self { // Operator +
         return Vector2.new(self.x + other.x, self.y + other.y);
     }
