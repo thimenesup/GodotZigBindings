@@ -12,6 +12,17 @@ pub fn build(b: *std.build.Builder) !void {
 
     const generate_bindings = b.option(bool, "generate_bindings", "Generate Zig class file bindings") orelse false;
     if (generate_bindings) {
+        var gdnative_file_path = String.init(b.allocator);
+        defer gdnative_file_path.deinit();
+
+        try gdnative_file_path.appendSlice(gdnative_headers);
+        try gdnative_file_path.appendSlice("/gdnative_api.json");
+
+        std.debug.print("Generating Zig gdnative api...\n", .{});
+        try BindingGenerator.generateGDNativeAPI(gdnative_file_path.items);
+        std.debug.print("Done generating Zig gdnative api\n", .{});
+
+
         var api_file_path = String.init(b.allocator);
         defer api_file_path.deinit();
 
@@ -25,20 +36,21 @@ pub fn build(b: *std.build.Builder) !void {
         }
 
         std.debug.print("Generating Zig class file bindings...\n", .{});
-
-        try BindingGenerator.generateBindings(api_file_path.items);
-
+        try BindingGenerator.generateClassBindings(api_file_path.items);
         std.debug.print("Done generating Zig class file bindings\n", .{});
     }
-    
+
     const lib = b.addSharedLibrary("gdnative", "src/lib.zig", b.version(0, 1, 0));
     lib.setTarget(target);
     lib.setBuildMode(mode);
-    lib.linkLibC();
 
     lib.force_pic = true;
 
-    lib.addIncludeDir(gdnative_headers);
+    const use_c = b.option(bool, "use_c", "Use C Godot Headers and LibC") orelse true;
+    if (use_c) {
+        lib.linkLibC();
+        lib.addIncludeDir(gdnative_headers);
+    }
 
     lib.install();
 }

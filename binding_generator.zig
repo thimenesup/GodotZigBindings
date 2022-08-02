@@ -284,8 +284,8 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
     // Import api
 
-    try string.appendSlice("const gd = @import(\"../core/api.zig\");\n");
-    try string.appendSlice("const c = gd.c;\n\n");
+    try string.appendSlice("const api = @import(\"../core/api.zig\");\n");
+    try string.appendSlice("const gd = @import(\"../core/gdnative_types.zig\");\n\n");
 
     try string.appendSlice("const GenGodotClass = @import(\"../core/wrapped.zig\").GenGodotClass;\n\n");
 
@@ -406,7 +406,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         const escaped_method_name = escapeFunctionName(method_name);
         defer escaped_method_name.deinit();
 
-        try std.fmt.format(string.writer(), "        {s}: [*c]c.godot_method_bind,\n", .{ escaped_method_name.items });
+        try std.fmt.format(string.writer(), "        {s}: [*c]gd.godot_method_bind,\n", .{ escaped_method_name.items });
     }
 
     try string.appendSlice("    };\n\n");
@@ -424,7 +424,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         const escaped_method_name = escapeFunctionName(method_name);
         defer escaped_method_name.deinit();
 
-        try std.fmt.format(string.writer(), "        binds.{s} = gd.api.*.godot_method_bind_get_method.?(\"{s}\", \"{s}\");\n", 
+        try std.fmt.format(string.writer(), "        binds.{s} = api.core.godot_method_bind_get_method.?(\"{s}\", \"{s}\");\n", 
             .{ escaped_method_name.items, class_name, method_name });
     }
 
@@ -486,7 +486,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 .{ arguments.items.len });
 
             try string.appendSlice(
-                "        var _bind_args: [64][*c]c.godot_variant = undefined;\n\n"); //Should be enough
+                "        var _bind_args: [64][*c]gd.godot_variant = undefined;\n\n"); //Should be enough
 
             for (arguments.items) |arguments_item, i| {
                 const argument = arguments_item.Object;
@@ -507,7 +507,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 .{ arguments.items.len });
 
             try std.fmt.format(string.writer(), 
-                "        const result = gd.api.*.godot_method_bind_call.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, total_arg_count, null);\n\n", 
+                "        const result = api.core.godot_method_bind_call.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, total_arg_count, null);\n\n", 
                 .{ escaped_method_name.items });
 
             if (std.mem.eql(u8, return_type, "void")) {
@@ -548,7 +548,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                     .{ bind_args.items });
                 
                 try std.fmt.format(string.writer(), 
-                    "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", 
+                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", 
                     .{ escaped_method_name.items });
             }
             else {
@@ -561,12 +561,12 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                     .{ bind_args.items });
 
                 try std.fmt.format(string.writer(), 
-                    "        gd.api.*.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", 
+                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", 
                     .{ escaped_method_name.items });
                 
                 if (isClassType(return_type)) { //Must use instance binding
                     try string.appendSlice("        if (ret != null) {\n");
-                    try string.appendSlice("            const instance_data = gd.nativescript_1_1_api.*.godot_nativescript_get_instance_binding_data.?(gd.language_index, ret);\n");
+                    try string.appendSlice("            const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, ret);\n");
 
                     try std.fmt.format(string.writer(), 
                         "            ret = @ptrCast({s}, @alignCast(@alignOf({s}), instance_data));\n", 
@@ -677,7 +677,7 @@ fn generateInitBindings(classes: *const std.json.Array) !String { //Must deinit 
     return string;
 }
 
-pub fn generateBindings(api_path: []const u8) !void {
+pub fn generateClassBindings(api_path: []const u8) !void {
     var api_file = try std.fs.cwd().openFile(api_path, .{});
     defer api_file.close();
 
@@ -691,7 +691,7 @@ pub fn generateBindings(api_path: []const u8) !void {
     defer tree.deinit();
 
     const gen_dir = try std.fs.cwd().makeOpenPath("src/gen", .{});
-
+    
     for (tree.root.Array.items) |item| {
         const class = item.Object;
 
@@ -726,4 +726,232 @@ pub fn generateBindings(api_path: []const u8) !void {
     const bindings_string = try generateInitBindings(&tree.root.Array);
     defer bindings_string.deinit();
     try bindings_file.writeAll(bindings_string.items);
+}
+
+
+const c_primitives = [_][2][]const u8 {
+    .{ "void", "void" },
+    .{ "bool", "bool" },
+    .{ "char", "u8" },
+    .{ "signed char", "i8" },
+    .{ "wchar_t", "c_ushort" },
+    .{ "int", "c_int" },
+    .{ "uint8_t", "u8" },
+    .{ "uint16_t", "u16" },
+    .{ "uint32_t", "u32" },
+    .{ "uint64_t", "u64" },
+    .{ "int8_t", "i8" },
+    .{ "int16_t", "i16" },
+    .{ "int32_t", "i32" },
+    .{ "int64_t", "i64" },
+    .{ "size_t", "usize" },
+    .{ "float", "f32" },
+    .{ "double", "f64" },
+};
+
+fn isCPrimitive(c_type: []const u8) ?usize {
+    var i: usize = 0;
+    while (i < c_primitives.len) : (i += 1) {
+        const c_primitive = c_primitives[i][0];
+        if (std.mem.eql(u8, c_type, c_primitive)) {
+            return i;
+        }
+    }
+
+    return null;
+}
+
+fn convertGDNativeType(gdnative_type: []const u8) String { //Must deinit string
+    var string = String.init(std.heap.page_allocator);
+
+    //Extract const
+    const const_index = std.mem.indexOf(u8, gdnative_type, "const ");
+    var type_start_index: usize = 0;
+    if (const_index != null) {
+        type_start_index = const_index.? + "const ".len;
+    }
+
+    //Extract ptr
+    const ptr_index = std.mem.indexOf(u8, gdnative_type, " *");
+    var type_end_index = gdnative_type.len;
+    if (ptr_index != null) {
+        type_end_index = ptr_index.?;
+    }
+    else {
+        const other_ptr_index = std.mem.indexOf(u8, gdnative_type, "*");
+        if (other_ptr_index != null) {
+            type_end_index = other_ptr_index.?;
+        }
+    }
+
+    //Zig expects void*/anyopaque to use ?*
+    const base_type = gdnative_type[type_start_index..type_end_index];
+    const is_void = std.mem.eql(u8, base_type, "void");
+    const is_anyopaque_ptr = ptr_index != null and (
+        is_void or
+        std.mem.eql(u8, base_type, "godot_object")
+    );
+
+    //Convert ptr
+    if (std.mem.indexOfPos(u8, gdnative_type, type_end_index, "**") != null) {
+        if (is_anyopaque_ptr) {
+            string.appendSlice("[*c]?*") catch {};
+        }
+        else {
+            string.appendSlice("[*c][*c]") catch {};
+        }
+        
+    }
+    else if (ptr_index != null) {
+        if (is_anyopaque_ptr) {
+            string.appendSlice("?*") catch {};
+        }
+        else {
+            string.appendSlice("[*c]") catch {};
+        }
+    }
+
+    //Convert const
+    if (const_index != null and ptr_index != null) {
+        string.appendSlice("const ") catch {};
+    }
+
+    if (is_void and ptr_index != null) {
+        string.appendSlice("anyopaque") catch {};
+    }
+    else {
+        const result = isCPrimitive(base_type);
+        if (result != null) {
+            string.appendSlice(c_primitives[result.?][1]) catch {};
+        }
+        else {
+            std.fmt.format(string.writer(), "gd.{s}", .{ base_type }) catch {};
+        }
+    }
+
+    return string;
+}
+
+fn writeAPI(api: *const std.json.ObjectMap, string: *String, is_core: bool, is_root: bool) void { //Must deinit string
+    const api_type_name = api.get("type").?.String;
+    var api_name_name_converted = toSnakeCase(api_type_name);
+    defer api_name_name_converted.deinit();
+
+    const version = api.get("version").?.Object;
+    const major = version.get("major").?.Integer;
+    const minor = version.get("minor").?.Integer;
+
+    var name = String.init(std.heap.page_allocator);
+    defer name.deinit();
+
+    if (is_core) {
+        if (is_root) {
+            std.fmt.format(name.writer(), "godot_gdnative_{s}_api_struct", .{ api_name_name_converted.items }) catch {};
+        }
+        else {
+            std.fmt.format(name.writer(), "godot_gdnative_{s}_{}_{}_api_struct", .{ api_name_name_converted.items, major, minor }) catch {};
+        }
+    }
+    else {
+        if (is_root) {
+            std.fmt.format(name.writer(), "godot_gdnative_ext_{s}_api_struct", .{ api_name_name_converted.items }) catch {};
+        }
+        else {
+            std.fmt.format(name.writer(), "godot_gdnative_ext_{s}_{}_{}_api_struct", .{ api_name_name_converted.items, major, minor }) catch {};
+        }
+    }
+
+    std.fmt.format(string.writer(), "pub const {s} = extern struct {{\n", .{ name.items }) catch {}; //API Struct begin
+
+    string.appendSlice(
+        "    type: c_uint,\n" ++
+        "    version: gd.godot_gdnative_api_version,\n" ++
+        "    next: [*c]const gd.godot_gdnative_api_struct,\n"
+    ) catch {};
+
+    if (is_core and is_root) {
+        string.appendSlice(
+            "    num_extensions: c_uint,\n" ++
+            "    extensions: [*c][*c]const gd.godot_gdnative_api_struct,\n"
+        ) catch {};
+    }
+
+    const api_functions = api.get("api").?.Array;
+
+    for (api_functions.items) |function_item| {
+        const function = function_item.Object;
+
+        const function_name = function.get("name").?.String;
+        const return_type = function.get("return_type").?.String;
+        const arguments = function.get("arguments").?.Array;
+
+        var converted_args = String.init(std.heap.page_allocator);
+        defer converted_args.deinit();
+
+        for (arguments.items) |argument_item, i| {
+            const argument_data = argument_item.Array;
+            const arg_type = argument_data.items.ptr[0].String;
+            // const arg_name = argument_data.items.ptr[0].String; //Don't care
+
+            var converted_arg_type = convertGDNativeType(arg_type);
+            defer converted_arg_type.deinit();
+
+            if (i < arguments.items.len - 1) {
+                std.fmt.format(converted_args.writer(), "{s}, ", .{ converted_arg_type.items }) catch {};
+            }
+            else {
+                std.fmt.format(converted_args.writer(), "{s}", .{ converted_arg_type.items }) catch {};
+            }
+        }
+
+        var converted_return_type = convertGDNativeType(return_type);
+        defer converted_return_type.deinit();
+
+        std.fmt.format(string.writer(), "    {s}: ?fn ({s}) callconv(.C) {s},\n", .{ function_name, converted_args.items, converted_return_type.items }) catch {};
+    }
+
+    string.appendSlice("};\n\n") catch {}; //API Struct end
+
+    const next = api.get("next").?;
+    switch (next) {
+        std.json.Value.Object => {
+            writeAPI(&next.Object, string, is_core, false);
+        },
+        else => {}, //Null
+    }
+}
+
+pub fn generateGDNativeAPI(api_path: []const u8) !void {
+    var api_file = try std.fs.cwd().openFile(api_path, .{});
+    defer api_file.close();
+
+    const api_file_buffer = try api_file.readToEndAlloc(std.heap.page_allocator, 1024 * 1024 * 16);
+    defer std.heap.page_allocator.free(api_file_buffer);
+
+    var parser = std.json.Parser.init(std.heap.page_allocator, false);
+    defer parser.deinit();
+
+    var tree = try parser.parse(api_file_buffer);
+    defer tree.deinit();
+
+    const core_dir = try std.fs.cwd().makeOpenPath("src/core", .{});
+
+    const gdnative_api_file = try core_dir.createFile("gdnative_api.zig", .{});
+    defer gdnative_api_file.close();
+
+    var gdnative_api_string = String.init(std.heap.page_allocator);
+    defer gdnative_api_string.deinit();
+
+    try gdnative_api_string.appendSlice("const gd = @import(\"gdnative_api_types.zig\");\n\n");
+
+    const core = tree.root.Object.get("core").?.Object;
+    writeAPI(&core, &gdnative_api_string, true, true);
+    
+    const extensions = tree.root.Object.get("extensions").?.Array;
+    for (extensions.items) |extension_item| {
+        const extension = extension_item.Object;
+        writeAPI(&extension, &gdnative_api_string, false, true);
+    }
+
+    try gdnative_api_file.writeAll(gdnative_api_string.items);
 }
