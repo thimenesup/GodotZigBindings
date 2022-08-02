@@ -1,5 +1,5 @@
-const gd = @import("core/api.zig");
-const c = gd.c;
+const api = @import("core/api.zig");
+const gd = @import("core/gdnative_types.zig");
 
 const Classes = @import("core/classes.zig");
 const Godot = @import("core/godot_global.zig").Godot;
@@ -36,20 +36,20 @@ pub const TestNode2D = struct {
     }
 
     pub fn registerMembers() void {
-        Classes.registerMethod(Self, "_process", _process, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        Classes.registerMethod(Self, "test_method", test_method, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        Classes.registerMethod(Self, "test_return", test_return, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        Classes.registerMethod(Self, "test_return_string", test_return_string, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        Classes.registerMethod(Self, "test_return_array", test_return_array, c.GODOT_METHOD_RPC_MODE_DISABLED);
-        Classes.registerMethod(Self, "test_memnew_and_cast", test_memnew_and_cast, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "_process", _process, gd.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_method", test_method, gd.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_return", test_return, gd.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_return_string", test_return_string, gd.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_return_array", test_return_array, gd.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerMethod(Self, "test_memnew_and_cast", test_memnew_and_cast, gd.GODOT_METHOD_RPC_MODE_DISABLED);
 
-        Classes.registerFunction(Self, "test_static_function", test_static_function, c.GODOT_METHOD_RPC_MODE_DISABLED);
+        Classes.registerFunction(Self, "test_static_function", test_static_function, gd.GODOT_METHOD_RPC_MODE_DISABLED);
 
         Classes.registerProperty(Self, "test_property", "test_property", @as(f32, 0), null, null,
-            c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
+            gd.GODOT_METHOD_RPC_MODE_DISABLED, gd.GODOT_PROPERTY_USAGE_DEFAULT, gd.GODOT_PROPERTY_HINT_NONE, ""
         );
         Classes.registerProperty(Self, "setget_property", "setget_property", @as(u16, 0), set_setget_property, get_setget_property,
-            c.GODOT_METHOD_RPC_MODE_DISABLED, c.GODOT_PROPERTY_USAGE_DEFAULT, c.GODOT_PROPERTY_HINT_NONE, ""
+            gd.GODOT_METHOD_RPC_MODE_DISABLED, gd.GODOT_PROPERTY_USAGE_DEFAULT, gd.GODOT_PROPERTY_HINT_NONE, ""
         );
 
         Classes.registerSignal(Self, "test_signal", .{ .{"arg0", i32}, .{"arg1", f32}, });

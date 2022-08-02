@@ -5,4 +5,5 @@ zig-out
 
 .vscode
 
+#Auto generated files
 src/gen

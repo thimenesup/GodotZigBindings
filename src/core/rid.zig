@@ -1,11 +1,11 @@
-const gd = @import("api.zig");
-const c = gd.c;
+const gd = @import("gdnative_types.zig");
+const api = @import("api.zig");
 
 const Object = @import("../gen/object.zig").Object;
 
 pub const RID = struct {
 
-    godot_rid: c.godot_rid,
+    godot_rid: gd.godot_rid,
 
     const Self = @This();
 
@@ -14,7 +14,7 @@ pub const RID = struct {
             .godot_rid = undefined,
         };
 
-        gd.api.*.godot_rid_new.?(&self.godot_rid);
+        api.core.godot_rid_new.?(&self.godot_rid);
 
         return self;
     }
@@ -24,17 +24,17 @@ pub const RID = struct {
             .godot_rid = undefined,
         };
 
-        gd.api.*.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast([*c]c.godot_object, object.base.owner));
+        api.core.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast([*c]gd.godot_object, object.base.owner));
 
         return self;
     }
 
     pub fn getId(self: *const Self) i32 {
-        return gd.api.*.godot_rid_get_id.?(&self.godot_rid);
+        return api.core.godot_rid_get_id.?(&self.godot_rid);
     }
 
     pub fn equal(self: *const Self, other: *const RID) bool { // Operator ==
-        return gd.api.*.godot_rid_operator_equal.?(&self.godot_rid, &other.godot_rid);
+        return api.core.godot_rid_operator_equal.?(&self.godot_rid, &other.godot_rid);
     }
 
     pub fn notEqual(self: *const Self, other: *const RID) bool { // Operator !=
@@ -42,7 +42,7 @@ pub const RID = struct {
     }
 
     pub fn less(self: *const Self, other: *const RID) bool { // Operator <
-        return gd.api.*.godot_rid_operator_less.?(&self.godot_rid, &other.godot_rid);
+        return api.core.godot_rid_operator_less.?(&self.godot_rid, &other.godot_rid);
     }
 
     pub fn lessEqual(self: *const Self, other: *const RID) bool { // Operator <=
