@@ -98,7 +98,7 @@ fn wrapperCreate(data: ?*anyopaque, type_tag: ?*const anyopaque, instance: ?*gd.
     _ = data;
 
     const wrapper_data = core.godot_alloc.?(@sizeOf(Wrapped));
-    var wrapper = @ptrCast(?*Wrapped, @alignCast(@alignOf(?*Wrapped), wrapper_data));
+    var wrapper = @ptrCast(?*Wrapped, @alignCast(@alignOf(Wrapped), wrapper_data));
     if (wrapper == null) {
         return null;
     }

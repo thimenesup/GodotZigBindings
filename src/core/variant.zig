@@ -634,11 +634,11 @@ pub const Variant = struct {
 
         const custom_instance_data = api.nativescript.godot_nativescript_get_userdata.?(godot_object);
         if (custom_instance_data != null) {
-            return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), custom_instance_data));
+            return @ptrCast(?*Object, @alignCast(@alignOf(Object), custom_instance_data));
         }
         else {
             var instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, godot_object);
-            return @ptrCast(?*Object, @alignCast(@alignOf(?*Object), instance_data));
+            return @ptrCast(?*Object, @alignCast(@alignOf(Object), instance_data));
         }
     }
 

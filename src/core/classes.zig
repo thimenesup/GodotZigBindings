@@ -138,7 +138,7 @@ pub fn getCustomClassInstance(comptime class: type, object: *const Wrapped) ?*cl
 
     const instance_data = api.nativescript.godot_nativescript_get_userdata.?(object.owner);
     if (instance_data != null) {
-        return @ptrCast(*class, @alignCast(@alignOf(*class), instance_data));
+        return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
     }
     
     return null;
@@ -178,7 +178,7 @@ pub fn createCustomClassInstance(comptime class: type) *class { //TODO: The meth
     }
 
     const instance_data = api.nativescript.godot_nativescript_get_userdata.?(base_object);
-    return @ptrCast(*class, @alignCast(@alignOf(*class), instance_data));
+    return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
 }
 
 
@@ -225,7 +225,7 @@ fn ConstructorWrapper(comptime class: type) type {
         fn functionWrap(p_instance: ?*gd.godot_object, p_method_data: ?*anyopaque) callconv(.C) ?*anyopaque {
             _ = p_method_data;
 
-            var class_instance = @ptrCast(*class, @alignCast(@alignOf(*class), api.core.godot_alloc.?(@sizeOf(class))));
+            var class_instance = @ptrCast(*class, @alignCast(@alignOf(class), api.core.godot_alloc.?(@sizeOf(class))));
             
             var wrapped = @ptrCast(*Wrapped, class_instance);
             wrapped.owner = p_instance;
@@ -246,7 +246,7 @@ fn DestructorWrapper(comptime class: type) type {
             _ = p_instance;
             _ = p_method_data;
 
-            var class_instance = @ptrCast(*class, @alignCast(@alignOf(*class), p_user_data));
+            var class_instance = @ptrCast(*class, @alignCast(@alignOf(class), p_user_data));
             class_instance.destructor();
             
             api.core.godot_free.?(class_instance);
@@ -410,7 +410,7 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
             _ = arg_count;
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
 
             comptime if (fn_info.args.len == 0) {
                 @compileError("A method needs to take atleast the struct parameter");
@@ -503,7 +503,7 @@ fn PropertyDefaultSetWrapper(comptime class: type, comptime field_name: []const 
             _ = godot_object;
             _ = method_data;
 
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
             const field_type = @TypeOf(@field(struct_instance, field_name));
             const value = Variant.variantAsType(field_type)(variant_value);
             @field(struct_instance, field_name) = value;
@@ -519,7 +519,7 @@ fn PropertyDefaultGetWrapper(comptime class: type, comptime field_name: []const 
             _ = godot_object;
             _ = method_data;
 
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
             const field_type = @TypeOf(@field(struct_instance, field_name));
             const value = @field(struct_instance, field_name);
             return Variant.typeAsVariant(field_type)(value);
@@ -536,7 +536,7 @@ fn PropertySetWrapper(comptime class: type, comptime function: anytype) type {
             _ = method_data;
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
 
             _ = @call(.{}, function, .{ struct_instance, Variant.variantAsType(fn_info.args[1].arg_type.?)(variant_value) });
         }
@@ -552,7 +552,7 @@ fn PropertyGetWrapper(comptime class: type, comptime function: anytype) type {
             _ = method_data;
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(*class), user_data));
+            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
 
             const result = @call(.{}, function, .{ struct_instance });
             return Variant.typeAsVariant(fn_info.return_type.?)(result);
@@ -618,7 +618,7 @@ pub fn registerSignal(comptime class: type, name: [*:0]const u8, comptime args: 
     if (args.len > 0) {
         const arg_data_size = signal.num_args * @sizeOf(gd.godot_signal_argument);
         const arg_data = api.core.godot_alloc.?(arg_data_size);
-        signal.args = @ptrCast([*c]gd.godot_signal_argument, @alignCast(@alignOf([*c]gd.godot_signal_argument), arg_data));
+        signal.args = @ptrCast([*c]gd.godot_signal_argument, @alignCast(@alignOf(gd.godot_signal_argument), arg_data));
         defer api.core.godot_free.?(signal.args);
         @memset(@ptrCast([*]u8, arg_data), 0, @intCast(usize, arg_data_size));
 
