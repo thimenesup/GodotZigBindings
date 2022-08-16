@@ -590,10 +590,30 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     return string;
 }
 
+fn generatePackageClassImports(classes: *const std.json.Array) !String { //Must deinit string
+    var string = String.init(std.heap.page_allocator);
+
+    //Imports
+    for (classes.items) |item| {
+        const class = item.Object;
+        
+        const class_name = class.get("name").?.String;
+        const stripped_name = stripName(class_name);
+        defer stripped_name.deinit();
+
+        const convention_name = toSnakeCase(stripped_name.items);
+        defer convention_name.deinit();
+        
+        try std.fmt.format(string.writer(), "pub const {s} = @import(\"{s}.zig\");\n", .{ convention_name.items, convention_name.items });
+    }
+
+    return string;
+}
+
 fn generateTypeRegistry(classes: *const std.json.Array) !String { //Must deinit string
     var string = String.init(std.heap.page_allocator);
 
-    try string.appendSlice("const Classes = @import(\"../core/classes.zig\");\n");
+    try string.appendSlice("const ClassRegistry = @import(\"../core/class_registry.zig\");\n");
     try string.appendSlice("const typeId = @import(\"../core/typeid.zig\").typeId;\n\n");
 
     //Imports
@@ -627,10 +647,10 @@ fn generateTypeRegistry(classes: *const std.json.Array) !String { //Must deinit 
         defer stripped_base_name.deinit();
         
         if (base_class_name.len == 0) {
-            try std.fmt.format(string.writer(), "    Classes.registerGlobalType(\"{s}\", typeId({s}), 0);\n", .{ class_name, stripped_name.items});
+            try std.fmt.format(string.writer(), "    ClassRegistry.registerGlobalType(\"{s}\", typeId({s}), 0);\n", .{ class_name, stripped_name.items});
         }
         else {
-            try std.fmt.format(string.writer(), "    Classes.registerGlobalType(\"{s}\", typeId({s}), typeId({s}));\n", 
+            try std.fmt.format(string.writer(), "    ClassRegistry.registerGlobalType(\"{s}\", typeId({s}), typeId({s}));\n", 
                 .{ class_name, stripped_name.items, stripped_base_name.items });
         }
     }
@@ -690,7 +710,7 @@ pub fn generateClassBindings(api_path: []const u8) !void {
     var tree = try parser.parse(api_file_buffer);
     defer tree.deinit();
 
-    const gen_dir = try std.fs.cwd().makeOpenPath("src/gen", .{});
+    const gen_dir = try std.fs.cwd().makeOpenPath("src/classes", .{});
     
     for (tree.root.Array.items) |item| {
         const class = item.Object;
@@ -712,20 +732,32 @@ pub fn generateClassBindings(api_path: []const u8) !void {
         try class_file.writeAll(file_string.items);
     }
 
+    {
+        const imports_file = try gen_dir.createFile("_classes.zig", .{});
+        defer imports_file.close();
 
-    const registry_file = try gen_dir.createFile("_register_types.zig", .{});
-    defer registry_file.close();
+        const class_imports_string = try generatePackageClassImports(&tree.root.Array);
+        defer class_imports_string.deinit();
+        try imports_file.writeAll(class_imports_string.items);
+    }
 
-    const registry_string = try generateTypeRegistry(&tree.root.Array);
-    defer registry_string.deinit();
-    try registry_file.writeAll(registry_string.items);
+    {
+        const registry_file = try gen_dir.createFile("_register_types.zig", .{});
+        defer registry_file.close();
 
-    const bindings_file = try gen_dir.createFile("_init_bindings.zig", .{});
-    defer bindings_file.close();
+        const registry_string = try generateTypeRegistry(&tree.root.Array);
+        defer registry_string.deinit();
+        try registry_file.writeAll(registry_string.items);
+    }
 
-    const bindings_string = try generateInitBindings(&tree.root.Array);
-    defer bindings_string.deinit();
-    try bindings_file.writeAll(bindings_string.items);
+    {
+        const bindings_file = try gen_dir.createFile("_init_bindings.zig", .{});
+        defer bindings_file.close();
+
+        const bindings_string = try generateInitBindings(&tree.root.Array);
+        defer bindings_string.deinit();
+        try bindings_file.writeAll(bindings_string.items);
+    }
 }
 
 

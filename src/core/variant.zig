@@ -27,7 +27,7 @@ const PoolVector2Array = PoolArrays.PoolVector2Array;
 const PoolVector3Array = PoolArrays.PoolVector3Array;
 const PoolColorArray = PoolArrays.PoolColorArray;
 
-const Object = @import("../gen/object.zig").Object;
+const Object = @import("../classes/object.zig").Object;
 
 pub const Variant = struct {
 

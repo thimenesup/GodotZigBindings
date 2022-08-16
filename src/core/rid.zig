@@ -1,7 +1,7 @@
 const gd = @import("gdnative_types.zig");
 const api = @import("api.zig");
 
-const Object = @import("../gen/object.zig").Object;
+const Object = @import("../classes/object.zig").Object;
 
 pub const RID = struct {
 

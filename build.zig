@@ -40,17 +40,20 @@ pub fn build(b: *std.build.Builder) !void {
         std.debug.print("Done generating Zig class file bindings\n", .{});
     }
 
-    const lib = b.addSharedLibrary("gdnative", "src/lib.zig", b.version(0, 1, 0));
-    lib.setTarget(target);
-    lib.setBuildMode(mode);
+    _ = target;
+    _ = mode;
 
-    lib.force_pic = true;
+    // const lib = b.addDynamicLibrary("gdnative", "src/lib.zig");
+    // lib.setTarget(target);
+    // lib.setBuildMode(mode);
 
-    const use_c = b.option(bool, "use_c", "Use C Godot Headers and LibC") orelse true;
-    if (use_c) {
-        lib.linkLibC();
-        lib.addIncludeDir(gdnative_headers);
-    }
+    // lib.force_pic = true;
 
-    lib.install();
+    // const use_c = b.option(bool, "use_c", "Use C Godot Headers and LibC") orelse true;
+    // if (use_c) {
+    //     lib.linkLibC();
+    //     lib.addIncludeDir(gdnative_headers);
+    // }
+
+    // lib.install();
 }

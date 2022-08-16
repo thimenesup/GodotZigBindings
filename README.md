@@ -16,7 +16,9 @@ You can also use the following option to generate the bindings using your custom
 zig build -Dgenerate_bindings=true -Dcustom_api_file="mydir/my_json.api"
 ```
 
-After they are generated you can use the regular
+## Example usage
+
+The "test_example" folder contains an explained minimal example of how to use this as a package, with the build script, library entry point and a sample class included that can be built with
 
 ```
 zig build
