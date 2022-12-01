@@ -279,10 +279,10 @@ pub const Color = extern struct {
     }
 
     pub inline fn getH(self: *const Self) f32 {
-        var min = @minimum(self.r, self.g);
-        min = @minimum(min, self.b);
-        var max = @maximum(self.r, self.g);
-        max = @maximum(max, self.b);
+        var min = @min(self.r, self.g);
+        min = @min(min, self.b);
+        var max = @max(self.r, self.g);
+        max = @max(max, self.b);
 
         const delta = max - min;
         if (delta == 0.0) {
@@ -309,17 +309,17 @@ pub const Color = extern struct {
     }
 
     pub inline fn getS(self: *const Self) f32 {
-        var min = @minimum(self.r, self.g);
-        min = @minimum(min, self.b);
-        var max = @maximum(self.r, self.g);
-        max = @maximum(max, self.b);
+        var min = @min(self.r, self.g);
+        min = @min(min, self.b);
+        var max = @max(self.r, self.g);
+        max = @max(max, self.b);
         const delta = max - min;
         return if (max != 0.0) delta / max else 0.0;
     }
 
     pub inline fn getV(self: *const Self) f32 {
-        var max = @maximum(self.r, self.g);
-        max = @maximum(max, self.b);
+        var max = @max(self.r, self.g);
+        max = @max(max, self.b);
         return max;
     }
 

@@ -349,7 +349,10 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
     try string.appendSlice("    const Self = @This();\n\n");
 
-    try std.fmt.format(string.writer(), "    pub const GodotClass = GenGodotClass(Self, {s}, {s});\n", .{ class_is_instanciable, class_is_singleton });
+    try std.fmt.format(string.writer(), "    pub const GodotClass = GenGodotClass(Self, {s}, {s});\n", .{ 
+        if (class_is_instanciable) "true" else "false",
+        if (class_is_singleton) "true" else "false"
+    });
     try string.appendSlice("    pub usingnamespace GodotClass;\n\n"); // Not necessary, but makes calling its nested functions less verbose
 
     // Enums

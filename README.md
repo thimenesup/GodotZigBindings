@@ -1,5 +1,7 @@
 # Zig lang bindings for Godot GDNative
 
+For Zig Version 0.10.0 and Godot 3.2.0+
+
 ## Building
 
 Add the "GDNATIVE_HEADERS" environment variable pointing to your header path

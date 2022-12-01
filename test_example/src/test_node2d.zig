@@ -59,8 +59,6 @@ pub const TestNode2D = struct {
     }
 
     pub fn _process(self: *Self, delta: f64) void {
-        _ = self;
-
         self.base.rotate(delta);
     }
 
@@ -83,7 +81,7 @@ pub const TestNode2D = struct {
         _ = self;
 
         var array = Array.init();
-        array.pushBackVars(.{ true, 1337, 420.69, "My Variant String" });
+        array.pushBackVars(.{ true, 1337, 420.69, @as([*:0]const u8, "My Variant String") });
 
         return array;
     }

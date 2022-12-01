@@ -40,16 +40,16 @@ pub const Rect2 = extern struct {
         var dist = 1e20;
 
         if (point.x < self.position.x) {
-            dist = @minimum(dist, self.position.x - point.x);
+            dist = @min(dist, self.position.x - point.x);
         }
         if (point.y < self.position.y) {
-            dist = @minimum(dist, self.position.y - point.y);
+            dist = @min(dist, self.position.y - point.y);
         }
         if (point.x >= (self.position.x + self.size.x)) {
-            dist = @minimum(point.x - (self.position.x + self.size.x), dist);
+            dist = @min(point.x - (self.position.x + self.size.x), dist);
         }
         if (point.y >= (self.position.y + self.size.y)) {
-            dist = @minimum(point.y - (self.position.y + self.size.y), dist);
+            dist = @min(point.y - (self.position.y + self.size.y), dist);
         }
 
         if (dist == 1e20) {
@@ -144,14 +144,14 @@ pub const Rect2 = extern struct {
         if (!self.intersects(new_rect))
             return Rect2.new(0, 0, 0, 0);
         
-        new_rect.position.x = @maximum(other.position.x, self.position.x);
-        new_rect.position.y = @maximum(other.position.y, self.position.y);
+        new_rect.position.x = @max(other.position.x, self.position.x);
+        new_rect.position.y = @max(other.position.y, self.position.y);
 
         const other_end = other.position.plus(other.size);
         const self_end = self.position.plus(self.size);
 
-        new_rect.size.x = @minimum(other_end.x, self_end.x) - new_rect.position.x;
-        new_rect.size.y = @minimum(other_end.y, self_end.y) - new_rect.position.y;
+        new_rect.size.x = @min(other_end.x, self_end.x) - new_rect.position.x;
+        new_rect.size.y = @min(other_end.y, self_end.y) - new_rect.position.y;
 
         return new_rect;
     }
@@ -159,11 +159,11 @@ pub const Rect2 = extern struct {
     pub inline fn merge(self: *const Self, other: *const Rect2) Self {
         var new_rect = other.*;
 
-        new_rect.position.x = @minimum(other.position.x, self.position.x);
-        new_rect.position.y = @minimum(other.position.y, self.position.y);
+        new_rect.position.x = @min(other.position.x, self.position.x);
+        new_rect.position.y = @min(other.position.y, self.position.y);
 
-        new_rect.size.x = @maximum(other.position.x + other.size.x, self.position.x + self.size.x);
-        new_rect.size.y = @maximum(other.position.y + other.size.y, self.position.y + self.size.y);
+        new_rect.size.x = @max(other.position.x + other.size.x, self.position.x + self.size.x);
+        new_rect.size.y = @max(other.position.y + other.size.y, self.position.y + self.size.y);
 
         new_rect.size = new_rect.size.minus(new_rect.position);
 

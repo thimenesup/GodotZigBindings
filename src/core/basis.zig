@@ -267,7 +267,7 @@ pub const Basis = extern struct {
     pub inline fn setEulerXyz(self: *Self, euler: *const Vector3) void {
         var c = @cos(euler.x);
         var s = @sin(euler.x);
-        const xmat = Basis.new(1.0, 0.0, 0.0, 0.0, c -s, 0.0, s, c);
+        const xmat = Basis.new(1.0, 0.0, 0.0, 0.0, c - s, 0.0, s, c);
 
         c = @cos(euler.y);
         s = @sin(euler.y);
@@ -315,7 +315,7 @@ pub const Basis = extern struct {
     pub inline fn setEulerYxz(self: *Self, euler: *const Vector3) void {
         var c = @cos(euler.x);
         var s = @sin(euler.x);
-        const xmat = Basis.new(1.0, 0.0, 0.0, 0.0, c -s, 0.0, s, c);
+        const xmat = Basis.new(1.0, 0.0, 0.0, 0.0, c - s, 0.0, s, c);
 
         c = @cos(euler.y);
         s = @sin(euler.y);

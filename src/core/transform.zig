@@ -192,10 +192,6 @@ pub const Transform = extern struct {
     }
 
     pub inline fn interpolateWith(self: *const Self, other: *const Transform, p_c: f32) Self {
-        _ = self;
-        _ = other;
-        _ = p_c;
-
         const src_scale = self.basis.getScale();
         const src_rot = Quat.newBasis(self.basis);
         const src_loc = self.origin;

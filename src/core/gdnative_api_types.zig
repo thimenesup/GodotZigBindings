@@ -162,16 +162,16 @@ pub const GDNATIVE_EXT_ARVR: c_int = 4;
 pub const GDNATIVE_EXT_VIDEODECODER: c_int = 5;
 pub const GDNATIVE_EXT_NET: c_int = 6;
 
-pub const godot_class_constructor = ?fn (...) callconv(.C) ?*godot_object;
-pub const native_call_cb = ?fn (?*anyopaque, [*c]godot_array) callconv(.C) godot_variant;
+pub const godot_class_constructor = ?*const fn (...) callconv(.C) ?*godot_object;
+pub const native_call_cb = ?*const fn (?*anyopaque, [*c]godot_array) callconv(.C) godot_variant;
 
 pub const godot_gdnative_init_options = extern struct {
     in_editor: godot_bool,
     core_api_hash: u64,
     editor_api_hash: u64,
     no_api_hash: u64,
-    report_version_mismatch: ?fn (?*const godot_object, [*c]const u8, godot_gdnative_api_version, godot_gdnative_api_version) callconv(.C) void,
-    report_loading_error: ?fn (?*const godot_object, [*c]const u8) callconv(.C) void,
+    report_version_mismatch: ?*const fn (?*const godot_object, [*c]const u8, godot_gdnative_api_version, godot_gdnative_api_version) callconv(.C) void,
+    report_loading_error: ?*const fn (?*const godot_object, [*c]const u8) callconv(.C) void,
     gd_native_library: ?*godot_object,
     api_struct: [*c]const gd.godot_gdnative_core_api_struct,
     active_library_path: [*c]const godot_string,
@@ -274,15 +274,15 @@ pub const godot_property_attributes = extern struct {
 };
 
 pub const godot_instance_create_func = extern struct {
-    create_func: ?fn (?*godot_object, ?*anyopaque) callconv(.C) ?*anyopaque,
+    create_func: ?*const fn (?*godot_object, ?*anyopaque) callconv(.C) ?*anyopaque,
     method_data: ?*anyopaque,
-    free_func: ?fn (?*anyopaque) callconv(.C) void,
+    free_func: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 
 pub const godot_instance_destroy_func = extern struct {
-    destroy_func: ?fn (?*godot_object, ?*anyopaque, ?*anyopaque) callconv(.C) void,
+    destroy_func: ?*const fn (?*godot_object, ?*anyopaque, ?*anyopaque) callconv(.C) void,
     method_data: ?*anyopaque,
-    free_func: ?fn (?*anyopaque) callconv(.C) void,
+    free_func: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 
 pub const godot_method_attributes = extern struct {
@@ -290,21 +290,21 @@ pub const godot_method_attributes = extern struct {
 };
 
 pub const godot_instance_method = extern struct {
-    method: ?fn (?*godot_object, ?*anyopaque, ?*anyopaque, c_int, [*c][*c]godot_variant) callconv(.C) godot_variant,
+    method: ?*const fn (?*godot_object, ?*anyopaque, ?*anyopaque, c_int, [*c][*c]godot_variant) callconv(.C) godot_variant,
     method_data: ?*anyopaque,
-    free_func: ?fn (?*anyopaque) callconv(.C) void,
+    free_func: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 
 pub const godot_property_set_func = extern struct {
-    set_func: ?fn (?*godot_object, ?*anyopaque, ?*anyopaque, [*c]godot_variant) callconv(.C) void,
+    set_func: ?*const fn (?*godot_object, ?*anyopaque, ?*anyopaque, [*c]godot_variant) callconv(.C) void,
     method_data: ?*anyopaque,
-    free_func: ?fn (?*anyopaque) callconv(.C) void,
+    free_func: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 
 pub const godot_property_get_func = extern struct {
-    get_func: ?fn (?*godot_object, ?*anyopaque, ?*anyopaque) callconv(.C) godot_variant,
+    get_func: ?*const fn (?*godot_object, ?*anyopaque, ?*anyopaque) callconv(.C) godot_variant,
     method_data: ?*anyopaque,
-    free_func: ?fn (?*anyopaque) callconv(.C) void,
+    free_func: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 
 pub const godot_signal_argument = extern struct {
@@ -332,36 +332,36 @@ pub const godot_method_arg = extern struct {
 };
 
 pub const godot_instance_binding_functions = extern struct {
-    alloc_instance_binding_data: ?fn (?*anyopaque, ?*const anyopaque, ?*godot_object) callconv(.C) ?*anyopaque,
-    free_instance_binding_data: ?fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
-    refcount_incremented_instance_binding: ?fn (?*anyopaque, ?*godot_object) callconv(.C) void,
-    refcount_decremented_instance_binding: ?fn (?*anyopaque, ?*godot_object) callconv(.C) bool,
+    alloc_instance_binding_data: ?*const fn (?*anyopaque, ?*const anyopaque, ?*godot_object) callconv(.C) ?*anyopaque,
+    free_instance_binding_data: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void,
+    refcount_incremented_instance_binding: ?*const fn (?*anyopaque, ?*godot_object) callconv(.C) void,
+    refcount_decremented_instance_binding: ?*const fn (?*anyopaque, ?*godot_object) callconv(.C) bool,
     data: ?*anyopaque,
-    free_func: ?fn (?*anyopaque) callconv(.C) void,
+    free_func: ?*const fn (?*anyopaque) callconv(.C) void,
 };
 
 // ARVR
 
 pub const godot_arvr_interface_gdnative = extern struct {
     version: godot_gdnative_api_version,
-    constructor: ?fn (?*godot_object) callconv(.C) ?*anyopaque,
-    destructor: ?fn (?*anyopaque) callconv(.C) void,
-    get_name: ?fn (?*const anyopaque) callconv(.C) godot_string,
-    get_capabilities: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_anchor_detection_is_enabled: ?fn (?*const anyopaque) callconv(.C) godot_bool,
-    set_anchor_detection_is_enabled: ?fn (?*anyopaque, godot_bool) callconv(.C) void,
-    is_stereo: ?fn (?*const anyopaque) callconv(.C) godot_bool,
-    is_initialized: ?fn (?*const anyopaque) callconv(.C) godot_bool,
-    initialize: ?fn (?*anyopaque) callconv(.C) godot_bool,
-    uninitialize: ?fn (?*anyopaque) callconv(.C) void,
-    get_render_targetsize: ?fn (?*const anyopaque) callconv(.C) godot_vector2,
-    get_transform_for_eye: ?fn (?*anyopaque, godot_int, [*c]godot_transform) callconv(.C) godot_transform,
-    fill_projection_for_eye: ?fn (?*anyopaque, [*c]godot_real, godot_int, godot_real, godot_real, godot_real) callconv(.C) void,
-    commit_for_eye: ?fn (?*anyopaque, godot_int, [*c]godot_rid, [*c]godot_rect2) callconv(.C) void,
-    process: ?fn (?*anyopaque) callconv(.C) void,
-    get_external_texture_for_eye: ?fn (?*anyopaque, godot_int) callconv(.C) godot_int,
-    notification: ?fn (?*anyopaque, godot_int) callconv(.C) void,
-    get_camera_feed_id: ?fn (?*anyopaque) callconv(.C) godot_int,
+    constructor: ?*const fn (?*godot_object) callconv(.C) ?*anyopaque,
+    destructor: ?*const fn (?*anyopaque) callconv(.C) void,
+    get_name: ?*const fn (?*const anyopaque) callconv(.C) godot_string,
+    get_capabilities: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_anchor_detection_is_enabled: ?*const fn (?*const anyopaque) callconv(.C) godot_bool,
+    set_anchor_detection_is_enabled: ?*const fn (?*anyopaque, godot_bool) callconv(.C) void,
+    is_stereo: ?*const fn (?*const anyopaque) callconv(.C) godot_bool,
+    is_initialized: ?*const fn (?*const anyopaque) callconv(.C) godot_bool,
+    initialize: ?*const fn (?*anyopaque) callconv(.C) godot_bool,
+    uninitialize: ?*const fn (?*anyopaque) callconv(.C) void,
+    get_render_targetsize: ?*const fn (?*const anyopaque) callconv(.C) godot_vector2,
+    get_transform_for_eye: ?*const fn (?*anyopaque, godot_int, [*c]godot_transform) callconv(.C) godot_transform,
+    fill_projection_for_eye: ?*const fn (?*anyopaque, [*c]godot_real, godot_int, godot_real, godot_real, godot_real) callconv(.C) void,
+    commit_for_eye: ?*const fn (?*anyopaque, godot_int, [*c]godot_rid, [*c]godot_rect2) callconv(.C) void,
+    process: ?*const fn (?*anyopaque) callconv(.C) void,
+    get_external_texture_for_eye: ?*const fn (?*anyopaque, godot_int) callconv(.C) godot_int,
+    notification: ?*const fn (?*anyopaque, godot_int) callconv(.C) void,
+    get_camera_feed_id: ?*const fn (?*anyopaque) callconv(.C) godot_int,
 };
 
 // Net
@@ -369,87 +369,87 @@ pub const godot_arvr_interface_gdnative = extern struct {
 pub const godot_net_stream_peer = extern struct {
     version: godot_gdnative_api_version,
     data: ?*godot_object,
-    get_data: ?fn (?*anyopaque, [*c]u8, c_int) callconv(.C) godot_error,
-    get_partial_data: ?fn (?*anyopaque, [*c]u8, c_int, [*c]c_int) callconv(.C) godot_error,
-    put_data: ?fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
-    put_partial_data: ?fn (?*anyopaque, [*c]const u8, c_int, [*c]c_int) callconv(.C) godot_error,
-    get_available_bytes: ?fn (?*const anyopaque) callconv(.C) c_int,
+    get_data: ?*const fn (?*anyopaque, [*c]u8, c_int) callconv(.C) godot_error,
+    get_partial_data: ?*const fn (?*anyopaque, [*c]u8, c_int, [*c]c_int) callconv(.C) godot_error,
+    put_data: ?*const fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
+    put_partial_data: ?*const fn (?*anyopaque, [*c]const u8, c_int, [*c]c_int) callconv(.C) godot_error,
+    get_available_bytes: ?*const fn (?*const anyopaque) callconv(.C) c_int,
     next: ?*anyopaque,
 };
 
 pub const godot_net_packet_peer = extern struct {
     version: godot_gdnative_api_version,
     data: ?*godot_object,
-    get_packet: ?fn (?*anyopaque, [*c][*c]const u8, [*c]c_int) callconv(.C) godot_error,
-    put_packet: ?fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
-    get_available_packet_count: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_max_packet_size: ?fn (?*const anyopaque) callconv(.C) godot_int,
+    get_packet: ?*const fn (?*anyopaque, [*c][*c]const u8, [*c]c_int) callconv(.C) godot_error,
+    put_packet: ?*const fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
+    get_available_packet_count: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_max_packet_size: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
     next: ?*anyopaque,
 };
 
 pub const godot_net_multiplayer_peer = extern struct {
     version: godot_gdnative_api_version,
     data: ?*godot_object,
-    get_packet: ?fn (?*anyopaque, [*c][*c]const u8, [*c]c_int) callconv(.C) godot_error,
-    put_packet: ?fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
-    get_available_packet_count: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_max_packet_size: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    set_transfer_mode: ?fn (?*anyopaque, godot_int) callconv(.C) void,
-    get_transfer_mode: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    set_target_peer: ?fn (?*anyopaque, godot_int) callconv(.C) void,
-    get_packet_peer: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    is_server: ?fn (?*const anyopaque) callconv(.C) godot_bool,
-    poll: ?fn (?*anyopaque) callconv(.C) void,
-    get_unique_id: ?fn (?*const anyopaque) callconv(.C) i32,
-    set_refuse_new_connections: ?fn (?*anyopaque, godot_bool) callconv(.C) void,
-    is_refusing_new_connections: ?fn (?*const anyopaque) callconv(.C) godot_bool,
-    get_connection_status: ?fn (?*const anyopaque) callconv(.C) godot_int,
+    get_packet: ?*const fn (?*anyopaque, [*c][*c]const u8, [*c]c_int) callconv(.C) godot_error,
+    put_packet: ?*const fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
+    get_available_packet_count: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_max_packet_size: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    set_transfer_mode: ?*const fn (?*anyopaque, godot_int) callconv(.C) void,
+    get_transfer_mode: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    set_target_peer: ?*const fn (?*anyopaque, godot_int) callconv(.C) void,
+    get_packet_peer: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    is_server: ?*const fn (?*const anyopaque) callconv(.C) godot_bool,
+    poll: ?*const fn (?*anyopaque) callconv(.C) void,
+    get_unique_id: ?*const fn (?*const anyopaque) callconv(.C) i32,
+    set_refuse_new_connections: ?*const fn (?*anyopaque, godot_bool) callconv(.C) void,
+    is_refusing_new_connections: ?*const fn (?*const anyopaque) callconv(.C) godot_bool,
+    get_connection_status: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
     next: ?*anyopaque,
 };
 
 pub const godot_net_webrtc_library = extern struct {
     version: godot_gdnative_api_version,
-    unregistered: ?fn (...) callconv(.C) void,
-    create_peer_connection: ?fn (?*godot_object) callconv(.C) godot_error,
+    unregistered: ?*const fn (...) callconv(.C) void,
+    create_peer_connection: ?*const fn (?*godot_object) callconv(.C) godot_error,
     next: ?*anyopaque,
 };
 
 pub const godot_net_webrtc_peer_connection = extern struct {
     version: godot_gdnative_api_version,
     data: ?*godot_object,
-    get_connection_state: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    initialize: ?fn (?*anyopaque, [*c]const godot_dictionary) callconv(.C) godot_error,
-    create_data_channel: ?fn (?*anyopaque, [*c]const u8, [*c]const godot_dictionary) callconv(.C) ?*godot_object,
-    create_offer: ?fn (?*anyopaque) callconv(.C) godot_error,
-    create_answer: ?fn (?*anyopaque) callconv(.C) godot_error,
-    set_remote_description: ?fn (?*anyopaque, [*c]const u8, [*c]const u8) callconv(.C) godot_error,
-    set_local_description: ?fn (?*anyopaque, [*c]const u8, [*c]const u8) callconv(.C) godot_error,
-    add_ice_candidate: ?fn (?*anyopaque, [*c]const u8, c_int, [*c]const u8) callconv(.C) godot_error,
-    poll: ?fn (?*anyopaque) callconv(.C) godot_error,
-    close: ?fn (?*anyopaque) callconv(.C) void,
+    get_connection_state: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    initialize: ?*const fn (?*anyopaque, [*c]const godot_dictionary) callconv(.C) godot_error,
+    create_data_channel: ?*const fn (?*anyopaque, [*c]const u8, [*c]const godot_dictionary) callconv(.C) ?*godot_object,
+    create_offer: ?*const fn (?*anyopaque) callconv(.C) godot_error,
+    create_answer: ?*const fn (?*anyopaque) callconv(.C) godot_error,
+    set_remote_description: ?*const fn (?*anyopaque, [*c]const u8, [*c]const u8) callconv(.C) godot_error,
+    set_local_description: ?*const fn (?*anyopaque, [*c]const u8, [*c]const u8) callconv(.C) godot_error,
+    add_ice_candidate: ?*const fn (?*anyopaque, [*c]const u8, c_int, [*c]const u8) callconv(.C) godot_error,
+    poll: ?*const fn (?*anyopaque) callconv(.C) godot_error,
+    close: ?*const fn (?*anyopaque) callconv(.C) void,
     next: ?*anyopaque,
 };
 
 pub const godot_net_webrtc_data_channel = extern struct {
     version: godot_gdnative_api_version,
     data: ?*godot_object,
-    get_packet: ?fn (?*anyopaque, [*c][*c]const u8, [*c]c_int) callconv(.C) godot_error,
-    put_packet: ?fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
-    get_available_packet_count: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_max_packet_size: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    set_write_mode: ?fn (?*anyopaque, godot_int) callconv(.C) void,
-    get_write_mode: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    was_string_packet: ?fn (?*const anyopaque) callconv(.C) bool,
-    get_ready_state: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_label: ?fn (?*const anyopaque) callconv(.C) [*c]const u8,
-    is_ordered: ?fn (?*const anyopaque) callconv(.C) bool,
-    get_id: ?fn (?*const anyopaque) callconv(.C) c_int,
-    get_max_packet_life_time: ?fn (?*const anyopaque) callconv(.C) c_int,
-    get_max_retransmits: ?fn (?*const anyopaque) callconv(.C) c_int,
-    get_protocol: ?fn (?*const anyopaque) callconv(.C) [*c]const u8,
-    is_negotiated: ?fn (?*const anyopaque) callconv(.C) bool,
-    poll: ?fn (?*anyopaque) callconv(.C) godot_error,
-    close: ?fn (?*anyopaque) callconv(.C) void,
+    get_packet: ?*const fn (?*anyopaque, [*c][*c]const u8, [*c]c_int) callconv(.C) godot_error,
+    put_packet: ?*const fn (?*anyopaque, [*c]const u8, c_int) callconv(.C) godot_error,
+    get_available_packet_count: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_max_packet_size: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    set_write_mode: ?*const fn (?*anyopaque, godot_int) callconv(.C) void,
+    get_write_mode: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    was_string_packet: ?*const fn (?*const anyopaque) callconv(.C) bool,
+    get_ready_state: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_label: ?*const fn (?*const anyopaque) callconv(.C) [*c]const u8,
+    is_ordered: ?*const fn (?*const anyopaque) callconv(.C) bool,
+    get_id: ?*const fn (?*const anyopaque) callconv(.C) c_int,
+    get_max_packet_life_time: ?*const fn (?*const anyopaque) callconv(.C) c_int,
+    get_max_retransmits: ?*const fn (?*const anyopaque) callconv(.C) c_int,
+    get_protocol: ?*const fn (?*const anyopaque) callconv(.C) [*c]const u8,
+    is_negotiated: ?*const fn (?*const anyopaque) callconv(.C) bool,
+    poll: ?*const fn (?*anyopaque) callconv(.C) godot_error,
+    close: ?*const fn (?*anyopaque) callconv(.C) void,
     next: ?*anyopaque,
 };
 
@@ -460,16 +460,16 @@ pub const godot_pluginscript_script_data = anyopaque;
 pub const godot_pluginscript_language_data = anyopaque;
 
 pub const godot_pluginscript_instance_desc = extern struct {
-    init: ?fn (?*godot_pluginscript_script_data, ?*godot_object) callconv(.C) ?*godot_pluginscript_instance_data,
-    finish: ?fn (?*godot_pluginscript_instance_data) callconv(.C) void,
-    set_prop: ?fn (?*godot_pluginscript_instance_data, [*c]const godot_string, [*c]const godot_variant) callconv(.C) godot_bool,
-    get_prop: ?fn (?*godot_pluginscript_instance_data, [*c]const godot_string, [*c]godot_variant) callconv(.C) godot_bool,
-    call_method: ?fn (?*godot_pluginscript_instance_data, [*c]const godot_string_name, [*c][*c]const godot_variant, c_int, [*c]godot_variant_call_error) callconv(.C) godot_variant,
-    notification: ?fn (?*godot_pluginscript_instance_data, c_int) callconv(.C) void,
-    get_rpc_mode: ?fn (?*godot_pluginscript_instance_data, [*c]const godot_string) callconv(.C) godot_method_rpc_mode,
-    get_rset_mode: ?fn (?*godot_pluginscript_instance_data, [*c]const godot_string) callconv(.C) godot_method_rpc_mode,
-    refcount_incremented: ?fn (?*godot_pluginscript_instance_data) callconv(.C) void,
-    refcount_decremented: ?fn (?*godot_pluginscript_instance_data) callconv(.C) bool,
+    init: ?*const fn (?*godot_pluginscript_script_data, ?*godot_object) callconv(.C) ?*godot_pluginscript_instance_data,
+    finish: ?*const fn (?*godot_pluginscript_instance_data) callconv(.C) void,
+    set_prop: ?*const fn (?*godot_pluginscript_instance_data, [*c]const godot_string, [*c]const godot_variant) callconv(.C) godot_bool,
+    get_prop: ?*const fn (?*godot_pluginscript_instance_data, [*c]const godot_string, [*c]godot_variant) callconv(.C) godot_bool,
+    call_method: ?*const fn (?*godot_pluginscript_instance_data, [*c]const godot_string_name, [*c][*c]const godot_variant, c_int, [*c]godot_variant_call_error) callconv(.C) godot_variant,
+    notification: ?*const fn (?*godot_pluginscript_instance_data, c_int) callconv(.C) void,
+    get_rpc_mode: ?*const fn (?*godot_pluginscript_instance_data, [*c]const godot_string) callconv(.C) godot_method_rpc_mode,
+    get_rset_mode: ?*const fn (?*godot_pluginscript_instance_data, [*c]const godot_string) callconv(.C) godot_method_rpc_mode,
+    refcount_incremented: ?*const fn (?*godot_pluginscript_instance_data) callconv(.C) void,
+    refcount_decremented: ?*const fn (?*godot_pluginscript_instance_data) callconv(.C) bool,
 };
 
 pub const godot_pluginscript_script_manifest = extern struct {
@@ -484,8 +484,8 @@ pub const godot_pluginscript_script_manifest = extern struct {
 };
 
 pub const godot_pluginscript_script_desc = extern struct {
-    init: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string, [*c]godot_error) callconv(.C) godot_pluginscript_script_manifest,
-    finish: ?fn (?*godot_pluginscript_script_data) callconv(.C) void,
+    init: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string, [*c]godot_error) callconv(.C) godot_pluginscript_script_manifest,
+    finish: ?*const fn (?*godot_pluginscript_script_data) callconv(.C) void,
     instance_desc: godot_pluginscript_instance_desc,
 };
 
@@ -501,36 +501,36 @@ pub const godot_pluginscript_language_desc = extern struct {
     type: [*c]const u8,
     extension: [*c]const u8,
     recognized_extensions: [*c][*c]const u8,
-    init: ?fn (...) callconv(.C) ?*godot_pluginscript_language_data,
-    finish: ?fn (?*godot_pluginscript_language_data) callconv(.C) void,
+    init: ?*const fn (...) callconv(.C) ?*godot_pluginscript_language_data,
+    finish: ?*const fn (?*godot_pluginscript_language_data) callconv(.C) void,
     reserved_words: [*c][*c]const u8,
     comment_delimiters: [*c][*c]const u8,
     string_delimiters: [*c][*c]const u8,
     has_named_classes: godot_bool,
     supports_builtin_mode: godot_bool,
-    get_template_source_code: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string) callconv(.C) godot_string,
-    validate: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]c_int, [*c]c_int, [*c]godot_string, [*c]const godot_string, [*c]godot_pool_string_array) callconv(.C) godot_bool,
-    find_function: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string) callconv(.C) c_int,
-    make_function: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string, [*c]const godot_pool_string_array) callconv(.C) godot_string,
-    complete_code: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string, ?*godot_object, [*c]godot_array, [*c]godot_bool, [*c]godot_string) callconv(.C) godot_error,
-    auto_indent_code: ?fn (?*godot_pluginscript_language_data, [*c]godot_string, c_int, c_int) callconv(.C) void,
-    add_global_constant: ?fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_variant) callconv(.C) void,
-    debug_get_error: ?fn (?*godot_pluginscript_language_data) callconv(.C) godot_string,
-    debug_get_stack_level_count: ?fn (?*godot_pluginscript_language_data) callconv(.C) c_int,
-    debug_get_stack_level_line: ?fn (?*godot_pluginscript_language_data, c_int) callconv(.C) c_int,
-    debug_get_stack_level_function: ?fn (?*godot_pluginscript_language_data, c_int) callconv(.C) godot_string,
-    debug_get_stack_level_source: ?fn (?*godot_pluginscript_language_data, c_int) callconv(.C) godot_string,
-    debug_get_stack_level_locals: ?fn (?*godot_pluginscript_language_data, c_int, [*c]godot_pool_string_array, [*c]godot_array, c_int, c_int) callconv(.C) void,
-    debug_get_stack_level_members: ?fn (?*godot_pluginscript_language_data, c_int, [*c]godot_pool_string_array, [*c]godot_array, c_int, c_int) callconv(.C) void,
-    debug_get_globals: ?fn (?*godot_pluginscript_language_data, [*c]godot_pool_string_array, [*c]godot_array, c_int, c_int) callconv(.C) void,
-    debug_parse_stack_level_expression: ?fn (?*godot_pluginscript_language_data, c_int, [*c]const godot_string, c_int, c_int) callconv(.C) godot_string,
-    get_public_functions: ?fn (?*godot_pluginscript_language_data, [*c]godot_array) callconv(.C) void,
-    get_public_constants: ?fn (?*godot_pluginscript_language_data, [*c]godot_dictionary) callconv(.C) void,
-    profiling_start: ?fn (?*godot_pluginscript_language_data) callconv(.C) void,
-    profiling_stop: ?fn (?*godot_pluginscript_language_data) callconv(.C) void,
-    profiling_get_accumulated_data: ?fn (?*godot_pluginscript_language_data, [*c]godot_pluginscript_profiling_data, c_int) callconv(.C) c_int,
-    profiling_get_frame_data: ?fn (?*godot_pluginscript_language_data, [*c]godot_pluginscript_profiling_data, c_int) callconv(.C) c_int,
-    profiling_frame: ?fn (?*godot_pluginscript_language_data) callconv(.C) void,
+    get_template_source_code: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string) callconv(.C) godot_string,
+    validate: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]c_int, [*c]c_int, [*c]godot_string, [*c]const godot_string, [*c]godot_pool_string_array) callconv(.C) godot_bool,
+    find_function: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string) callconv(.C) c_int,
+    make_function: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string, [*c]const godot_pool_string_array) callconv(.C) godot_string,
+    complete_code: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_string, ?*godot_object, [*c]godot_array, [*c]godot_bool, [*c]godot_string) callconv(.C) godot_error,
+    auto_indent_code: ?*const fn (?*godot_pluginscript_language_data, [*c]godot_string, c_int, c_int) callconv(.C) void,
+    add_global_constant: ?*const fn (?*godot_pluginscript_language_data, [*c]const godot_string, [*c]const godot_variant) callconv(.C) void,
+    debug_get_error: ?*const fn (?*godot_pluginscript_language_data) callconv(.C) godot_string,
+    debug_get_stack_level_count: ?*const fn (?*godot_pluginscript_language_data) callconv(.C) c_int,
+    debug_get_stack_level_line: ?*const fn (?*godot_pluginscript_language_data, c_int) callconv(.C) c_int,
+    debug_get_stack_level_function: ?*const fn (?*godot_pluginscript_language_data, c_int) callconv(.C) godot_string,
+    debug_get_stack_level_source: ?*const fn (?*godot_pluginscript_language_data, c_int) callconv(.C) godot_string,
+    debug_get_stack_level_locals: ?*const fn (?*godot_pluginscript_language_data, c_int, [*c]godot_pool_string_array, [*c]godot_array, c_int, c_int) callconv(.C) void,
+    debug_get_stack_level_members: ?*const fn (?*godot_pluginscript_language_data, c_int, [*c]godot_pool_string_array, [*c]godot_array, c_int, c_int) callconv(.C) void,
+    debug_get_globals: ?*const fn (?*godot_pluginscript_language_data, [*c]godot_pool_string_array, [*c]godot_array, c_int, c_int) callconv(.C) void,
+    debug_parse_stack_level_expression: ?*const fn (?*godot_pluginscript_language_data, c_int, [*c]const godot_string, c_int, c_int) callconv(.C) godot_string,
+    get_public_functions: ?*const fn (?*godot_pluginscript_language_data, [*c]godot_array) callconv(.C) void,
+    get_public_constants: ?*const fn (?*godot_pluginscript_language_data, [*c]godot_dictionary) callconv(.C) void,
+    profiling_start: ?*const fn (?*godot_pluginscript_language_data) callconv(.C) void,
+    profiling_stop: ?*const fn (?*godot_pluginscript_language_data) callconv(.C) void,
+    profiling_get_accumulated_data: ?*const fn (?*godot_pluginscript_language_data, [*c]godot_pluginscript_profiling_data, c_int) callconv(.C) c_int,
+    profiling_get_frame_data: ?*const fn (?*godot_pluginscript_language_data, [*c]godot_pluginscript_profiling_data, c_int) callconv(.C) c_int,
+    profiling_frame: ?*const fn (?*godot_pluginscript_language_data) callconv(.C) void,
     script_desc: godot_pluginscript_script_desc,
 };
 
@@ -539,21 +539,21 @@ pub const godot_pluginscript_language_desc = extern struct {
 pub const godot_videodecoder_interface_gdnative = extern struct {
     version: godot_gdnative_api_version,
     next: ?*anyopaque,
-    constructor: ?fn (?*godot_object) callconv(.C) ?*anyopaque,
-    destructor: ?fn (?*anyopaque) callconv(.C) void,
-    get_plugin_name: ?fn () callconv(.C) [*c]const u8,
-    get_supported_extensions: ?fn ([*c]c_int) callconv(.C) [*c][*c]const u8,
-    open_file: ?fn (?*anyopaque, ?*anyopaque) callconv(.C) godot_bool,
-    get_length: ?fn (?*const anyopaque) callconv(.C) godot_real,
-    get_playback_position: ?fn (?*const anyopaque) callconv(.C) godot_real,
-    seek: ?fn (?*anyopaque, godot_real) callconv(.C) void,
-    set_audio_track: ?fn (?*anyopaque, godot_int) callconv(.C) void,
-    update: ?fn (?*anyopaque, godot_real) callconv(.C) void,
-    get_videoframe: ?fn (?*anyopaque) callconv(.C) [*c]godot_pool_byte_array,
-    get_audioframe: ?fn (?*anyopaque, [*c]f32, c_int) callconv(.C) godot_int,
-    get_channels: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_mix_rate: ?fn (?*const anyopaque) callconv(.C) godot_int,
-    get_texture_size: ?fn (?*const anyopaque) callconv(.C) godot_vector2,
+    constructor: ?*const fn (?*godot_object) callconv(.C) ?*anyopaque,
+    destructor: ?*const fn (?*anyopaque) callconv(.C) void,
+    get_plugin_name: ?*const fn () callconv(.C) [*c]const u8,
+    get_supported_extensions: ?*const fn ([*c]c_int) callconv(.C) [*c][*c]const u8,
+    open_file: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) godot_bool,
+    get_length: ?*const fn (?*const anyopaque) callconv(.C) godot_real,
+    get_playback_position: ?*const fn (?*const anyopaque) callconv(.C) godot_real,
+    seek: ?*const fn (?*anyopaque, godot_real) callconv(.C) void,
+    set_audio_track: ?*const fn (?*anyopaque, godot_int) callconv(.C) void,
+    update: ?*const fn (?*anyopaque, godot_real) callconv(.C) void,
+    get_videoframe: ?*const fn (?*anyopaque) callconv(.C) [*c]godot_pool_byte_array,
+    get_audioframe: ?*const fn (?*anyopaque, [*c]f32, c_int) callconv(.C) godot_int,
+    get_channels: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_mix_rate: ?*const fn (?*const anyopaque) callconv(.C) godot_int,
+    get_texture_size: ?*const fn (?*const anyopaque) callconv(.C) godot_vector2,
 };
 
 // Android Java

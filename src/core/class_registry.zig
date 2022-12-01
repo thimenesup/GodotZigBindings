@@ -19,7 +19,7 @@ pub fn deinitTypeTagRegistry() void {
 
 pub fn ensureTypeIsGodotClassPointer(comptime T: type) void {
     const type_info = @typeInfo(T);
-    const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+    const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
     switch (type_info) {
         type_tag.Pointer => {
@@ -192,7 +192,14 @@ pub fn DefineGodotClass(comptime class: type, comptime base: type) type {
         }
 
         pub inline fn _getClassName() [*:0]const u8 {
-            return @typeName(class);
+            const class_name = comptime blk: { // Remove parent namespace from type
+                const type_name = @typeName(class);
+                const class_index = std.mem.indexOf(u8, type_name, ".");
+                const name = type_name[(class_index.? + 1)..type_name.len];
+                break :blk name;
+            };
+            
+            return class_name;
         }
 
         pub inline fn _getBaseClassName() [*:0]const u8 {

@@ -680,7 +680,7 @@ pub const Variant = struct {
 
     pub fn variantAsType(comptime T: type) (fn([*c]gd.godot_variant) callconv(.Inline) T) {
         const type_info = @typeInfo(T);
-        const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+        const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
         switch (type_info) {
             type_tag.Struct => {
@@ -1021,7 +1021,7 @@ pub const Variant = struct {
 
     pub fn typeAsVariant(comptime T: type) (fn(T) callconv(.Inline) gd.godot_variant) {
         const type_info = @typeInfo(T);
-        const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+        const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
         switch (type_info) {
             type_tag.Struct => {
@@ -1046,8 +1046,10 @@ pub const Variant = struct {
             type_tag.ComptimeFloat => {
                 return comptimeFloatAsGodotVariant;
             },
-            type_tag.Pointer => { //NOTE: For now it assumes that pointer is a [*]u8 string
-                return @ptrCast((fn(T) callconv(.Inline) gd.godot_variant), cstringAsGodotVariant); //Must cast since it will expect the param size to EXACTLY match
+            type_tag.Pointer => {
+                if (type_info.Pointer.child == u8) {
+                    return cstringAsGodotVariant;
+                }
             },
             else => {},
         }
@@ -1135,7 +1137,7 @@ pub const Variant = struct {
 
     pub fn typeToVariantType(comptime T: type) Type {
         const type_info = @typeInfo(T);
-        const type_tag = @typeInfo(std.builtin.TypeInfo).Union.tag_type.?;
+        const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
         switch (type_info) {
             type_tag.Struct => {
