@@ -1,12 +1,16 @@
 # Zig lang bindings for Godot GDNative
 
-For Zig Version 0.10.0 and Godot 3.2.0+
+For Zig Version 0.11.0 and Godot 3.2.0+
 
 ## Building
 
-Add the "GDNATIVE_HEADERS" environment variable pointing to your header path
+To retreive the headers
 
-For the first time, you must generate the class files too with this option
+```
+zig build
+```
+
+You must generate the class files too with this option
 
 ```
 zig build -Dgenerate_bindings=true
