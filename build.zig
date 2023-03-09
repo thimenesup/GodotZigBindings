@@ -4,13 +4,18 @@ const String = std.ArrayList(u8);
 const BindingGenerator = @import("binding_generator.zig");
 
 pub fn build(b: *std.build.Builder) !void {
-    const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
+    try defaultBuild(b);
+}
 
-    const gdnative_headers = try std.process.getEnvVarOwned(b.allocator, "GDNATIVE_HEADERS");
-    defer b.allocator.free(gdnative_headers);
+fn defaultBuild(b: *std.build.Builder) !void {
+    const target = b.standardTargetOptions(.{});
+    //const mode = b.standardReleaseOptions();
+    const mode = b.standardOptimizeOption(.{});
+
+    const gdnative_headers = b.pathFromRoot("./godot-headers");
 
     const generate_bindings = b.option(bool, "generate_bindings", "Generate Zig class file bindings") orelse false;
+
     if (generate_bindings) {
         var gdnative_file_path = String.init(b.allocator);
         defer gdnative_file_path.deinit();
@@ -38,6 +43,8 @@ pub fn build(b: *std.build.Builder) !void {
         std.debug.print("Generating Zig class file bindings...\n", .{});
         try BindingGenerator.generateClassBindings(api_file_path.items);
         std.debug.print("Done generating Zig class file bindings\n", .{});
+    }else{
+        _ = try b.exec(&.{"git", "clone", "-b", "3.x", "https://github.com/godotengine/godot-headers.git"});
     }
 
     _ = target;

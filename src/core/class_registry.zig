@@ -332,48 +332,48 @@ fn FunctionWrapper(comptime function: anytype) type {
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
 
-            switch(fn_info.args.len) { //TODO: Find if its possible to this automatically
+            switch(fn_info.params.len) { //TODO: Find if its possible to this automatically
                 1 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 2 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 3 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 4 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[3]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[3]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 5 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[3]),
-                        Variant.variantAsType(fn_info.args[4].arg_type.?)(args[4]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[3]),
+                        Variant.variantAsType(fn_info.params[4].type.?)(args[4]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
@@ -419,56 +419,56 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
             const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
 
-            comptime if (fn_info.args.len == 0) {
+            comptime if (fn_info.params.len == 0) {
                 @compileError("A method needs to take atleast the struct parameter");
             };
 
-            comptime if (fn_info.args[0].arg_type.? != *class and fn_info.args[0].arg_type.? != *const class) {
+            comptime if (fn_info.params[0].type.? != *class and fn_info.params[0].type.? != *const class) {
                 @compileError("The first parameter of a method should be the struct");
             };
 
-            switch(fn_info.args.len) { //TODO: Find if its possible to this automatically
+            switch(fn_info.params.len) { //TODO: Find if its possible to this automatically
                 1 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 2 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 3 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 4 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[2]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 5 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[2]),
-                        Variant.variantAsType(fn_info.args[4].arg_type.?)(args[3]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[4].type.?)(args[3]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
@@ -545,7 +545,7 @@ fn PropertySetWrapper(comptime class: type, comptime function: anytype) type {
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
             const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
 
-            _ = @call(.{}, function, .{ struct_instance, Variant.variantAsType(fn_info.args[1].arg_type.?)(variant_value) });
+            _ = @call(.auto, function, .{ struct_instance, Variant.variantAsType(fn_info.params[1].type.?)(variant_value) });
         }
 
     };
@@ -561,7 +561,7 @@ fn PropertyGetWrapper(comptime class: type, comptime function: anytype) type {
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
             const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
 
-            const result = @call(.{}, function, .{ struct_instance });
+            const result = @call(.auto, function, .{ struct_instance });
             return Variant.typeAsVariant(fn_info.return_type.?)(result);
         }
 
@@ -629,7 +629,7 @@ pub fn registerSignal(comptime class: type, name: [*:0]const u8, comptime args: 
         defer api.core.godot_free.?(signal.args);
         @memset(@ptrCast([*]u8, arg_data), 0, @intCast(usize, arg_data_size));
 
-        inline for (args) |arg, i| {
+        inline for (args,0..) |arg, i| {
             const arg_name = arg[0];
             const arg_type = @enumToInt(Variant.typeToVariantType(arg[1]));
             
