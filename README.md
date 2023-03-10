@@ -4,22 +4,28 @@ For Zig Version 0.11.0 and Godot 3.2.0+
 
 ## Building
 
-To retreive the headers
+To retrieve the headers and generate the bindings
+
+```
+zig build -DgetHeaders=true
+```
+
+If no arguments are specified, then it'll only generate the bindings without retrieving the headers
 
 ```
 zig build
 ```
 
-You must generate the class files too with this option
+You may also get the headers without generating the bindings
 
 ```
-zig build -Dgenerate_bindings=true
+zig build -DgetHeaders=true -Dgenerate=false
 ```
 
 You can also use the following option to generate the bindings using your custom json api file
 
 ```
-zig build -Dgenerate_bindings=true -Dcustom_api_file="mydir/my_json.api"
+zig build -Dcustom_api_file="mydir/my_json.api"
 ```
 
 ## Example usage
@@ -29,7 +35,3 @@ The "test_example" folder contains an explained minimal example of how to use th
 ```
 zig build
 ```
-
-## Warning
-
-Due to a Zig bug with C ABI compatibility (apparently only on x86_64-windows) https://github.com/ziglang/zig/issues/1481 structs returned from functions with sizeof <= 16 will not be correct and cause undefined behaviour, crashes etc... so if your code is crashing this is likely why
