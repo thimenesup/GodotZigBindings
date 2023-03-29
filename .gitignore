@@ -8,3 +8,4 @@ zig-out
 #Auto generated files
 src/core/gdnative_api.zig
 src/classes
+/godot-headers/

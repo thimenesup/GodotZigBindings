@@ -13,18 +13,18 @@ pub fn build(b: *std.build.Builder) !void {
     const getHeaders = b.option(bool, "getHeaders", "Specify a custom Godot api json file for generating Zig class files") orelse false;
     const doGen = b.option(bool, "generate", "Generate Zig bindings") orelse true;
 
-    if(getHeaders){
+    if (getHeaders) {
         try doGetHeaders(b);
     }
 
-    if(doGen){
+    if (doGen) {
         try doGenerate(b);
     }
 }
 
-fn doGetHeaders(b: *std.build.Builder) !void{
+fn doGetHeaders(b: *std.build.Builder) !void {
     std.debug.print("Retrieving headers...\n", .{});
-    _ = try b.exec(&.{"git", "clone", "-b", "3.x", "https://github.com/godotengine/godot-headers.git"});
+    _ = b.exec(&.{ "git", "clone", "-b", "3.x", "https://github.com/godotengine/godot-headers.git" });
     std.debug.print("Headers retrieved successfully!\n", .{});
 }
 
@@ -41,16 +41,12 @@ fn doGenerate(b: *std.build.Builder) !void {
     try BindingGenerator.generateGDNativeAPI(gdnative_file_path.items);
     std.debug.print("Done generating Zig gdnative api\n", .{});
 
-
     var api_file_path = String.init(b.allocator);
     defer api_file_path.deinit();
 
-    if(b.option([]const u8,
-        "custom_api_file",
-        "Specify a custom Godot api json file for generating Zig class files"
-    ))|custom_api_file|{
+    if (b.option([]const u8, "custom_api_file", "Specify a custom Godot api json file for generating Zig class files")) |custom_api_file| {
         try api_file_path.appendSlice(custom_api_file);
-    }else{
+    } else {
         try api_file_path.appendSlice(gdnative_headers);
         try api_file_path.appendSlice("/api.json");
     }
@@ -59,4 +55,3 @@ fn doGenerate(b: *std.build.Builder) !void {
     try BindingGenerator.generateClassBindings(api_file_path.items);
     std.debug.print("Done generating Zig class file bindings\n", .{});
 }
-
