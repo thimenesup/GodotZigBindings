@@ -854,7 +854,7 @@ fn writeAPI(api: *const std.json.ObjectMap, string: *String, is_core: bool, is_r
         var converted_return_type = convertGDNativeType(return_type);
         defer converted_return_type.deinit();
 
-        std.fmt.format(string.writer(), "    {s}: ?fn ({s}) callconv(.C) {s},\n", .{ function_name, converted_args.items, converted_return_type.items }) catch {};
+        std.fmt.format(string.writer(), "    {s}: ?*fn ({s}) callconv(.C) {s},\n", .{ function_name, converted_args.items, converted_return_type.items }) catch {};
     }
 
     string.appendSlice("};\n\n") catch {}; //API Struct end
