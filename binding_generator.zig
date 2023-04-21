@@ -499,7 +499,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
                 try std.fmt.format(string.writer(), "        var _bind_args = [_]?*const anyopaque {{{s} }};\n", .{bind_args.items});
 
-                try std.fmt.format(string.writer(), "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", .{escaped_method_name.items});
+                try std.fmt.format(string.writer(), "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, @ptrCast(?*anyopaque, &ret));\n", .{escaped_method_name.items});
 
                 if (isClassType(return_type)) { //Must use instance binding
                     try string.appendSlice("        if (ret != null) {\n");
