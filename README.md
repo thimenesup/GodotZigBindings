@@ -2,21 +2,15 @@
 
 For Zig Version 0.10.0 and Godot 3.2.0+
 
-## Building
+## Package Usage
 
-Add the "GDNATIVE_HEADERS" environment variable pointing to your header path
-
-For the first time, you must generate the class files too with this option
+Before you use this as a package, you must generate the GDNative and class files for Zig, this is done by bulding with the following options
 
 ```
-zig build -Dgenerate_bindings=true
+zig build -Dgdnative="mydir/gdnative_api.json" -Dclasses="mydir/api.json"
 ```
 
-You can also use the following option to generate the bindings using your custom json api file
-
-```
-zig build -Dgenerate_bindings=true -Dcustom_api_file="mydir/my_json.api"
-```
+These options correspond to the files that are found in Godot's GDNative, [**which you can get here**](https://github.com/godotengine/godot-headers)
 
 ## Example usage
 
@@ -25,7 +19,3 @@ The "test_example" folder contains an explained minimal example of how to use th
 ```
 zig build
 ```
-
-## Warning
-
-Due to a Zig bug with C ABI compatibility (apparently only on x86_64-windows) https://github.com/ziglang/zig/issues/1481 structs returned from functions with sizeof <= 16 will not be correct and cause undefined behaviour, crashes etc... so if your code is crashing this is likely why
