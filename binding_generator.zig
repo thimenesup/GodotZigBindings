@@ -564,7 +564,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                     .{ bind_args.items });
 
                 try std.fmt.format(string.writer(), 
-                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, &ret);\n", 
+                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, @ptrCast(?*anyopaque, &ret));\n", 
                     .{ escaped_method_name.items });
                 
                 if (isClassType(return_type)) { //Must use instance binding
@@ -942,7 +942,7 @@ fn writeAPI(api: *const std.json.ObjectMap, string: *String, is_core: bool, is_r
         var converted_return_type = convertGDNativeType(return_type);
         defer converted_return_type.deinit();
 
-        std.fmt.format(string.writer(), "    {s}: ?fn ({s}) callconv(.C) {s},\n", .{ function_name, converted_args.items, converted_return_type.items }) catch {};
+        std.fmt.format(string.writer(), "    {s}: ?*fn ({s}) callconv(.C) {s},\n", .{ function_name, converted_args.items, converted_return_type.items }) catch {};
     }
 
     string.appendSlice("};\n\n") catch {}; //API Struct end
