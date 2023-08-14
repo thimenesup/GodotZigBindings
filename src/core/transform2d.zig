@@ -213,7 +213,7 @@ pub const Transform2D = extern struct {
     }
 
     pub inline fn equal(self: *const Self, other: *const Transform2D) bool { //Operator ==
-        inline for (self.elements) |element, i| {
+        inline for (self.elements, 0..) |element, i| {
             _ = element;
             if (self.elements[i].notEqual(other.elements[i])) {
                 return false;
@@ -224,7 +224,7 @@ pub const Transform2D = extern struct {
     }
 
     pub inline fn notEqual(self: *const Self, other: *const Transform2D) bool { //Operator !=
-        inline for (self.elements) |element, i| {
+        inline for (self.elements, 0..) |element, i| {
             _ = element;
             if (self.elements[i].notEqual(other.elements[i])) {
                 return true;

@@ -57,7 +57,7 @@ pub fn ensureTypeIsGodotClassPointer(comptime T: type) void {
 
 pub fn castTo(comptime class: type, object: anytype) ?*class { //This makes it less annoying to cast godot objects, without needing to dig for class.base:wrapped
     comptime ensureTypeIsGodotClassPointer(@TypeOf(object)); //While also still having compile time safety checks
-    const wrapped = @ptrCast(?*Wrapped, object);
+    const wrapped: ?*Wrapped = @ptrCast(object);
     return wrappedCastTo(class, wrapped);
 }
 
@@ -72,7 +72,8 @@ pub fn wrappedCastTo(comptime class: type, object: ?*const Wrapped) ?*class {
             return null;
         }
 
-        const wrapped = @ptrCast(?*Wrapped, custom_object).?;
+        const wrapped_optional: ?*Wrapped = @ptrCast(custom_object);
+        const wrapped = wrapped_optional.?;
 
         if (!isTypeKnown(wrapped.type_tag)) {
             return null;
@@ -88,7 +89,7 @@ pub fn wrappedCastTo(comptime class: type, object: ?*const Wrapped) ?*class {
         }
 
         if (isTypeCompatible(object.?.type_tag, class.GodotClass._getClassId())) {
-            return @intToPtr(?*class, @ptrToInt(object));
+            return @constCast(@ptrCast(object));
         }
     }
 
@@ -100,8 +101,8 @@ pub fn isTypeKnown(type_tag: usize) bool {
 }
 
 pub fn registerGlobalType(name: [*:0]const u8, type_tag: usize, base_type_tag: usize) void {
-    api.nativescript_1_1.godot_nativescript_set_global_type_tag.?(api.language_index, name, @intToPtr(?*anyopaque, type_tag));
-    
+    api.nativescript_1_1.godot_nativescript_set_global_type_tag.?(api.language_index, name, @ptrFromInt(type_tag));
+
     registerType(type_tag, base_type_tag);
 }
 
@@ -138,7 +139,7 @@ pub fn getCustomClassInstance(comptime class: type, object: *const Wrapped) ?*cl
 
     const instance_data = api.nativescript.godot_nativescript_get_userdata.?(object.owner);
     if (instance_data != null) {
-        return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
+        return @ptrCast(@alignCast(instance_data));
     }
     
     return null;
@@ -178,7 +179,7 @@ pub fn createCustomClassInstance(comptime class: type) *class { //TODO: The meth
     }
 
     const instance_data = api.nativescript.godot_nativescript_get_userdata.?(base_object);
-    return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
+    return @ptrCast(@alignCast(instance_data));
 }
 
 
@@ -232,9 +233,9 @@ fn ConstructorWrapper(comptime class: type) type {
         fn functionWrap(p_instance: ?*gd.godot_object, p_method_data: ?*anyopaque) callconv(.C) ?*anyopaque {
             _ = p_method_data;
 
-            var class_instance = @ptrCast(*class, @alignCast(@alignOf(class), api.core.godot_alloc.?(@sizeOf(class))));
-            
-            var wrapped = @ptrCast(*Wrapped, class_instance);
+            var class_instance: *class = @ptrCast(@alignCast(api.core.godot_alloc.?(@sizeOf(class))));
+
+            var wrapped: *Wrapped = @ptrCast(class_instance);
             wrapped.owner = p_instance;
             wrapped.type_tag = class.GodotClass._getClassId();
 
@@ -253,7 +254,7 @@ fn DestructorWrapper(comptime class: type) type {
             _ = p_instance;
             _ = p_method_data;
 
-            var class_instance = @ptrCast(*class, @alignCast(@alignOf(class), p_user_data));
+            var class_instance: *class = @ptrCast(@alignCast(p_user_data));
             class_instance.destructor();
             
             api.core.godot_free.?(class_instance);
@@ -286,7 +287,7 @@ pub fn registerClass(comptime class: type) void {
     api.nativescript.godot_nativescript_register_class.?(api.nativescript_handle, class.GodotClass._getClassName(), class.GodotClass._getBaseClassName(), create, destroy);
 
     registerType(class.GodotClass._getClassId(), class.GodotClass._getBaseClassId());
-    api.nativescript_1_1.godot_nativescript_set_type_tag.?(api.nativescript_handle, class.GodotClass._getClassName(), @intToPtr(?*anyopaque, class.GodotClass._getClassId()));
+    api.nativescript_1_1.godot_nativescript_set_type_tag.?(api.nativescript_handle, class.GodotClass._getClassName(), @ptrFromInt(class.GodotClass._getClassId()));
 
     class.registerMembers();
 }
@@ -315,7 +316,7 @@ pub fn registerToolClass(comptime class: type) void {
     api.nativescript.godot_nativescript_register_tool_class.?(api.nativescript_handle, class.GodotClass._getClassName(), class.GodotClass._getBaseClassName(), create, destroy);
 
     registerType(class.GodotClass._getClassId(), class.GodotClass._getBaseClassId());
-    api.nativescript_1_1.godot_nativescript_set_type_tag.?(api.nativescript_handle, class.GodotClass._getClassName(), @intToPtr(?*anyopaque, class.GodotClass._getClassId()));
+    api.nativescript_1_1.godot_nativescript_set_type_tag.?(api.nativescript_handle, class.GodotClass._getClassName(), @ptrFromInt(class.GodotClass._getClassId()));
 
     class.registerMembers();
 }
@@ -332,48 +333,48 @@ fn FunctionWrapper(comptime function: anytype) type {
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
 
-            switch(fn_info.args.len) { //TODO: Find if its possible to this automatically
+            switch(fn_info.params.len) { //TODO: Find if its possible to this automatically
                 1 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 2 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 3 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 4 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[3]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[3]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 5 => {
-                    const result = @call(.{}, function, .{
-                        Variant.variantAsType(fn_info.args[0].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[2]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[3]),
-                        Variant.variantAsType(fn_info.args[4].arg_type.?)(args[4]),
+                    const result = @call(.auto, function, .{
+                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[3]),
+                        Variant.variantAsType(fn_info.params[4].type.?)(args[4]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
@@ -417,58 +418,58 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
             _ = arg_count;
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
+            const struct_instance: *class = @ptrCast(@alignCast(user_data));
 
-            comptime if (fn_info.args.len == 0) {
+            comptime if (fn_info.params.len == 0) {
                 @compileError("A method needs to take atleast the struct parameter");
             };
 
-            comptime if (fn_info.args[0].arg_type.? != *class and fn_info.args[0].arg_type.? != *const class) {
+            comptime if (fn_info.params[0].type.? != *class and fn_info.params[0].type.? != *const class) {
                 @compileError("The first parameter of a method should be the struct");
             };
 
-            switch(fn_info.args.len) { //TODO: Find if its possible to this automatically
+            switch(fn_info.params.len) { //TODO: Find if its possible to this automatically
                 1 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 2 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 3 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
                     });
                     
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 4 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[2]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
                 },
                 5 => {
-                    const result = @call(.{}, function, .{
+                    const result = @call(.auto, function, .{
                         struct_instance,
-                        Variant.variantAsType(fn_info.args[1].arg_type.?)(args[0]),
-                        Variant.variantAsType(fn_info.args[2].arg_type.?)(args[1]),
-                        Variant.variantAsType(fn_info.args[3].arg_type.?)(args[2]),
-                        Variant.variantAsType(fn_info.args[4].arg_type.?)(args[3]),
+                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
+                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
+                        Variant.variantAsType(fn_info.params[3].type.?)(args[2]),
+                        Variant.variantAsType(fn_info.params[4].type.?)(args[3]),
                     });
 
                     return Variant.typeAsVariant(fn_info.return_type.?)(result);
@@ -510,7 +511,7 @@ fn PropertyDefaultSetWrapper(comptime class: type, comptime field_name: []const 
             _ = godot_object;
             _ = method_data;
 
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
+            const struct_instance: *class = @ptrCast(@alignCast(user_data));
             const field_type = @TypeOf(@field(struct_instance, field_name));
             const value = Variant.variantAsType(field_type)(variant_value);
             @field(struct_instance, field_name) = value;
@@ -526,7 +527,7 @@ fn PropertyDefaultGetWrapper(comptime class: type, comptime field_name: []const 
             _ = godot_object;
             _ = method_data;
 
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
+            const struct_instance: *class = @ptrCast(@alignCast(user_data));
             const field_type = @TypeOf(@field(struct_instance, field_name));
             const value = @field(struct_instance, field_name);
             return Variant.typeAsVariant(field_type)(value);
@@ -543,9 +544,9 @@ fn PropertySetWrapper(comptime class: type, comptime function: anytype) type {
             _ = method_data;
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
+            const struct_instance: *class = @ptrCast(@alignCast(user_data));
 
-            _ = @call(.{}, function, .{ struct_instance, Variant.variantAsType(fn_info.args[1].arg_type.?)(variant_value) });
+            _ = @call(.auto, function, .{ struct_instance, Variant.variantAsType(fn_info.params[1].type.?)(variant_value) });
         }
 
     };
@@ -559,9 +560,9 @@ fn PropertyGetWrapper(comptime class: type, comptime function: anytype) type {
             _ = method_data;
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
-            const struct_instance = @ptrCast(*class, @alignCast(@alignOf(class), user_data));
+            const struct_instance: *class = @ptrCast(@alignCast(user_data));
 
-            const result = @call(.{}, function, .{ struct_instance });
+            const result = @call(.auto, function, .{ struct_instance });
             return Variant.typeAsVariant(fn_info.return_type.?)(result);
         }
 
@@ -581,7 +582,7 @@ pub fn registerProperty(comptime class: type, name: [*:0]const u8, comptime fiel
     defer api.core.godot_string_destroy.?(&godot_string_hint);
 
     var attributes: gd.godot_property_attributes = undefined;
-    attributes.type = @intCast(c_int, api.core.godot_variant_get_type.?(&godot_variant));
+    attributes.type = @intCast(api.core.godot_variant_get_type.?(&godot_variant));
     attributes.default_value = godot_variant;
     attributes.hint = hint;
     attributes.rset_type = rpc_mode;
@@ -625,13 +626,14 @@ pub fn registerSignal(comptime class: type, name: [*:0]const u8, comptime args: 
     if (args.len > 0) {
         const arg_data_size = signal.num_args * @sizeOf(gd.godot_signal_argument);
         const arg_data = api.core.godot_alloc.?(arg_data_size);
-        signal.args = @ptrCast([*c]gd.godot_signal_argument, @alignCast(@alignOf(gd.godot_signal_argument), arg_data));
+        signal.args = @ptrCast(@alignCast(arg_data));
         defer api.core.godot_free.?(signal.args);
-        @memset(@ptrCast([*]u8, arg_data), 0, @intCast(usize, arg_data_size));
+        const arg_data_bytes: [*]u8 = @ptrCast(arg_data);
+        @memset(arg_data_bytes[0..][0..@intCast(arg_data_size)], 0);
 
-        inline for (args) |arg, i| {
+        inline for (args, 0..) |arg, i| {
             const arg_name = arg[0];
-            const arg_type = @enumToInt(Variant.typeToVariantType(arg[1]));
+            const arg_type = @intFromEnum(Variant.typeToVariantType(arg[1]));
             
             var arg_name_string: gd.godot_string = undefined;
             api.core.godot_string_new.?(&arg_name_string);

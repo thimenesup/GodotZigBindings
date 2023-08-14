@@ -502,11 +502,11 @@ pub const Variant = struct {
     }
 
     pub fn getType(self: *const Self) Type {
-        return @intToEnum(Type, api.core.godot_variant_get_type.?(&self.godot_variant));
+        return @enumFromInt(api.core.godot_variant_get_type.?(&self.godot_variant));
     }
 
     pub fn call(self: *Self, method: *const String, args: *[*]const Variant, arg_count: i32) Variant { // Make sure you call .deinit() on returned struct
-        const godot_value = api.core.godot_variant_call.?(&self.godot_variant, &method.godot_string, @ptrCast([*c]gd.godot_variant, args), arg_count, null);
+        const godot_value = api.core.godot_variant_call.?(&self.godot_variant, &method.godot_string, @ptrCast(args), arg_count, null);
         return Variant.initGodotVariant(godot_value);
     }
 
@@ -550,7 +550,7 @@ pub const Variant = struct {
     fn GodotVariantAsInt(comptime T: type) type {
         return struct {
             inline fn function(variant: [*c]gd.godot_variant) T {
-                return @intCast(T, api.core.godot_variant_as_int.?(variant));
+                return @intCast(api.core.godot_variant_as_int.?(variant));
             }
         };
     }
@@ -558,7 +558,7 @@ pub const Variant = struct {
     fn GodotVariantAsUint(comptime T: type) type {
         return struct {
             inline fn function(variant: [*c]gd.godot_variant) T {
-                return @intCast(T, api.core.godot_variant_as_uint.?(variant));
+                return @intCast(api.core.godot_variant_as_uint.?(variant));
             }
         };
     }
@@ -566,7 +566,7 @@ pub const Variant = struct {
     fn GodotVariantAsFloat(comptime T: type) type {
         return struct {
             inline fn function(variant: [*c]gd.godot_variant) T {
-                return @floatCast(T, api.core.godot_variant_as_real.?(variant));
+                return @floatCast(api.core.godot_variant_as_real.?(variant));
             }
         };
     }
@@ -634,11 +634,11 @@ pub const Variant = struct {
 
         const custom_instance_data = api.nativescript.godot_nativescript_get_userdata.?(godot_object);
         if (custom_instance_data != null) {
-            return @ptrCast(?*Object, @alignCast(@alignOf(Object), custom_instance_data));
+            return @ptrCast(@alignCast(custom_instance_data));
         }
         else {
             var instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, godot_object);
-            return @ptrCast(?*Object, @alignCast(@alignOf(Object), instance_data));
+            return @ptrCast(@alignCast(instance_data));
         }
     }
 
@@ -856,61 +856,61 @@ pub const Variant = struct {
 
     inline fn vector2AsGodotVariant(value: Vector2) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_vector2.?(&variant, @ptrCast(*gd.godot_vector2, &value));
+        api.core.godot_variant_new_vector2.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn rect2AsGodotVariant(value: Rect2) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_rect2.?(&variant, @ptrCast(*gd.godot_rect2, &value));
+        api.core.godot_variant_new_rect2.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn vector3AsGodotVariant(value: Vector3) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_vector3.?(&variant, @ptrCast(*gd.godot_vector3, &value));
+        api.core.godot_variant_new_vector3.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn transform2DAsGodotVariant(value: Transform2D) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_transform2d.?(&variant, @ptrCast(*gd.godot_transform2d, &value));
+        api.core.godot_variant_new_transform2d.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn planeAsGodotVariant(value: Plane) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_plane.?(&variant, @ptrCast(*gd.godot_plane, &value));
+        api.core.godot_variant_new_plane.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn quatAsGodotVariant(value: Quat) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_quat.?(&variant, @ptrCast(*gd.godot_quat, &value));
+        api.core.godot_variant_new_quat.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn aabbAsGodotVariant(value: AABB) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_aabb.?(&variant, @ptrCast(*gd.godot_aabb, &value));
+        api.core.godot_variant_new_aabb.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn basisAsGodotVariant(value: Basis) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_basis.?(&variant, @ptrCast(*gd.godot_basis, &value));
+        api.core.godot_variant_new_basis.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn transformAsGodotVariant(value: Transform) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_transform.?(&variant, @ptrCast(*gd.godot_transform, &value));
+        api.core.godot_variant_new_transform.?(&variant, @ptrCast(&value));
         return variant;
     }
 
     inline fn colorAsGodotVariant(value: Color) gd.godot_variant {
         var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_color.?(&variant, @ptrCast(*gd.godot_color, &value));
+        api.core.godot_variant_new_color.?(&variant, @ptrCast(&value));
         return variant;
     }
 

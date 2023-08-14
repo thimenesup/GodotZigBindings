@@ -61,7 +61,7 @@ pub const String = struct {
         };
 
         api.core.godot_string_new.?(&self.godot_string);
-        _ = api.core.godot_string_parse_utf8.?(&self.godot_string, @ptrCast([*c]const u8, chars));
+        _ = api.core.godot_string_parse_utf8.?(&self.godot_string, @ptrCast(chars));
 
         return self;
     }
@@ -167,11 +167,11 @@ pub const String = struct {
     pub fn allocCString(self: *const Self) [*:0]u8 { // Make sure you call api.godot_free() on returned ptr
         const contents = api.core.godot_string_utf8.?(&self.godot_string);
         const len = api.core.godot_char_string_length.?(&contents);
-        const result = @ptrCast([*:0]u8, api.core.godot_alloc.?(len + 1));
+        const result: [*:0]u8 = @ptrCast(api.core.godot_alloc.?(len + 1));
 
         if (result != null) {
             const data = api.core.godot_char_string_get_data.?(&contents);
-            @memcpy(result, data, len + 1);
+            @memcpy(result, data[0..][0..len + 1]);
         }
 
         api.core.godot_char_string_destroy.?(&contents);

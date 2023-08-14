@@ -219,15 +219,15 @@ fn makeGDNativeType(string: []const u8) String { //Must deinit string
 fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //Must deinit hashmap, key strings too //Names are stripped, CoreTypes not included
     var classes = std.StringHashMap(void).init(std.heap.page_allocator);
     
-    const base_class_name = class.get("base_class").?.String;
+    const base_class_name = class.get("base_class").?.string;
     if (base_class_name.len > 0) {
         classes.put(base_class_name, {}) catch {};
     }
 
-    const methods = class.get("methods").?.Array;
+    const methods = class.get("methods").?.array;
     for (methods.items) |item| {
-        const method = item.Object;
-        const return_type = method.get("return_type").?.String;
+        const method = item.object;
+        const return_type = method.get("return_type").?.string;
         
         if (isEnum(return_type)) {
             const enum_class = enumGetClass(return_type);
@@ -240,10 +240,10 @@ fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //
             classes.put(stripped_class.items, {}) catch {};
         }
 
-        const arguments = method.get("arguments").?.Array;
+        const arguments = method.get("arguments").?.array;
         for (arguments.items) |arguments_item| {
-            const argument = arguments_item.Object;
-            const arg_type = argument.get("type").?.String;
+            const argument = arguments_item.object;
+            const arg_type = argument.get("type").?.string;
 
             if (isEnum(arg_type)){
                 const enum_class = enumGetClass(arg_type);
@@ -265,11 +265,11 @@ fn getUsedClasses(class: *const std.json.ObjectMap) std.StringHashMap(void) { //
 fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit string
     var string = String.init(std.heap.page_allocator);
 
-    const class_name = class.get("name").?.String;
+    const class_name = class.get("name").?.string;
     const stripped_class_name = stripName(class_name);
     defer stripped_class_name.deinit();
 
-    var base_class_name = class.get("base_class").?.String;
+    var base_class_name = class.get("base_class").?.string;
     var stripped_base_name = stripName(base_class_name);
     defer stripped_base_name.deinit();
 
@@ -279,8 +279,8 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         base_class_name = stripped_base_name.items;
     }
 
-    const class_is_instanciable = class.get("instanciable").?.Bool;
-    const class_is_singleton = class.get("singleton").?.Bool;
+    const class_is_instanciable = class.get("instanciable").?.bool;
+    const class_is_singleton = class.get("singleton").?.bool;
 
     // Import api
 
@@ -357,13 +357,13 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
     // Enums
 
-    const enums = class.get("enums").?.Array;
+    const enums = class.get("enums").?.array;
     for (enums.items) |enum_item| {
-        const class_enum = enum_item.Object;
-        const enum_name = class_enum.get("name").?.String;
+        const class_enum = enum_item.object;
+        const enum_name = class_enum.get("name").?.string;
         try std.fmt.format(string.writer(), "    pub const {s} = enum(i64) {{\n", .{ enum_name });
 
-        const values = class_enum.get("values").?.Object;
+        const values = class_enum.get("values").?.object;
         var value_iterator = values.iterator();
         while (value_iterator.next()) |entry| {
             const entry_name = entry.key_ptr.*;
@@ -372,7 +372,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
             const convention_name = toSnakeCase(entry_name);
             defer convention_name.deinit();
 
-            try std.fmt.format(string.writer(), "        {s} = {},\n", .{ convention_name.items, entry_value.Integer });
+            try std.fmt.format(string.writer(), "        {s} = {},\n", .{ convention_name.items, entry_value.integer });
         }
 
         // Enum end
@@ -381,7 +381,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
     // Constants
     
-    const constants = class.get("constants").?.Object;
+    const constants = class.get("constants").?.object;
     var const_iterator = constants.iterator();
     while (const_iterator.next()) |entry| {
         const entry_name = entry.key_ptr.*;
@@ -390,7 +390,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         const convention_name = toSnakeCase(entry_name);
         defer convention_name.deinit();
 
-        try std.fmt.format(string.writer(), "    pub const {s} = {};\n", .{ convention_name.items, entry_value.Integer });
+        try std.fmt.format(string.writer(), "    pub const {s} = {};\n", .{ convention_name.items, entry_value.integer });
     }
 
     if (constants.count() > 0) {
@@ -401,11 +401,11 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
     try string.appendSlice("    const Binds = struct {\n");
 
-    const methods = class.get("methods").?.Array;
+    const methods = class.get("methods").?.array;
     for (methods.items) |item| {
-        const method = item.Object;
+        const method = item.object;
 
-        const method_name = method.get("name").?.String;
+        const method_name = method.get("name").?.string;
         const escaped_method_name = escapeFunctionName(method_name);
         defer escaped_method_name.deinit();
 
@@ -421,9 +421,9 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     try string.appendSlice("    pub fn initBindings() void {\n");
 
     for (methods.items) |item| {
-        const method = item.Object;
+        const method = item.object;
 
-        const method_name = method.get("name").?.String;
+        const method_name = method.get("name").?.string;
         const escaped_method_name = escapeFunctionName(method_name);
         defer escaped_method_name.deinit();
 
@@ -436,19 +436,19 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     // Method implementations
 
     for (methods.items) |item| {
-        const method = item.Object;
+        const method = item.object;
 
-        const method_name = method.get("name").?.String;
+        const method_name = method.get("name").?.string;
         const escaped_method_name = escapeFunctionName(method_name);
         defer escaped_method_name.deinit();
 
-        const return_type = method.get("return_type").?.String;
+        const return_type = method.get("return_type").?.string;
         const return_gd_type = makeGDNativeType(return_type);
         defer return_gd_type.deinit();
 
-        const is_const = method.get("is_const").?.Bool;
-        const has_varargs = method.get("has_varargs").?.Bool;
-        const arguments = method.get("arguments").?.Array;
+        const is_const = method.get("is_const").?.bool;
+        const has_varargs = method.get("has_varargs").?.bool;
+        const arguments = method.get("arguments").?.array;
 
         { // Method signature
             const camel_method_name = toCamelCase(escaped_method_name.items);
@@ -461,15 +461,15 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
             var signature_args = String.init(std.heap.page_allocator); defer signature_args.deinit();
             for (arguments.items) |arguments_item| {
-                const argument = arguments_item.Object;
+                const argument = arguments_item.object;
 
-                const arg_name = argument.get("name").?.String;
-                const arg_type = argument.get("type").?.String;
+                const arg_name = argument.get("name").?.string;
+                const arg_type = argument.get("type").?.string;
                 const arg_gd_type = makeGDNativeType(arg_type);
                 defer arg_gd_type.deinit();
 
-                // const arg_has_default = argument.get("has_default_value").?.Bool;
-                // const arg_default_value = argument.get("default_value").?.String;
+                // const arg_has_default = argument.get("has_default_value").?.bool;
+                // const arg_default_value = argument.get("default_value").?.string;
                 try std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, arg_gd_type.items });
             }
 
@@ -491,10 +491,10 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
             try string.appendSlice(
                 "        var _bind_args: [64][*c]gd.godot_variant = undefined;\n\n"); //Should be enough
 
-            for (arguments.items) |arguments_item, i| {
-                const argument = arguments_item.Object;
+            for (arguments.items, 0..) |arguments_item, i| {
+                const argument = arguments_item.object;
 
-                const arg_name = argument.get("name").?.String;
+                const arg_name = argument.get("name").?.string;
                 try std.fmt.format(string.writer(), 
                     "        var _variant_{s} = Variant.init(p_{s});\n" ++ 
                     "        defer _variant_{s}.deinit();\n" ++ 
@@ -505,12 +505,12 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
             try std.fmt.format(string.writer(), 
                 "        var i: usize = 0;\n" ++ 
                 "        while (i < p_var_args.size()) : (i += 1) {{\n" ++ 
-                "            _bind_args[i + {}] = &p_var_args.get(@intCast(i32, i)).godot_variant;\n" ++ 
+                "            _bind_args[i + {}] = &p_var_args.get(@intCast(i)).godot_variant;\n" ++ 
                 "        }}\n\n",
                 .{ arguments.items.len });
 
             try std.fmt.format(string.writer(), 
-                "        const result = api.core.godot_method_bind_call.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, total_arg_count, null);\n\n", 
+                "        const result = api.core.godot_method_bind_call.?(binds.{s}, @as(*Wrapped, @constCast(@ptrCast(self))).owner, &_bind_args, total_arg_count, null);\n\n", 
                 .{ escaped_method_name.items });
 
             if (std.mem.eql(u8, return_type, "void")) {
@@ -530,12 +530,12 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
             defer bind_args.deinit();
 
             for (arguments.items) |arguments_item| {
-                const argument = arguments_item.Object;
+                const argument = arguments_item.object;
 
-                const arg_name = argument.get("name").?.String;
-                const arg_type = argument.get("type").?.String;
+                const arg_name = argument.get("name").?.string;
+                const arg_type = argument.get("type").?.string;
                 if (isClassType(arg_type)) {
-                    try std.fmt.format(bind_args.writer(), " @ptrCast(*Wrapped, p_{s}).owner,", .{ arg_name }); // Trailing comma is fine
+                    try std.fmt.format(bind_args.writer(), " @as(*Wrapped, @constCast(@ptrCast(p_{s}))).owner,", .{ arg_name }); // Trailing comma is fine
                 }
                 else {
                     try std.fmt.format(bind_args.writer(), " &p_{s},", .{ arg_name }); // Trailing comma is fine
@@ -551,7 +551,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                     .{ bind_args.items });
                 
                 try std.fmt.format(string.writer(), 
-                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, null);\n", 
+                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @as(*Wrapped, @constCast(@ptrCast(self))).owner, &_bind_args, null);\n", 
                     .{ escaped_method_name.items });
             }
             else {
@@ -564,16 +564,14 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                     .{ bind_args.items });
 
                 try std.fmt.format(string.writer(), 
-                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @intToPtr(*Wrapped, @ptrToInt(self)).owner, &_bind_args, @ptrCast(?*anyopaque, &ret));\n", 
+                    "        api.core.godot_method_bind_ptrcall.?(binds.{s}, @as(*Wrapped, @constCast(@ptrCast(self))).owner, &_bind_args, @ptrCast(&ret));\n", 
                     .{ escaped_method_name.items });
                 
                 if (isClassType(return_type)) { //Must use instance binding
                     try string.appendSlice("        if (ret != null) {\n");
                     try string.appendSlice("            const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, ret);\n");
 
-                    try std.fmt.format(string.writer(), 
-                        "            ret = @ptrCast({s}, @alignCast(@alignOf({s}), instance_data));\n", 
-                        .{ return_gd_type.items, return_gd_type.items });
+                    try string.appendSlice("            ret = @ptrCast(@alignCast(instance_data));\n");
 
                     try string.appendSlice("        }\n");
                 }
@@ -598,9 +596,9 @@ fn generatePackageClassImports(classes: *const std.json.Array) !String { //Must 
 
     //Imports
     for (classes.items) |item| {
-        const class = item.Object;
+        const class = item.object;
         
-        const class_name = class.get("name").?.String;
+        const class_name = class.get("name").?.string;
         const stripped_name = stripName(class_name);
         defer stripped_name.deinit();
 
@@ -621,9 +619,9 @@ fn generateTypeRegistry(classes: *const std.json.Array) !String { //Must deinit 
 
     //Imports
     for (classes.items) |item| {
-        const class = item.Object;
+        const class = item.object;
         
-        const class_name = class.get("name").?.String;
+        const class_name = class.get("name").?.string;
         const stripped_name = stripName(class_name);
         defer stripped_name.deinit();
 
@@ -639,13 +637,13 @@ fn generateTypeRegistry(classes: *const std.json.Array) !String { //Must deinit 
     try string.appendSlice("pub fn registerTypes() void {\n");
     
     for (classes.items) |item| {
-        const class = item.Object;
+        const class = item.object;
         
-        const class_name = class.get("name").?.String;
+        const class_name = class.get("name").?.string;
         const stripped_name = stripName(class_name);
         defer stripped_name.deinit();
 
-        const base_class_name = class.get("base_class").?.String;
+        const base_class_name = class.get("base_class").?.string;
         const stripped_base_name = stripName(base_class_name);
         defer stripped_base_name.deinit();
         
@@ -668,9 +666,9 @@ fn generateInitBindings(classes: *const std.json.Array) !String { //Must deinit 
 
     //Imports
     for (classes.items) |item| {
-        const class = item.Object;
+        const class = item.object;
         
-        const class_name = class.get("name").?.String;
+        const class_name = class.get("name").?.string;
         const stripped_name = stripName(class_name);
         defer stripped_name.deinit();
 
@@ -686,9 +684,9 @@ fn generateInitBindings(classes: *const std.json.Array) !String { //Must deinit 
     try string.appendSlice("pub fn initBindings() void {\n");
 
     for (classes.items) |item| {
-        const class = item.Object;
+        const class = item.object;
 
-        const class_name = class.get("name").?.String;
+        const class_name = class.get("name").?.string;
         const stripped_name = stripName(class_name);
         defer stripped_name.deinit();
 
@@ -707,18 +705,15 @@ pub fn generateClassBindings(api_path: []const u8) !void {
     const api_file_buffer = try api_file.readToEndAlloc(std.heap.page_allocator, 1024 * 1024 * 16);
     defer std.heap.page_allocator.free(api_file_buffer);
 
-    var parser = std.json.Parser.init(std.heap.page_allocator, false);
-    defer parser.deinit();
-
-    var tree = try parser.parse(api_file_buffer);
-    defer tree.deinit();
+    var parsed = try std.json.parseFromSlice(std.json.Value, std.heap.page_allocator, api_file_buffer, .{});
+    defer parsed.deinit();
 
     const gen_dir = try std.fs.cwd().makeOpenPath("src/classes", .{});
     
-    for (tree.root.Array.items) |item| {
-        const class = item.Object;
+    for (parsed.value.array.items) |item| {
+        const class = item.object;
 
-        const class_name = class.get("name").?.String;
+        const class_name = class.get("name").?.string;
         const stripped_name = stripName(class_name);
         defer stripped_name.deinit();
         const convention_name = toSnakeCase(stripped_name.items);
@@ -739,7 +734,7 @@ pub fn generateClassBindings(api_path: []const u8) !void {
         const imports_file = try gen_dir.createFile("_classes.zig", .{});
         defer imports_file.close();
 
-        const class_imports_string = try generatePackageClassImports(&tree.root.Array);
+        const class_imports_string = try generatePackageClassImports(&parsed.value.array);
         defer class_imports_string.deinit();
         try imports_file.writeAll(class_imports_string.items);
     }
@@ -748,7 +743,7 @@ pub fn generateClassBindings(api_path: []const u8) !void {
         const registry_file = try gen_dir.createFile("_register_types.zig", .{});
         defer registry_file.close();
 
-        const registry_string = try generateTypeRegistry(&tree.root.Array);
+        const registry_string = try generateTypeRegistry(&parsed.value.array);
         defer registry_string.deinit();
         try registry_file.writeAll(registry_string.items);
     }
@@ -757,7 +752,7 @@ pub fn generateClassBindings(api_path: []const u8) !void {
         const bindings_file = try gen_dir.createFile("_init_bindings.zig", .{});
         defer bindings_file.close();
 
-        const bindings_string = try generateInitBindings(&tree.root.Array);
+        const bindings_string = try generateInitBindings(&parsed.value.array);
         defer bindings_string.deinit();
         try bindings_file.writeAll(bindings_string.items);
     }
@@ -868,13 +863,13 @@ fn convertGDNativeType(gdnative_type: []const u8) String { //Must deinit string
 }
 
 fn writeAPI(api: *const std.json.ObjectMap, string: *String, is_core: bool, is_root: bool) void { //Must deinit string
-    const api_type_name = api.get("type").?.String;
+    const api_type_name = api.get("type").?.string;
     var api_name_name_converted = toSnakeCase(api_type_name);
     defer api_name_name_converted.deinit();
 
-    const version = api.get("version").?.Object;
-    const major = version.get("major").?.Integer;
-    const minor = version.get("minor").?.Integer;
+    const version = api.get("version").?.object;
+    const major = version.get("major").?.integer;
+    const minor = version.get("minor").?.integer;
 
     var name = String.init(std.heap.page_allocator);
     defer name.deinit();
@@ -911,22 +906,22 @@ fn writeAPI(api: *const std.json.ObjectMap, string: *String, is_core: bool, is_r
         ) catch {};
     }
 
-    const api_functions = api.get("api").?.Array;
+    const api_functions = api.get("api").?.array;
 
     for (api_functions.items) |function_item| {
-        const function = function_item.Object;
+        const function = function_item.object;
 
-        const function_name = function.get("name").?.String;
-        const return_type = function.get("return_type").?.String;
-        const arguments = function.get("arguments").?.Array;
+        const function_name = function.get("name").?.string;
+        const return_type = function.get("return_type").?.string;
+        const arguments = function.get("arguments").?.array;
 
         var converted_args = String.init(std.heap.page_allocator);
         defer converted_args.deinit();
 
-        for (arguments.items) |argument_item, i| {
-            const argument_data = argument_item.Array;
-            const arg_type = argument_data.items.ptr[0].String;
-            // const arg_name = argument_data.items.ptr[0].String; //Don't care
+        for (arguments.items, 0..) |argument_item, i| {
+            const argument_data = argument_item.array;
+            const arg_type = argument_data.items.ptr[0].string;
+            // const arg_name = argument_data.items.ptr[0].string; //Don't care
 
             var converted_arg_type = convertGDNativeType(arg_type);
             defer converted_arg_type.deinit();
@@ -949,8 +944,8 @@ fn writeAPI(api: *const std.json.ObjectMap, string: *String, is_core: bool, is_r
 
     const next = api.get("next").?;
     switch (next) {
-        std.json.Value.Object => {
-            writeAPI(&next.Object, string, is_core, false);
+        std.json.Value.object => {
+            writeAPI(&next.object, string, is_core, false);
         },
         else => {}, //Null
     }
@@ -963,11 +958,8 @@ pub fn generateGDNativeAPI(api_path: []const u8) !void {
     const api_file_buffer = try api_file.readToEndAlloc(std.heap.page_allocator, 1024 * 1024 * 16);
     defer std.heap.page_allocator.free(api_file_buffer);
 
-    var parser = std.json.Parser.init(std.heap.page_allocator, false);
-    defer parser.deinit();
-
-    var tree = try parser.parse(api_file_buffer);
-    defer tree.deinit();
+    var parsed = try std.json.parseFromSlice(std.json.Value, std.heap.page_allocator, api_file_buffer, .{});
+    defer parsed.deinit();
 
     const core_dir = try std.fs.cwd().makeOpenPath("src/core", .{});
 
@@ -979,12 +971,12 @@ pub fn generateGDNativeAPI(api_path: []const u8) !void {
 
     try gdnative_api_string.appendSlice("const gd = @import(\"gdnative_api_types.zig\");\n\n");
 
-    const core = tree.root.Object.get("core").?.Object;
+    const core = parsed.value.object.get("core").?.object;
     writeAPI(&core, &gdnative_api_string, true, true);
-    
-    const extensions = tree.root.Object.get("extensions").?.Array;
+
+    const extensions = parsed.value.object.get("extensions").?.array;
     for (extensions.items) |extension_item| {
-        const extension = extension_item.Object;
+        const extension = extension_item.object;
         writeAPI(&extension, &gdnative_api_string, false, true);
     }
 

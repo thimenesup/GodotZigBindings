@@ -176,102 +176,102 @@ pub const Color = extern struct {
 
     pub inline fn to32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @intFromFloat(self.a * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @intFromFloat(self.r * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @intFromFloat(self.g * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @intFromFloat(self.b * 255);
         return c;
     }
 
     pub inline fn toARGB32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @intFromFloat(self.a * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @intFromFloat(self.r * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @intFromFloat(self.g * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @intFromFloat(self.b * 255);
         return c;
     }
 
     pub inline fn toABGR32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @intFromFloat(self.a * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @intFromFloat(self.b * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @intFromFloat(self.g * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @intFromFloat(self.r * 255);
         return c;
     }
 
     pub inline fn toRGBA32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @intFromFloat(self.r * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @intFromFloat(self.g * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @intFromFloat(self.b * 255);
         c <<= 8;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @intFromFloat(self.a * 255);
         return c;
     }
 
     pub inline fn toARGB64(self: *const Self) u64 {
         var c: u64 = 0;
-        c |= @floatToInt(u16, self.a * 65535);
+        c |= @intFromFloat(self.a * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.r * 65535);
+        c |= @intFromFloat(self.r * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.g * 65535);
+        c |= @intFromFloat(self.g * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.b * 65535);
+        c |= @intFromFloat(self.b * 65535);
         return c;
     }
 
     pub inline fn toABGR64(self: *const Self) u64 {
         var c: u64 = 0;
-        c |= @floatToInt(u16, self.a * 65535);
+        c |= @intFromFloat(self.a * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.b * 65535);
+        c |= @intFromFloat(self.b * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.g * 65535);
+        c |= @intFromFloat(self.g * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.r * 65535);
+        c |= @intFromFloat(self.r * 65535);
         return c;
     }
 
     pub inline fn toRGBA64(self: *const Self) u64 {
         var c: u64 = 0;
-        c |= @floatToInt(u16, self.r * 65535);
+        c |= @intFromFloat(self.r * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.g * 65535);
+        c |= @intFromFloat(self.g * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.b * 65535);
+        c |= @intFromFloat(self.b * 65535);
         c <<= 16;
-        c |= @floatToInt(u16, self.a * 65535);
+        c |= @intFromFloat(self.a * 65535);
         return c;
     }
 
     pub inline fn getR8(self: *const Self) u8 {
-        return @floatToInt(u8, self.r * 255);
+        return @intFromFloat(self.r * 255);
     }
 
     pub inline fn getG8(self: *const Self) u8 {
-        return @floatToInt(u8, self.g * 255);
+        return @intFromFloat(self.g * 255);
     }
 
     pub inline fn getB8(self: *const Self) u8 {
-        return @floatToInt(u8, self.b * 255);
+        return @intFromFloat(self.b * 255);
     }
 
     pub inline fn getA8(self: *const Self) u8 {
-        return @floatToInt(u8, self.a * 255);
+        return @intFromFloat(self.a * 255);
     }
 
     pub inline fn gray(self: *const Self) f32 {
@@ -382,7 +382,7 @@ pub const Color = extern struct {
             h += 360.0;
         }
 
-        const i = @floatToInt(usize, h / 60.0);
+        const i: usize = @intFromFloat(h / 60.0);
         const c = p_v * p_s;
         const x = c * (1.0 - @fabs(@mod(h / 60.0, 2.0) - 1.0));
 

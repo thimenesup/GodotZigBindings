@@ -37,7 +37,7 @@ pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime
             const class_constructor = api.core.godot_get_class_constructor.?(@typeName(class));
             const class_instance = class_constructor.?();
             const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, class_instance);
-            return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
+            return @ptrCast(@alignCast(instance_data));
         }
 
         pub inline fn _getClassSingleton() *class {
@@ -45,9 +45,9 @@ pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime
                 @compileError("This class isn't a singleton");
             };
 
-            const class_instance = api.core.godot_global_get_singleton.?(@intToPtr(*u8, @ptrToInt(@typeName(class))));
+            const class_instance = api.core.godot_global_get_singleton.?(@ptrCast(@typeName(class)));
             const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, class_instance);
-            return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
+            return @ptrCast(@alignCast(instance_data));
         }
 
     };

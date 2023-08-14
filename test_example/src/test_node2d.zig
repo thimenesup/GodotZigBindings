@@ -103,26 +103,26 @@ pub const TestNode2D = struct {
             const node = TestNode2D._memnew();
             defer node.base.base.base.queueFree();
             const cast = ClassRegistry.castTo(Node2D, node);
-            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});
         }
 
         {
             const node = Node._memnew();
             defer node.queueFree();
             const cast = ClassRegistry.castTo(Node2D, node);
-            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)}); //Null
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)}); //Null
         }
 
         {
             const child_node = self.base.base.base.getChild(0);
             const cast = ClassRegistry.castTo(Node2D, child_node);
-            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});
         }
 
         {
             const child_node = self.base.base.base.getChild(0);
             const cast = ClassRegistry.castTo(TestNode2D, child_node);
-            std.debug.print("Cast:{}\n", .{@ptrToInt(cast)});
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});
         }
     }
 

@@ -24,7 +24,7 @@ pub const RID = struct {
             .godot_rid = undefined,
         };
 
-        api.core.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast([*c]gd.godot_object, object.base.owner));
+        api.core.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast(object.base.owner));
 
         return self;
     }
