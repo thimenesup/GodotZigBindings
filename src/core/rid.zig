@@ -4,13 +4,12 @@ const api = @import("api.zig");
 const Object = @import("../classes/object.zig").Object;
 
 pub const RID = struct {
-
     godot_rid: gd.godot_rid,
 
     const Self = @This();
 
     pub fn new() Self {
-        var self = Self {
+        var self = Self{
             .godot_rid = undefined,
         };
 
@@ -20,11 +19,11 @@ pub const RID = struct {
     }
 
     pub fn newObject(object: *const Object) Self {
-        var self = Self {
+        var self = Self{
             .godot_rid = undefined,
         };
 
-        api.core.godot_rid_new_with_resource.?(&self.godot_rid, @ptrCast([*c]gd.godot_object, object.base.owner));
+        api.core.godot_rid_new_with_resource.?(&self.godot_rid, @as([*c]gd.godot_object, @ptrCast(object.base.owner)));
 
         return self;
     }
@@ -56,5 +55,4 @@ pub const RID = struct {
     pub fn moreEqual(self: *const Self, other: *const RID) bool { // Operator >=
         return !less(self, other);
     }
-
 };

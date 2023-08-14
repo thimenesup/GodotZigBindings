@@ -2,7 +2,6 @@ const Vector2 = @import("vector2.zig").Vector2;
 const Transform2D = @import("transform2d.zig").Transform2D;
 
 pub const Rect2 = extern struct {
-
     const T = f32;
 
     position: Vector2,
@@ -11,7 +10,7 @@ pub const Rect2 = extern struct {
     const Self = @This();
 
     pub inline fn new(p_x: T, p_y: T, s_x: T, s_y: T) Self {
-        const self = Self {
+        const self = Self{
             .position = Vector2.new(p_x, p_y),
             .size = Vector2.new(s_x, s_y),
         };
@@ -54,8 +53,7 @@ pub const Rect2 = extern struct {
 
         if (dist == 1e20) {
             return 0.0;
-        }
-        else {
+        } else {
             return dist;
         }
     }
@@ -80,16 +78,15 @@ pub const Rect2 = extern struct {
             if (seg_from < seg_to) {
                 if (seg_from > box_end or seg_to < box_begin)
                     return false;
-                
+
                 const length = seg_to - seg_from;
                 cmin = if (seg_from < box_begin) (box_begin - seg_from) / length else 0.0;
                 cmax = if (seg_to > box_end) (box_end - seg_from) / length else 1.0;
                 csign = -1.0;
-            }
-            else {
+            } else {
                 if (seg_to > box_end or seg_from < box_begin)
                     return false;
-                
+
                 const length = seg_to - seg_from;
                 cmin = if (seg_from < box_end) (box_end - seg_from) / length else 0.0;
                 cmax = if (seg_to > box_begin) (box_begin - seg_from) / length else 1.0;
@@ -128,8 +125,7 @@ pub const Rect2 = extern struct {
     // }
 
     pub inline fn encloses(self: *const Self, other: *const Rect2) bool {
-        return 
-            (other.position.x >= self.position.x) and (other.position.y >= self.position.y) and
+        return (other.position.x >= self.position.x) and (other.position.y >= self.position.y) and
             ((other.position.x + other.size.x) < (self.position.x + self.size.x)) and
             ((other.position.y + other.size.y) < (self.position.y + self.size.y));
     }
@@ -138,12 +134,12 @@ pub const Rect2 = extern struct {
         return (self.size.x <= 0 or self.size.y <= 0);
     }
 
-        pub inline fn clip(self: *const Self, other: *const Rect2) Self {
+    pub inline fn clip(self: *const Self, other: *const Rect2) Self {
         var new_rect = other.*;
 
         if (!self.intersects(new_rect))
             return Rect2.new(0, 0, 0, 0);
-        
+
         new_rect.position.x = @max(other.position.x, self.position.x);
         new_rect.position.y = @max(other.position.y, self.position.y);
 
@@ -219,14 +215,13 @@ pub const Rect2 = extern struct {
             begin.x = vector.x;
         if (vector.y < begin.y)
             begin.y = vector.y;
-        
+
         if (vector.x > end.x)
             end.x = vector.x;
         if (vector.y > end.y)
             end.y = vector.y;
-        
+
         self.position = begin;
         self.size = end.minus(begin);
     }
-
 };

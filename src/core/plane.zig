@@ -4,14 +4,13 @@ const epsilon = std.math.epsilon(f32);
 const Vector3 = @import("vector3.zig").Vector3;
 
 pub const Plane = extern struct {
-
     normal: Vector3,
     d: f32,
 
     const Self = @This();
 
     pub inline fn new(normal: *const Vector3, d: f32) Self {
-        const self = Self {
+        const self = Self{
             .normal = normal.*,
             .d = d,
         };
@@ -49,8 +48,7 @@ pub const Plane = extern struct {
 
         if (@fabs(self.normal.dot(p0)) > 0.99) {
             p = p1;
-        }
-        else {
+        } else {
             p = p0;
         }
 
@@ -74,11 +72,9 @@ pub const Plane = extern struct {
         }
 
         if (result != null) {
-            result.* = (
-                    (normal1.cross(normal2).mulScalar(plane0.d)) +
-                    (normal2.cross(normal0).mulScalar(plane1.d)) +
-                    (normal0.cross(normal1).mulScalar(plane2.d))
-                ) / denom;
+            result.* = ((normal1.cross(normal2).mulScalar(plane0.d)) +
+                (normal2.cross(normal0).mulScalar(plane1.d)) +
+                (normal0.cross(normal1).mulScalar(plane2.d))) / denom;
         }
 
         return true;
@@ -141,5 +137,4 @@ pub const Plane = extern struct {
         dist = @fabs(dist);
         return dist <= p_epsilon;
     }
-
 };

@@ -15,9 +15,8 @@ const String = @import("string.zig").String;
 const Object = @import("../classes/object.zig").Object;
 
 pub const Array = struct {
-
     godot_array: gd.godot_array,
-    
+
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
@@ -25,7 +24,7 @@ pub const Array = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -35,7 +34,7 @@ pub const Array = struct {
     }
 
     pub fn initGodotArray(p_godot_array: gd.godot_array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = p_godot_array,
         };
 
@@ -43,7 +42,7 @@ pub const Array = struct {
     }
 
     pub fn initCopy(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -53,7 +52,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolByteArray(other: *const PoolByteArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -63,7 +62,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolIntArray(other: *const PoolIntArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -73,7 +72,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolRealArray(other: *const PoolRealArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -83,7 +82,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolStringArray(other: *const PoolStringArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -93,7 +92,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolVector2Array(other: *const PoolVector2Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -103,7 +102,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolVector3Array(other: *const PoolVector3Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -113,7 +112,7 @@ pub const Array = struct {
     }
 
     pub fn initPoolColorArray(other: *const PoolColorArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -129,7 +128,7 @@ pub const Array = struct {
     pub fn get(self: *const Self, index: i32) Variant {
         const godot_variant = api.core.godot_array_get.?(&self.godot_array, index);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -159,7 +158,7 @@ pub const Array = struct {
     pub fn front(self: *const Self) Variant {
         const godot_variant = api.core.godot_array_front.?(&self.godot_array);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -169,7 +168,7 @@ pub const Array = struct {
     pub fn back(self: *const Self) Variant {
         const godot_variant = api.core.godot_array_back.?(&self.godot_array);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -203,7 +202,7 @@ pub const Array = struct {
     pub fn popBack(self: *Self) Variant {
         const godot_variant = api.core.godot_array_pop_back.?(&self.godot_array);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -213,7 +212,7 @@ pub const Array = struct {
     pub fn popFront(self: *Self) Variant {
         const godot_variant = api.core.godot_array_pop_front.?(&self.godot_array);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -263,7 +262,7 @@ pub const Array = struct {
     pub fn duplicate(self: *const Self, deep: bool) Array {
         const godot_array = api.core_1_1.godot_array_duplicate.?(&self.godot_array, deep);
 
-        const array = Array {
+        const array = Array{
             .godot_array = godot_array,
         };
 
@@ -273,7 +272,7 @@ pub const Array = struct {
     pub fn max(self: *const Self) Variant {
         const godot_variant = api.core_1_1.godot_array_max.?(&self.godot_array);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -283,7 +282,7 @@ pub const Array = struct {
     pub fn min(self: *const Self) Variant {
         const godot_variant = api.core_1_1.godot_array_min.?(&self.godot_array);
 
-        const variant = Variant {
+        const variant = Variant{
             .godot_variant = godot_variant,
         };
 
@@ -301,5 +300,4 @@ pub const Array = struct {
             self.pushBack(&variant);
         }
     }
-
 };

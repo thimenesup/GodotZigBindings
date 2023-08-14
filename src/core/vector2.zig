@@ -6,7 +6,6 @@ const atan2 = std.math.atan2;
 const math = @import("math.zig");
 
 pub const Vector2 = extern struct {
-
     const T = f32;
 
     x: T,
@@ -30,7 +29,7 @@ pub const Vector2 = extern struct {
     const down = Vector2.new(0, 1);
 
     pub inline fn new(p_x: T, p_y: T) Self {
-        const self = Self {
+        const self = Self{
             .x = p_x,
             .y = p_y,
         };
@@ -118,8 +117,7 @@ pub const Vector2 = extern struct {
     pub inline fn less(self: *const Self, other: *const Vector2) bool { // Operator <
         if (self.x == other.x) {
             return self.y < other.y;
-        }
-        else {
+        } else {
             return self.x < other.x;
         }
     }
@@ -127,8 +125,7 @@ pub const Vector2 = extern struct {
     pub inline fn lessEqual(self: *const Self, other: *const Vector2) bool { // Operator <=
         if (self.x == other.x) {
             return self.y <= other.y;
-        }
-        else {
+        } else {
             return self.x <= other.x;
         }
     }
@@ -236,8 +233,7 @@ pub const Vector2 = extern struct {
         const len = vd.length();
         if (len <= delta or len < epsilon) {
             return to;
-        }
-        else {
+        } else {
             return v.plus(vd.divScalar(len * delta));
         }
     }
@@ -297,5 +293,4 @@ pub const Vector2 = extern struct {
     pub inline fn polar2cartesian(self: *const Self) Self {
         return Vector2.new(self.x * @cos(self.y), self.x * @sin(self.y));
     }
-
 };

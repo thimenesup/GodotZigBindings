@@ -5,7 +5,6 @@ const AABB = @import("aabb.zig").AABB;
 const Quat = @import("quat.zig").Quat;
 
 pub const Transform = extern struct {
-
     basis: Basis,
     origin: Vector3,
 
@@ -17,7 +16,7 @@ pub const Transform = extern struct {
     const flip_z = Transform.new(1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0);
 
     pub inline fn new(basis: *const Basis, origin: *const Vector3) Self {
-        const self = Self {
+        const self = Self{
             .basis = basis.*,
             .origin = origin.*,
         };
@@ -26,7 +25,7 @@ pub const Transform = extern struct {
     }
 
     pub inline fn newIdentity() Self {
-        const self = Self {
+        const self = Self{
             .basis = Basis.newIdentity(),
             .origin = Vector3.new(0, 0, 0),
         };
@@ -50,20 +49,12 @@ pub const Transform = extern struct {
     }
 
     pub inline fn xformVector3(self: *const Self, vector: *const Vector3) Vector3 {
-        return Vector3.new(
-            self.basis.elements[0].dot(vector).plus(self.origin.x),
-            self.basis.elements[1].dot(vector).plus(self.origin.y),
-            self.basis.elements[2].dot(vector).plus(self.origin.z)
-        );
+        return Vector3.new(self.basis.elements[0].dot(vector).plus(self.origin.x), self.basis.elements[1].dot(vector).plus(self.origin.y), self.basis.elements[2].dot(vector).plus(self.origin.z));
     }
 
     pub inline fn xformInvVector3(self: *const Self, vector: *const Vector3) Vector3 {
         const v = vector.minus(self.origin);
-        return Vector3.new(
-            (self.basis.elements[0].x * v.x) + (self.basis[1].x + v.y) + (self.basis[2].x * v.z),
-            (self.basis.elements[0].y * v.x) + (self.basis[1].y + v.y) + (self.basis[2].y * v.z),
-            (self.basis.elements[0].z * v.x) + (self.basis[1].z + v.y) + (self.basis[2].z * v.z)
-        );
+        return Vector3.new((self.basis.elements[0].x * v.x) + (self.basis[1].x + v.y) + (self.basis[2].x * v.z), (self.basis.elements[0].y * v.x) + (self.basis[1].y + v.y) + (self.basis[2].y * v.z), (self.basis.elements[0].z * v.x) + (self.basis[1].z + v.y) + (self.basis[2].z * v.z));
     }
 
     pub inline fn xformPlane(self: *const Self, plane: *const Plane) Plane {
@@ -111,16 +102,7 @@ pub const Transform = extern struct {
     }
 
     pub inline fn xformInvAABB(self: *const Self, aabb: *const AABB) AABB {
-        const vertices = [8]Vector3 {
-            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
-            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z),
-            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z + aabb.size.z),
-            Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z),
-            Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z),
-            Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z),
-            Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z + aabb.size.z),
-            Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z)
-        };
+        const vertices = [8]Vector3{ Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z), Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y + aabb.size.y, aabb.position.z), Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z + aabb.size.z), Vector3.new(aabb.position.x + aabb.size.x, aabb.position.y, aabb.position.z), Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z + aabb.size.z), Vector3.new(aabb.position.x, aabb.position.y + aabb.size.y, aabb.position.z), Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z + aabb.size.z), Vector3.new(aabb.position.x, aabb.position.y, aabb.position.z) };
 
         var new_aabb: AABB = undefined;
         new_aabb.position = self.xformInvVector3(vertices[0]);
@@ -262,5 +244,4 @@ pub const Transform = extern struct {
         self.origin = self.xformVector3(other.origin);
         self.basis.mulAssign(other.basis);
     }
-
 };

@@ -3,8 +3,8 @@ const std = @import("std");
 const BindingGenerator = @import("binding_generator.zig");
 
 pub fn build(b: *std.build.Builder) !void {
-    const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
+    // const target = b.standardTargetOptions(.{});
+    // const mode = b.standardReleaseOptions();
 
     const gdnative_api_file = b.option([]const u8, "gdnative", "Specify GDNative API json file") orelse "";
     if (gdnative_api_file.len == 0) {
@@ -26,6 +26,6 @@ pub fn build(b: *std.build.Builder) !void {
     try BindingGenerator.generateClassBindings(classes_api_file);
     std.debug.print("Done generating Zig class file bindings\n", .{});
 
-    _ = target;
-    _ = mode;
+    // _ = target;
+    // _ = mode;
 }

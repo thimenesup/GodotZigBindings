@@ -28,9 +28,9 @@ pub fn gdnativeInit(p_options: [*c]gd.godot_gdnative_init_options) void {
     gndlib = p_options.*.gd_native_library;
 
     if (core.next != null) {
-        core_1_1 = @ptrCast(@TypeOf(core_1_1), core.next);
-        if (core_1_1.next != null){
-            core_1_2 = @ptrCast(@TypeOf(core_1_2), core_1_1.next);
+        core_1_1 = @ptrCast(core.next);
+        if (core_1_1.next != null) {
+            core_1_2 = @ptrCast(core_1_1.next);
         }
     }
 
@@ -39,27 +39,27 @@ pub fn gdnativeInit(p_options: [*c]gd.godot_gdnative_init_options) void {
     while (i < core.num_extensions) : (i += 1) {
         switch (core.extensions[i].*.type) {
             gd.GDNATIVE_EXT_NATIVESCRIPT => {
-                nativescript = @ptrCast(@TypeOf(nativescript), core.extensions[i]);
+                nativescript = @ptrCast(core.extensions[i]);
                 if (nativescript.next != null) {
-                    nativescript_1_1 = @ptrCast(@TypeOf(nativescript_1_1), nativescript.next);
+                    nativescript_1_1 = @ptrCast(nativescript.next);
                 }
             },
             gd.GDNATIVE_EXT_PLUGINSCRIPT => {
-                pluginscript = @ptrCast(@TypeOf(pluginscript), core.extensions[i]);
+                pluginscript = @ptrCast(core.extensions[i]);
             },
             gd.GDNATIVE_EXT_ANDROID => {
-                android = @ptrCast(@TypeOf(android), core.extensions[i]);
+                android = @ptrCast(core.extensions[i]);
             },
             gd.GDNATIVE_EXT_ARVR => {
-                arvr = @ptrCast(@TypeOf(arvr), core.extensions[i]);
+                arvr = @ptrCast(core.extensions[i]);
             },
             gd.GDNATIVE_EXT_VIDEODECODER => {
-                videodecoder = @ptrCast(@TypeOf(videodecoder), core.extensions[i]);
+                videodecoder = @ptrCast(core.extensions[i]);
             },
             gd.GDNATIVE_EXT_NET => {
-                net = @ptrCast(@TypeOf(net), core.extensions[i]);
+                net = @ptrCast(core.extensions[i]);
                 if (net.next != null) {
-                    net_3_2 = @ptrCast(@TypeOf(net_3_2), net.next);
+                    net_3_2 = @ptrCast(net.next);
                 }
             },
             else => {},
@@ -93,25 +93,24 @@ pub fn nativescriptTerminate(p_handle: ?*anyopaque) void {
     nativescript_1_1.godot_nativescript_unregister_instance_binding_data_functions.?(language_index);
 }
 
-
 fn wrapperCreate(data: ?*anyopaque, type_tag: ?*const anyopaque, instance: ?*gd.godot_object) callconv(.C) ?*anyopaque {
     _ = data;
 
     const wrapper_data = core.godot_alloc.?(@sizeOf(Wrapped));
-    var wrapper = @ptrCast(?*Wrapped, @alignCast(@alignOf(Wrapped), wrapper_data));
+    var wrapper = @as(?*Wrapped, @ptrCast(@alignCast(wrapper_data)));
     if (wrapper == null) {
         return null;
     }
 
     wrapper.?.owner = instance;
-    wrapper.?.type_tag = @ptrToInt(type_tag);
+    wrapper.?.type_tag = @intFromPtr(type_tag);
 
-    return @ptrCast(?*anyopaque, wrapper);
+    return @ptrCast(wrapper);
 }
 
 fn wrapperDestroy(data: ?*anyopaque, wrapper: ?*anyopaque) callconv(.C) void {
     _ = data;
-    
+
     if (wrapper != null) {
         core.godot_free.?(wrapper);
     }

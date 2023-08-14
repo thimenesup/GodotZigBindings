@@ -8,7 +8,6 @@ const math = @import("math.zig");
 const Basis = @import("basis.zig").Basis;
 
 pub const Vector3 = extern struct {
-
     const T = f32;
 
     x: T,
@@ -36,7 +35,7 @@ pub const Vector3 = extern struct {
     const back = Vector3.new(0, 0, 1);
 
     pub inline fn new(p_x: T, p_y: T, p_z: T) Self {
-        const self = Self {
+        const self = Self{
             .x = p_x,
             .y = p_y,
             .z = p_z,
@@ -135,12 +134,10 @@ pub const Vector3 = extern struct {
         if (self.x == other.x) {
             if (self.y == other.y) {
                 return self.z < other.z;
-            }
-            else {
+            } else {
                 return self.y < other.y;
             }
-        }
-        else {
+        } else {
             return self.x < other.x;
         }
     }
@@ -149,12 +146,10 @@ pub const Vector3 = extern struct {
         if (self.x == other.x) {
             if (self.y == other.y) {
                 return self.z <= other.z;
-            }
-            else {
+            } else {
                 return self.y < other.y;
             }
-        }
-        else {
+        } else {
             return self.x < other.x;
         }
     }
@@ -200,8 +195,7 @@ pub const Vector3 = extern struct {
         const len = vd.length();
         if (len <= delta or len < epsilon) {
             return to;
-        }
-        else {
+        } else {
             return v.plus(vd.divScalar(len * delta));
         }
     }
@@ -266,16 +260,13 @@ pub const Vector3 = extern struct {
         if (self.x < self.y) {
             if (self.y < self.z) {
                 return 2;
-            }
-            else {
+            } else {
                 return 1;
             }
-        }
-        else {
+        } else {
             if (self.x < self.z) {
                 return 2;
-            }
-            else {
+            } else {
                 return 0;
             }
         }
@@ -285,16 +276,13 @@ pub const Vector3 = extern struct {
         if (self.x < self.y) {
             if (self.x < self.z) {
                 return 0;
-            }
-            else {
+            } else {
                 return 2;
             }
-        }
-        else {
+        } else {
             if (self.y < self.z) {
                 return 1;
-            }
-            else {
+            } else {
                 return 2;
             }
         }
@@ -345,5 +333,4 @@ pub const Vector3 = extern struct {
         ret.snap(by);
         return ret;
     }
-
 };

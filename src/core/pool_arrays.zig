@@ -4,11 +4,9 @@ const api = @import("api.zig");
 const Array = @import("array.zig").Array;
 
 pub const PoolByteArray = struct {
-
     godot_array: gd.godot_pool_byte_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_byte_array_read_access,
 
         const ReadSelf = @This();
@@ -18,7 +16,7 @@ pub const PoolByteArray = struct {
         }
 
         pub inline fn init(array: *const PoolByteArray) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -28,7 +26,7 @@ pub const PoolByteArray = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -40,11 +38,9 @@ pub const PoolByteArray = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_byte_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_byte_array_write_access,
 
         const WriteSelf = @This();
@@ -54,7 +50,7 @@ pub const PoolByteArray = struct {
         }
 
         pub inline fn init(array: *const PoolByteArray) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -64,7 +60,7 @@ pub const PoolByteArray = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -85,7 +81,7 @@ pub const PoolByteArray = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -95,7 +91,7 @@ pub const PoolByteArray = struct {
     }
 
     pub fn initGodotPoolByteArray(godot_array: gd.godot_pool_byte_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -103,7 +99,7 @@ pub const PoolByteArray = struct {
     }
 
     pub fn initCopy(other: *const PoolByteArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -113,7 +109,7 @@ pub const PoolByteArray = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -169,15 +165,12 @@ pub const PoolByteArray = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_byte_array_get.?(&self.godot_array);
     }
-
 };
 
 pub const PoolIntArray = struct {
-
     godot_array: gd.godot_pool_int_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_int_array_read_access,
 
         const ReadSelf = @This();
@@ -187,7 +180,7 @@ pub const PoolIntArray = struct {
         }
 
         pub inline fn init(array: *const PoolIntArray) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -197,7 +190,7 @@ pub const PoolIntArray = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -209,11 +202,9 @@ pub const PoolIntArray = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_int_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_int_array_write_access,
 
         const WriteSelf = @This();
@@ -223,7 +214,7 @@ pub const PoolIntArray = struct {
         }
 
         pub inline fn init(array: *const PoolIntArray) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -233,7 +224,7 @@ pub const PoolIntArray = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -254,7 +245,7 @@ pub const PoolIntArray = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -264,7 +255,7 @@ pub const PoolIntArray = struct {
     }
 
     pub fn initGodotPoolIntArray(godot_array: gd.godot_pool_int_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -272,7 +263,7 @@ pub const PoolIntArray = struct {
     }
 
     pub fn initCopy(other: *const PoolIntArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -282,7 +273,7 @@ pub const PoolIntArray = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -338,15 +329,12 @@ pub const PoolIntArray = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_int_array_get.?(&self.godot_array);
     }
-
 };
 
 pub const PoolRealArray = struct {
-
     godot_array: gd.godot_pool_real_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_real_array_read_access,
 
         const ReadSelf = @This();
@@ -356,7 +344,7 @@ pub const PoolRealArray = struct {
         }
 
         pub inline fn init(array: *const PoolRealArray) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -366,7 +354,7 @@ pub const PoolRealArray = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -378,11 +366,9 @@ pub const PoolRealArray = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_real_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_real_array_write_access,
 
         const WriteSelf = @This();
@@ -392,7 +378,7 @@ pub const PoolRealArray = struct {
         }
 
         pub inline fn init(array: *const PoolRealArray) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -402,7 +388,7 @@ pub const PoolRealArray = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -423,7 +409,7 @@ pub const PoolRealArray = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -433,7 +419,7 @@ pub const PoolRealArray = struct {
     }
 
     pub fn initGodotPoolRealArray(godot_array: gd.godot_pool_real_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -441,7 +427,7 @@ pub const PoolRealArray = struct {
     }
 
     pub fn initCopy(other: *const PoolRealArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -451,7 +437,7 @@ pub const PoolRealArray = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -507,15 +493,12 @@ pub const PoolRealArray = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_real_array_get.?(&self.godot_array);
     }
-
 };
 
 pub const PoolStringArray = struct {
-
     godot_array: gd.godot_pool_string_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_string_array_read_access,
 
         const ReadSelf = @This();
@@ -525,7 +508,7 @@ pub const PoolStringArray = struct {
         }
 
         pub inline fn init(array: *const PoolStringArray) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -535,7 +518,7 @@ pub const PoolStringArray = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -547,11 +530,9 @@ pub const PoolStringArray = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_string_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_string_array_write_access,
 
         const WriteSelf = @This();
@@ -561,7 +542,7 @@ pub const PoolStringArray = struct {
         }
 
         pub inline fn init(array: *const PoolStringArray) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -571,7 +552,7 @@ pub const PoolStringArray = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -592,7 +573,7 @@ pub const PoolStringArray = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -602,7 +583,7 @@ pub const PoolStringArray = struct {
     }
 
     pub fn initGodotPoolStringArray(godot_array: gd.godot_pool_string_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -610,7 +591,7 @@ pub const PoolStringArray = struct {
     }
 
     pub fn initCopy(other: *const PoolStringArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -620,7 +601,7 @@ pub const PoolStringArray = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -676,15 +657,12 @@ pub const PoolStringArray = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_string_array_get.?(&self.godot_array);
     }
-
 };
 
 pub const PoolVector2Array = struct {
-
     godot_array: gd.godot_pool_vector2_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_vector2_array_read_access,
 
         const ReadSelf = @This();
@@ -694,7 +672,7 @@ pub const PoolVector2Array = struct {
         }
 
         pub inline fn init(array: *const PoolVector2Array) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -704,7 +682,7 @@ pub const PoolVector2Array = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -716,11 +694,9 @@ pub const PoolVector2Array = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_vector2_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_vector2_array_write_access,
 
         const WriteSelf = @This();
@@ -730,7 +706,7 @@ pub const PoolVector2Array = struct {
         }
 
         pub inline fn init(array: *const PoolVector2Array) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -740,7 +716,7 @@ pub const PoolVector2Array = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -761,7 +737,7 @@ pub const PoolVector2Array = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -771,7 +747,7 @@ pub const PoolVector2Array = struct {
     }
 
     pub fn initGodotPoolVector2Array(godot_array: gd.godot_pool_vector2_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -779,7 +755,7 @@ pub const PoolVector2Array = struct {
     }
 
     pub fn initCopy(other: *const PoolVector2Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -789,7 +765,7 @@ pub const PoolVector2Array = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -845,15 +821,12 @@ pub const PoolVector2Array = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_vector2_array_get.?(&self.godot_array);
     }
-
 };
 
 pub const PoolVector3Array = struct {
-
     godot_array: gd.godot_pool_vector3_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_vector3_array_read_access,
 
         const ReadSelf = @This();
@@ -863,7 +836,7 @@ pub const PoolVector3Array = struct {
         }
 
         pub inline fn init(array: *const PoolVector3Array) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -873,7 +846,7 @@ pub const PoolVector3Array = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -885,11 +858,9 @@ pub const PoolVector3Array = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_vector3_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_vector3_array_write_access,
 
         const WriteSelf = @This();
@@ -899,7 +870,7 @@ pub const PoolVector3Array = struct {
         }
 
         pub inline fn init(array: *const PoolVector3Array) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -909,7 +880,7 @@ pub const PoolVector3Array = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -930,7 +901,7 @@ pub const PoolVector3Array = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -940,7 +911,7 @@ pub const PoolVector3Array = struct {
     }
 
     pub fn initGodotPoolVector3Array(godot_array: gd.godot_pool_vector3_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -948,7 +919,7 @@ pub const PoolVector3Array = struct {
     }
 
     pub fn initCopy(other: *const PoolVector3Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -958,7 +929,7 @@ pub const PoolVector3Array = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -1014,15 +985,12 @@ pub const PoolVector3Array = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_vector3_array_get.?(&self.godot_array);
     }
-
 };
 
 pub const PoolColorArray = struct {
-
     godot_array: gd.godot_pool_color_array,
 
     pub const Read = struct {
-
         read_access: gd.godot_pool_color_array_read_access,
 
         const ReadSelf = @This();
@@ -1032,7 +1000,7 @@ pub const PoolColorArray = struct {
         }
 
         pub inline fn init(array: *const PoolColorArray) ReadSelf {
-            var self = ReadSelf {
+            var self = ReadSelf{
                 .read_access = undefined,
             };
 
@@ -1042,7 +1010,7 @@ pub const PoolColorArray = struct {
         }
 
         pub inline fn initCopy(other: *const Read) ReadSelf {
-            var self = Self {
+            var self = Self{
                 .read_access = undefined,
             };
 
@@ -1054,11 +1022,9 @@ pub const PoolColorArray = struct {
         pub inline fn ptr(self: *const ReadSelf) [*]const u8 {
             return api.core.godot_pool_color_array_read_access_ptr.?(&self.read_access);
         }
-
     };
 
     pub const Write = struct {
-
         write_access: gd.godot_pool_color_array_write_access,
 
         const WriteSelf = @This();
@@ -1068,7 +1034,7 @@ pub const PoolColorArray = struct {
         }
 
         pub inline fn init(array: *const PoolColorArray) WriteSelf {
-            var self = WriteSelf {
+            var self = WriteSelf{
                 .write_access = undefined,
             };
 
@@ -1078,7 +1044,7 @@ pub const PoolColorArray = struct {
         }
 
         pub inline fn initCopy(other: *const Write) WriteSelf {
-            var self = Self {
+            var self = Self{
                 .write_access = undefined,
             };
 
@@ -1099,7 +1065,7 @@ pub const PoolColorArray = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -1109,7 +1075,7 @@ pub const PoolColorArray = struct {
     }
 
     pub fn initGodotPoolColorArray(godot_array: gd.godot_pool_color_array) Self {
-        const self = Self {
+        const self = Self{
             .godot_array = godot_array,
         };
 
@@ -1117,7 +1083,7 @@ pub const PoolColorArray = struct {
     }
 
     pub fn initCopy(other: *const PoolColorArray) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -1127,7 +1093,7 @@ pub const PoolColorArray = struct {
     }
 
     pub fn initArray(other: *const Array) Self {
-        var self = Self {
+        var self = Self{
             .godot_array = undefined,
         };
 
@@ -1183,5 +1149,4 @@ pub const PoolColorArray = struct {
     pub fn size(self: *const Self) i32 {
         return api.core.godot_pool_color_array_get.?(&self.godot_array);
     }
-
 };

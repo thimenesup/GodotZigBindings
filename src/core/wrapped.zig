@@ -8,11 +8,9 @@ pub const Wrapped = struct {
     type_tag: usize,
 };
 
-
 // Functions start with _underscore to avoid conflicting with other godot class body functions to allow usingnamespace to make calling them less verbose
 pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime singleton: bool) type {
     return struct {
-
         pub inline fn _isClassScript() bool {
             return false;
         }
@@ -37,7 +35,7 @@ pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime
             const class_constructor = api.core.godot_get_class_constructor.?(@typeName(class));
             const class_instance = class_constructor.?();
             const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, class_instance);
-            return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
+            return @as(*class, @ptrCast(@alignCast(instance_data)));
         }
 
         pub inline fn _getClassSingleton() *class {
@@ -45,10 +43,9 @@ pub fn GenGodotClass(comptime class: type, comptime instanciable: bool, comptime
                 @compileError("This class isn't a singleton");
             };
 
-            const class_instance = api.core.godot_global_get_singleton.?(@intToPtr(*u8, @ptrToInt(@typeName(class))));
+            const class_instance = api.core.godot_global_get_singleton.?(@as(*u8, @ptrFromInt(@intFromPtr(@typeName(class)))));
             const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, class_instance);
-            return @ptrCast(*class, @alignCast(@alignOf(class), instance_data));
+            return @as(*class, @ptrCast(@alignCast(instance_data)));
         }
-
     };
 }

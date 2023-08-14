@@ -24,11 +24,9 @@ pub const CharString = struct { // This is not meant to be constructed directly
     pub fn getData(self: *const Self) [*:0]u8 {
         return api.core.godot_char_string_get_data.?(&self.godot_char_string);
     }
-
 };
 
 pub const String = struct {
-
     godot_string: gd.godot_string,
 
     const Self = @This();
@@ -38,7 +36,7 @@ pub const String = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_string = undefined,
         };
 
@@ -48,7 +46,7 @@ pub const String = struct {
     }
 
     pub fn initGodotString(p_godot_string: gd.godot_string) Self {
-        const self = Self {
+        const self = Self{
             .godot_string = p_godot_string,
         };
 
@@ -56,18 +54,18 @@ pub const String = struct {
     }
 
     pub fn initUtf8(chars: [*:0]const u8) Self {
-        var self = Self {
+        var self = Self{
             .godot_string = undefined,
         };
 
         api.core.godot_string_new.?(&self.godot_string);
-        _ = api.core.godot_string_parse_utf8.?(&self.godot_string, @ptrCast([*c]const u8, chars));
+        _ = api.core.godot_string_parse_utf8.?(&self.godot_string, @as([*c]const u8, @ptrCast(chars)));
 
         return self;
     }
 
     pub fn initCopy(other: *const String) Self {
-        var self = Self {
+        var self = Self{
             .godot_string = undefined,
         };
 
@@ -77,7 +75,7 @@ pub const String = struct {
     }
 
     pub fn initNodePath(node_path: *const NodePath) Self {
-        var self = Self {
+        var self = Self{
             .godot_string = undefined,
         };
 
@@ -167,11 +165,11 @@ pub const String = struct {
     pub fn allocCString(self: *const Self) [*:0]u8 { // Make sure you call api.godot_free() on returned ptr
         const contents = api.core.godot_string_utf8.?(&self.godot_string);
         const len = api.core.godot_char_string_length.?(&contents);
-        const result = @ptrCast([*:0]u8, api.core.godot_alloc.?(len + 1));
+        const result = @as([*:0]u8, @ptrCast(api.core.godot_alloc.?(len + 1)));
 
         if (result != null) {
             const data = api.core.godot_char_string_get_data.?(&contents);
-            @memcpy(result, data, len + 1);
+            @memcpy(result, @as(*[len + 1]u8, data));
         }
 
         api.core.godot_char_string_destroy.?(&contents);
@@ -180,7 +178,7 @@ pub const String = struct {
     }
 
     pub fn utf8(self: *const Self) CharString { // Make sure you call .deinit() on returned struct
-        const char_string = CharString {
+        const char_string = CharString{
             .godot_char_string = api.core.godot_string_utf8.?(&self.godot_string),
         };
 
@@ -188,14 +186,13 @@ pub const String = struct {
     }
 
     pub fn ascii(self: *const Self, extended: bool) CharString { // Make sure you call .deinit() on returned struct
-        var char_string = CharString {
+        var char_string = CharString{
             .godot_char_string = undefined,
         };
 
         if (extended) {
             char_string.godot_char_string = api.core.godot_string_ascii_extended.?(&self.godot_string);
-        }
-        else {
+        } else {
             char_string.godot_char_string = api.core.godot_string_ascii.?(&self.godot_string);
         }
 
@@ -261,7 +258,7 @@ pub const String = struct {
     pub fn formatPlaceholder(self: *const Self, values: *const Variant, placeholder: *const String) String { // Make sure you call .deinit() on returned struct
         const char_contents = api.core.godot_string_utf8.?(&placeholder.godot_string);
         const data = api.core.godot_char_string_get_data.?(&char_contents);
-        const godot_string =  api.core.godot_string_format_with_custom_placeholder.?(&self.godot_string, &values.godot_variant, &placeholder.godot_string, data);
+        const godot_string = api.core.godot_string_format_with_custom_placeholder.?(&self.godot_string, &values.godot_variant, &placeholder.godot_string, data);
         api.core.godot_char_string_destroy.?(&char_contents);
         return String.initGodotString(godot_string);
     }
@@ -521,5 +518,4 @@ pub const String = struct {
         const godot_string = api.core_1_1.godot_string_trim_suffix.?(&self.godot_string);
         return String.initGodotString(godot_string);
     }
-
 };

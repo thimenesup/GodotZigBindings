@@ -5,7 +5,6 @@ const Vector3 = @import("vector3.zig").Vector3;
 const Plane = @import("plane.zig").Plane;
 
 pub const AABB = extern struct {
-
     position: Vector3,
     size: Vector3,
 
@@ -85,24 +84,18 @@ pub const AABB = extern struct {
         const dst_min = other.position;
         const dst_max = other.position.plus(other.size);
 
-        return (
-            (src_min.x <= dst_min.x) and
+        return ((src_min.x <= dst_min.x) and
             (src_max.x > dst_max.x) and
             (src_min.y <= dst_min.y) and
             (src_max.y > dst_max.y) and
             (src_min.z <= dst_min.z) and
-            (src_max.z > dst_max.z)
-        );
+            (src_max.z > dst_max.z));
     }
 
     pub inline fn getSupport(self: *const Self, normal: *const Vector3) Vector3 {
         const half_extents = self.size.mulScalar(0.5);
         const ofs = self.position.plus(half_extents);
-        const support = Vector3.new(
-            if (normal.x > 0) -half_extents.x else half_extents.x,
-            if (normal.y > 0) -half_extents.y else half_extents.y,
-            if (normal.z > 0) -half_extents.z else half_extents.z
-        );
+        const support = Vector3.new(if (normal.x > 0) -half_extents.x else half_extents.x, if (normal.y > 0) -half_extents.y else half_extents.y, if (normal.z > 0) -half_extents.z else half_extents.z);
         return support.plus(ofs);
     }
 
@@ -145,11 +138,7 @@ pub const AABB = extern struct {
         var i: usize = 0;
         while (i < plane_count) : (i += 1) {
             const plane = planes[i];
-            var point = Vector3.new(
-                if (plane.normal.x > 0.0) -half_extents.x else half_extents.x,
-                if (plane.normal.y > 0.0) -half_extents.y else half_extents.y,
-                if (plane.normal.z > 0.0) -half_extents.z else half_extents.z
-            );
+            var point = Vector3.new(if (plane.normal.x > 0.0) -half_extents.x else half_extents.x, if (plane.normal.y > 0.0) -half_extents.y else half_extents.y, if (plane.normal.z > 0.0) -half_extents.z else half_extents.z);
             point.plusAssign(ofs);
             if (plane.isPointOver(point)) {
                 return false;
@@ -186,7 +175,7 @@ pub const AABB = extern struct {
             begin.y = vector.y;
         if (vector.z < begin.z)
             begin.z = vector.z;
-        
+
         if (vector.x > end.x)
             end.x = vector.x;
         if (vector.y > end.y)
@@ -284,24 +273,21 @@ pub const AABB = extern struct {
 
         if (src_min.x > dst_max.x or src_max.x < dst_min.x) {
             return AABB.newDefault();
-        }
-        else {
+        } else {
             min.x = if (src_min.x > dst_min.x) src_min.x else dst_min.x;
             max.x = if (src_max.x > dst_max.x) src_max.x else dst_max.x;
         }
 
         if (src_min.y > dst_max.y or src_max.y < dst_min.y) {
             return AABB.newDefault();
-        }
-        else {
+        } else {
             min.y = if (src_min.y > dst_min.y) src_min.y else dst_min.y;
             max.y = if (src_max.y > dst_max.y) src_max.y else dst_max.y;
         }
 
         if (src_min.z > dst_max.z or src_max.z < dst_min.z) {
             return AABB.newDefault();
-        }
-        else {
+        } else {
             min.z = if (src_min.z > dst_min.z) src_min.z else dst_min.z;
             max.z = if (src_max.z > dst_max.z) src_max.z else dst_max.z;
         }
@@ -326,8 +312,7 @@ pub const AABB = extern struct {
         if (dir.x >= 0) {
             tmin = (self.position.x - from.x) * divx;
             tmax = (upbound.x - from.x) * divx;
-        }
-        else {
+        } else {
             tmin = (upbound.x - from.x) * divx;
             tmax = (self.position.x - from.x) * divx;
         }
@@ -335,43 +320,41 @@ pub const AABB = extern struct {
         if (dir.y >= 0) {
             tymin = (self.position.y - from.y) * divy;
             tymax = (upbound.y - from.y) * divy;
-        }
-        else {
+        } else {
             tymin = (upbound.y - from.y) * divy;
             tymax = (self.position.y - from.y) * divy;
         }
 
         if ((tmin > tymax) or (tymin > tmax))
             return false;
-        
+
         if (tymin > tmin)
             tmin = tymin;
         if (tymax < tmax)
             tmax = tymax;
-        
+
         if (dir.z >= 0) {
             tzmin = (self.position.z - from.z) * divz;
             tzmax = (upbound.z - from.z) * divz;
-        }
-        else {
+        } else {
             tzmin = (upbound.z - from.z) * divz;
             tzmax = (self.position.z - from.z) * divz;
         }
 
         if ((tmin > tzmax) or (tzmin > tmax))
             return false;
-        
+
         if (tzmin > tmin)
             tmin = tzmin;
         if (tzmax < tmax)
             tmax = tzmax;
-        
+
         return ((tmin < t1) and (tmax > t0));
     }
 
     pub fn intersectsRay(self: *const Self, from: *const Vector3, dir: *const Vector3, r_clip: ?*Vector3, r_normal: ?*Vector3) bool {
         const end = self.position.plus(self.size);
-        
+
         var c1 = Vector3.new(0, 0, 0);
         var c2 = Vector3.new(0, 0, 0);
 
@@ -385,8 +368,7 @@ pub const AABB = extern struct {
                 if ((from.axis(i) < self.position.axis(i)) or (from.axis(i) > end.axis(i))) {
                     return false;
                 }
-            }
-            else {
+            } else {
                 c1.axis(i).* = (self.position.axis(i) - from.axis(i)) / dir.axis(i);
                 c2.axis(i).* = (end.axis(i) - from.axis(i)) / dir.axis(i);
 
@@ -445,8 +427,7 @@ pub const AABB = extern struct {
                 cmin = if (seg_from < box_begin) (box_begin - seg_from) / length else 0.0;
                 cmax = if (seg_to > box_end) (box_end - seg_from) / length else 1.0;
                 csign = -1.0;
-            }
-            else {
+            } else {
                 if (seg_to > box_end or seg_from < box_begin) {
                     return false;
                 }
@@ -485,16 +466,7 @@ pub const AABB = extern struct {
     }
 
     pub fn intersectsPlane(self: *const Self, plane: *const Plane) bool {
-        const points = [8]Vector3 {
-            Vector3.new(self.position.x, self.position.y, self.position.z),
-            Vector3.new(self.position.x, self.position.y, self.position.z + self.size.z),
-            Vector3.new(self.position.x, self.position.y + self.size.y, self.position.z),
-            Vector3.new(self.position.x, self.position.y + self.size.y, self.position.z + self.size.z),
-            Vector3.new(self.position.x + self.size.x, self.position.y, self.position.z),
-            Vector3.new(self.position.x + self.size.x, self.position.y, self.position.z + self.size.z),
-            Vector3.new(self.position.x + self.size.x, self.position.y + self.size.y, self.position.z),
-            Vector3.new(self.position.x + self.size.x, self.position.y + self.size.y, self.position.z + self.size.z)
-        };
+        const points = [8]Vector3{ Vector3.new(self.position.x, self.position.y, self.position.z), Vector3.new(self.position.x, self.position.y, self.position.z + self.size.z), Vector3.new(self.position.x, self.position.y + self.size.y, self.position.z), Vector3.new(self.position.x, self.position.y + self.size.y, self.position.z + self.size.z), Vector3.new(self.position.x + self.size.x, self.position.y, self.position.z), Vector3.new(self.position.x + self.size.x, self.position.y, self.position.z + self.size.z), Vector3.new(self.position.x + self.size.x, self.position.y + self.size.y, self.position.z), Vector3.new(self.position.x + self.size.x, self.position.y + self.size.y, self.position.z + self.size.z) };
 
         var over = false;
         var under = false;
@@ -503,8 +475,7 @@ pub const AABB = extern struct {
         while (i < 8) : (i += 1) {
             if (plane.distanceTo(points[i]) > 0.0) {
                 over = true;
-            }
-            else {
+            } else {
                 under = true;
             }
         }
@@ -630,10 +601,7 @@ pub const AABB = extern struct {
                 from.* = Vector3.new(self.position.x + self.size.x, self.position.y, self.position.z + self.size.z);
                 to.* = Vector3.new(self.position.x + self.size.x, self.position.y + self.size.y, self.position.z + self.size.z);
             },
-            else => {
-
-            },
+            else => {},
         }
     }
-
 };

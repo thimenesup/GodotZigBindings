@@ -1,7 +1,6 @@
 const std = @import("std");
 
 pub const Color = extern struct {
-
     const T = f32;
 
     r: T,
@@ -12,7 +11,7 @@ pub const Color = extern struct {
     const Self = @This();
 
     pub inline fn new(p_r: T, p_g: T, p_b: T, p_a: T) Self {
-        const self = Self {
+        const self = Self{
             .r = p_r,
             .g = p_g,
             .b = p_b,
@@ -23,7 +22,7 @@ pub const Color = extern struct {
     }
 
     pub inline fn newDefault() Self {
-        const self = Self {
+        const self = Self{
             .r = 0.0,
             .g = 0.0,
             .b = 0.0,
@@ -46,16 +45,13 @@ pub const Color = extern struct {
             if (self.g == other.g) {
                 if (self.b == other.b) {
                     return self.a < other.a;
-                }
-                else {
+                } else {
                     return self.b < other.b;
                 }
-            }
-            else {
+            } else {
                 return self.g < other.g;
             }
-        }
-        else {
+        } else {
             return self.r < other.r;
         }
     }
@@ -65,16 +61,13 @@ pub const Color = extern struct {
             if (self.g == other.g) {
                 if (self.b == other.b) {
                     return self.a <= other.a;
-                }
-                else {
+                } else {
                     return self.b < other.b;
                 }
-            }
-            else {
+            } else {
                 return self.g < other.g;
             }
-        }
-        else {
+        } else {
             return self.r < other.r;
         }
     }
@@ -176,102 +169,102 @@ pub const Color = extern struct {
 
     pub inline fn to32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @as(u8, @intFromFloat(self.a * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @as(u8, @intFromFloat(self.r * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @as(u8, @intFromFloat(self.g * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @as(u8, @intFromFloat(self.b * 255));
         return c;
     }
 
     pub inline fn toARGB32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @as(u8, @intFromFloat(self.a * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @as(u8, @intFromFloat(self.r * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @as(u8, @intFromFloat(self.g * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @as(u8, @intFromFloat(self.b * 255));
         return c;
     }
 
     pub inline fn toABGR32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @as(u8, @intFromFloat(self.a * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @as(u8, @intFromFloat(self.b * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @as(u8, @intFromFloat(self.g * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @as(u8, @intFromFloat(self.r * 255));
         return c;
     }
 
     pub inline fn toRGBA32(self: *const Self) u32 {
         var c: u32 = 0;
-        c |= @floatToInt(u8, self.r * 255);
+        c |= @as(u8, @intFromFloat(self.r * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.g * 255);
+        c |= @as(u8, @intFromFloat(self.g * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.b * 255);
+        c |= @as(u8, @intFromFloat(self.b * 255));
         c <<= 8;
-        c |= @floatToInt(u8, self.a * 255);
+        c |= @as(u8, @intFromFloat(self.a * 255));
         return c;
     }
 
     pub inline fn toARGB64(self: *const Self) u64 {
         var c: u64 = 0;
-        c |= @floatToInt(u16, self.a * 65535);
+        c |= @as(u16, @intFromFloat(self.a * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.r * 65535);
+        c |= @as(u16, @intFromFloat(self.r * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.g * 65535);
+        c |= @as(u16, @intFromFloat(self.g * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.b * 65535);
+        c |= @as(u16, @intFromFloat(self.b * 65535));
         return c;
     }
 
     pub inline fn toABGR64(self: *const Self) u64 {
         var c: u64 = 0;
-        c |= @floatToInt(u16, self.a * 65535);
+        c |= @as(u16, @intFromFloat(self.a * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.b * 65535);
+        c |= @as(u16, @intFromFloat(self.b * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.g * 65535);
+        c |= @as(u16, @intFromFloat(self.g * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.r * 65535);
+        c |= @as(u16, @intFromFloat(self.r * 65535));
         return c;
     }
 
     pub inline fn toRGBA64(self: *const Self) u64 {
         var c: u64 = 0;
-        c |= @floatToInt(u16, self.r * 65535);
+        c |= @as(u16, @intFromFloat(self.r * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.g * 65535);
+        c |= @as(u16, @intFromFloat(self.g * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.b * 65535);
+        c |= @as(u16, @intFromFloat(self.b * 65535));
         c <<= 16;
-        c |= @floatToInt(u16, self.a * 65535);
+        c |= @as(u16, @intFromFloat(self.a * 65535));
         return c;
     }
 
     pub inline fn getR8(self: *const Self) u8 {
-        return @floatToInt(u8, self.r * 255);
+        return @as(u8, @intFromFloat(self.r * 255));
     }
 
     pub inline fn getG8(self: *const Self) u8 {
-        return @floatToInt(u8, self.g * 255);
+        return @as(u8, @intFromFloat(self.g * 255));
     }
 
     pub inline fn getB8(self: *const Self) u8 {
-        return @floatToInt(u8, self.b * 255);
+        return @as(u8, @intFromFloat(self.b * 255));
     }
 
     pub inline fn getA8(self: *const Self) u8 {
-        return @floatToInt(u8, self.a * 255);
+        return @as(u8, @intFromFloat(self.a * 255));
     }
 
     pub inline fn gray(self: *const Self) f32 {
@@ -292,11 +285,9 @@ pub const Color = extern struct {
         var h: f32 = 0.0;
         if (self.r == max) {
             h = (self.g - self.b) / delta;
-        }
-        else if (self.g == max) {
+        } else if (self.g == max) {
             h = 2.0 + (self.b - self.r) / delta;
-        }
-        else {
+        } else {
             h = 4.0 + (self.r - self.g) / delta;
         }
 
@@ -382,7 +373,7 @@ pub const Color = extern struct {
             h += 360.0;
         }
 
-        const i = @floatToInt(usize, h / 60.0);
+        const i = @as(usize, @intFromFloat(h / 60.0));
         const c = p_v * p_s;
         const x = c * (1.0 - @fabs(@mod(h / 60.0, 2.0) - 1.0));
 
@@ -487,8 +478,7 @@ pub const Color = extern struct {
         color.a = self.a * sa + other.a;
         if (color.a == 0.0) {
             return Color.new(0, 0, 0, 0);
-        }
-        else {
+        } else {
             color.r = (self.r * self.a * sa + other.r * other.a) / color.a;
             color.g = (self.g * self.a * sa + other.g * other.a) / color.a;
             color.b = (self.b * self.a * sa + other.b * other.a) / color.a;
@@ -497,12 +487,7 @@ pub const Color = extern struct {
     }
 
     pub inline fn toLinear(self: *const Self) Self {
-        return Color.new(
-            if (self.r < 0.04045) self.r * (1.0 / 12.92) else std.math.pow(T, (self.r + 0.055) * (1.0 / (1 + 0.055)), 2.4),
-            if (self.g < 0.04045) self.g * (1.0 / 12.92) else std.math.pow(T, (self.g + 0.055) * (1.0 / (1 + 0.055)), 2.4),
-            if (self.b < 0.04045) self.b * (1.0 / 12.92) else std.math.pow(T, (self.b + 0.055) * (1.0 / (1 + 0.055)), 2.4),
-            self.a
-        );
+        return Color.new(if (self.r < 0.04045) self.r * (1.0 / 12.92) else std.math.pow(T, (self.r + 0.055) * (1.0 / (1 + 0.055)), 2.4), if (self.g < 0.04045) self.g * (1.0 / 12.92) else std.math.pow(T, (self.g + 0.055) * (1.0 / (1 + 0.055)), 2.4), if (self.b < 0.04045) self.b * (1.0 / 12.92) else std.math.pow(T, (self.b + 0.055) * (1.0 / (1 + 0.055)), 2.4), self.a);
     }
 
     pub inline fn hex(p_hex: u32) Self {
@@ -516,5 +501,4 @@ pub const Color = extern struct {
         const b = (mut_hex & 0xFF) / 255.0;
         return Color.new(r, g, b, a);
     }
-
 };

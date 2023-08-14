@@ -6,7 +6,6 @@ const Vector3 = @import("vector3.zig").Vector3;
 const Basis = @import("basis.zig").Basis;
 
 pub const Quat = struct {
-
     const T = f32;
 
     x: T,
@@ -19,7 +18,7 @@ pub const Quat = struct {
     const identity = Quat.newIdentity();
 
     pub inline fn new(x: T, y: T, z: T, w: T) Self {
-        const self = Self {
+        const self = Self{
             .x = x,
             .y = y,
             .z = z,
@@ -30,7 +29,7 @@ pub const Quat = struct {
     }
 
     pub inline fn newIdentity() Self {
-        const self = Self {
+        const self = Self{
             .x = 0,
             .y = 0,
             .z = 0,
@@ -39,7 +38,6 @@ pub const Quat = struct {
 
         return self;
     }
-
 
     pub inline fn plus(self: *const Self, other: *const Quat) Self { // Operator +
         return Quat.new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w);
@@ -190,8 +188,7 @@ pub const Quat = struct {
             to1.y = -q.y;
             to1.z = -q.z;
             to1.w = -q.w;
-        }
-        else {
+        } else {
             to1.x = q.x;
             to1.y = q.y;
             to1.z = q.z;
@@ -208,8 +205,7 @@ pub const Quat = struct {
             sinom = @sin(omega);
             scale0 = @sin((1.0 - t) * omega) / sinom;
             scale1 = @sin(t * omega) / sinom;
-        }
-        else {
+        } else {
             scale0 = 1.0 - t;
             scale1 = t;
         }
@@ -224,7 +220,7 @@ pub const Quat = struct {
 
         if (@fabs(d) > 0.9999)
             return from;
-        
+
         const theta = acos(d);
         const sinT = 1.0 / @sin(theta);
         const newFactor = @sin(t * theta) * sinT;
@@ -255,8 +251,7 @@ pub const Quat = struct {
             self.y = 0;
             self.z = 0;
             self.w = 0;
-        }
-        else {
+        } else {
             const sin_angle = @sin(angle * 0.5);
             const cos_angle = @cos(angle * 0.5);
             const s = sin_angle / d;
@@ -266,5 +261,4 @@ pub const Quat = struct {
             self.w = cos_angle;
         }
     }
-
 };

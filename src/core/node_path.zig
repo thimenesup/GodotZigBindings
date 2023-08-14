@@ -4,7 +4,6 @@ const api = @import("api.zig");
 const String = @import("string.zig").String;
 
 pub const NodePath = struct {
-
     godot_node_path: gd.godot_node_path,
 
     const Self = @This();
@@ -17,7 +16,7 @@ pub const NodePath = struct {
         const string = String.init();
         defer string.deinit();
 
-        var self = Self {
+        var self = Self{
             .godot_node_path = undefined,
         };
 
@@ -26,7 +25,7 @@ pub const NodePath = struct {
     }
 
     pub fn initGodotNodePath(p_godot_node_path: gd.godot_node_path) Self {
-        const self = String {
+        const self = String{
             .godot_node_path = p_godot_node_path,
         };
 
@@ -34,7 +33,7 @@ pub const NodePath = struct {
     }
 
     pub fn initCopy(other: *const NodePath) Self {
-        var self = Self {
+        var self = Self{
             .godot_node_path = undefined,
         };
 
@@ -46,7 +45,7 @@ pub const NodePath = struct {
     }
 
     pub fn initString(string: *const String) Self {
-        var self = Self {
+        var self = Self{
             .godot_node_path = undefined,
         };
 
@@ -58,7 +57,7 @@ pub const NodePath = struct {
         const string = String.initUtf8(chars);
         defer string.deinit();
 
-        var self = Self {
+        var self = Self{
             .godot_node_path = undefined,
         };
 
@@ -121,5 +120,4 @@ pub const NodePath = struct {
         defer string.deinit();
         api.core.godot_node_path_destroy.?(&self.godot_node_path, &string.godot_string);
     }
-
 };

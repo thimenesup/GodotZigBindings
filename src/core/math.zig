@@ -7,9 +7,9 @@ pub inline fn lerp(T: type, min: T, max: T, weight: T) T {
 }
 
 pub inline fn lerpAngle(T: type, from: T, to: T, weight: T) T {
-	const difference = @mod(to - from, std.math.tau);
-	const distance = @mod(2.0 * difference, std.math.tau) - difference;
-	return from + distance * weight;
+    const difference = @mod(to - from, std.math.tau);
+    const distance = @mod(2.0 * difference, std.math.tau) - difference;
+    return from + distance * weight;
 }
 
 pub inline fn inverseLerp(T: type, from: T, to: T, weight: T) T {

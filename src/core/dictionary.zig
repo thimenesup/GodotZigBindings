@@ -6,7 +6,6 @@ const Array = @import("array.zig").Array;
 const String = @import("string.zig").String;
 
 pub const Dictionary = struct {
-
     godot_dictionary: gd.godot_dictionary,
 
     const Self = @This();
@@ -16,7 +15,7 @@ pub const Dictionary = struct {
     }
 
     pub fn init() Self {
-        var self = Self {
+        var self = Self{
             .godot_dictionary = undefined,
         };
 
@@ -49,7 +48,7 @@ pub const Dictionary = struct {
     pub fn hash(self: *const Self) u32 {
         return api.core.godot_dictionary_hash.?(&self.godot_dictionary);
     }
-    
+
     pub fn keys(self: *const Self) Array { // Make sure you call .deinit() on returned struct
         const godot_array = api.core.godot_dictionary_keys.?(&self.godot_dictionary);
         return Array.initGodotArray(godot_array);
@@ -78,5 +77,4 @@ pub const Dictionary = struct {
         const godot_array = api.core.godot_dictionary_values.?(&self.godot_dictionary);
         return Array.initGodotArray(godot_array);
     }
-
 };

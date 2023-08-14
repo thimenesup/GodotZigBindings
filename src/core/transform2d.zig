@@ -6,7 +6,6 @@ const Vector2 = @import("vector2.zig").Vector2;
 const Rect2 = @import("rect2.zig").Rect2;
 
 pub const Transform2D = extern struct {
-
     elements: [3]Vector2,
 
     const Self = @This();
@@ -101,7 +100,7 @@ pub const Transform2D = extern struct {
         return new_rect;
     }
 
-    pub inline fn xformInvRect(self:* const Self, rect: *const Rect2) Rect2 {
+    pub inline fn xformInvRect(self: *const Self, rect: *const Rect2) Rect2 {
         var ends: [4]Vector2 = undefined;
         ends[0] = self.xformInv(rect.position);
         ends[1] = self.xformInv(Vector2.new(rect.position.x, rect.position.y + rect.size.y));
@@ -213,7 +212,7 @@ pub const Transform2D = extern struct {
     }
 
     pub inline fn equal(self: *const Self, other: *const Transform2D) bool { //Operator ==
-        inline for (self.elements) |element, i| {
+        inline for (self.elements, 0..) |element, i| {
             _ = element;
             if (self.elements[i].notEqual(other.elements[i])) {
                 return false;
@@ -224,7 +223,7 @@ pub const Transform2D = extern struct {
     }
 
     pub inline fn notEqual(self: *const Self, other: *const Transform2D) bool { //Operator !=
-        inline for (self.elements) |element, i| {
+        inline for (self.elements, 0..) |element, i| {
             _ = element;
             if (self.elements[i].notEqual(other.elements[i])) {
                 return true;
@@ -309,8 +308,7 @@ pub const Transform2D = extern struct {
 
         if (dot > 0.9995) {
             v = v1.linearInterpolate(v2, p_c).normalized();
-        }
-        else {
+        } else {
             const angle = p_c * acos(dot);
             const v3 = v2.minus(v1.mulScalar(dot)).normalized();
             v = v1.mulScalar(@cos(angle)).plus(v3.mulScalar(@sin(angle)));
@@ -320,5 +318,4 @@ pub const Transform2D = extern struct {
         res.scaleBasis(s1.linearInterpolate(s2, p_c));
         return res;
     }
-
 };

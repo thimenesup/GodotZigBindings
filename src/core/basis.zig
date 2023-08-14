@@ -8,7 +8,6 @@ const Vector3 = @import("vector3.zig").Vector3;
 const Quat = @import("quat.zig").Quat;
 
 pub const Basis = extern struct {
-
     elements: [3]Vector3,
 
     const Self = @This();
@@ -88,13 +87,9 @@ pub const Basis = extern struct {
         const yy = quat.y * ys;
         const yz = quat.y * zs;
         const zz = quat.z * zs;
-        
+
         var self: Self = undefined;
-        self.set(
-            1.0 - (yy + zz), xy - wz, xz + wy,
-            xy + wz, 1.0 - (xx + zz), yz - wx,
-            xz - wy, yz + wx, 1.0 - (xx + yy)
-        );
+        self.set(1.0 - (yy + zz), xy - wz, xz + wy, xy + wz, 1.0 - (xx + zz), yz - wx, xz - wy, yz + wx, 1.0 - (xx + yy));
         return self;
     }
 
@@ -120,15 +115,12 @@ pub const Basis = extern struct {
         return self.elements[row0].axis(col0) * self.elements[row1].axis(col1) - self.elements[row0].axis(col1) * self.elements[row1].axis(col0);
     }
 
-    pub inline fn invert(self:* Self) void {
-        const co = [3]f32 { self.cofac(1, 1, 2, 2), self.cofac(1, 2, 2, 0), self.cofac(1, 0, 2, 1) };
+    pub inline fn invert(self: *Self) void {
+        const co = [3]f32{ self.cofac(1, 1, 2, 2), self.cofac(1, 2, 2, 0), self.cofac(1, 0, 2, 1) };
         const det = self.elements[0].x * co[0] + self.elements[0].y * co[1] + self.elements[0].z * co[2];
         const s = 1.0 / det;
 
-        set(co[0] * s, self.cofac(0, 2, 2, 1) * s, self.cofac(0, 1, 1, 2) * s,
-            co[1] * s, self.cofac(0, 0, 2, 2) * s, self.cofac(0, 1, 1, 2) * s,
-            co[2] * s, self.cofac(0, 1, 2, 0) * s, self.cofac(0, 0, 1, 1) * s
-        );
+        set(co[0] * s, self.cofac(0, 2, 2, 1) * s, self.cofac(0, 1, 1, 2) * s, co[1] * s, self.cofac(0, 0, 2, 2) * s, self.cofac(0, 1, 1, 2) * s, co[2] * s, self.cofac(0, 1, 2, 0) * s, self.cofac(0, 0, 1, 1) * s);
     }
 
     pub inline fn inverse(self: *const Self) Self {
@@ -137,7 +129,7 @@ pub const Basis = extern struct {
         return basis;
     }
 
-    pub inline fn transpose(self:* Self) void {
+    pub inline fn transpose(self: *Self) void {
         std.mem.swap(f32, self.elements[0].y, self.elements[1].x);
         std.mem.swap(f32, self.elements[0].z, self.elements[2].x);
         std.mem.swap(f32, self.elements[1].z, self.elements[2].y);
@@ -174,8 +166,7 @@ pub const Basis = extern struct {
     }
 
     pub inline fn determinant(self: *const Self) f32 {
-        return
-            self.elements[0].x * (self.elements[1].y * self.elements[2].z - self.elements[2].y * self.elements[1].z) -
+        return self.elements[0].x * (self.elements[1].y * self.elements[2].z - self.elements[2].y * self.elements[1].z) -
             self.elements[1].x * (self.elements[0].y * self.elements[2].z - self.elements[2].y * self.elements[0].z) +
             self.elements[2].x * (self.elements[0].y * self.elements[1].z - self.elements[1].y * self.elements[0].z);
     }
@@ -218,12 +209,7 @@ pub const Basis = extern struct {
 
     pub inline fn getScale(self: *const Self) Vector3 {
         const det_sign = if (self.determinant() > 0) 1 else -1;
-        return 
-            Vector3.new(
-                Vector3.new(self.elements[0].x, self.elements[1].x, self.elements[2].x).length(),
-                Vector3.new(self.elements[0].y, self.elements[1].y, self.elements[2].y).length(),
-                Vector3.new(self.elements[0].z, self.elements[1].z, self.elements[2].z).length()
-            ).mulScalar(det_sign);
+        return Vector3.new(Vector3.new(self.elements[0].x, self.elements[1].x, self.elements[2].x).length(), Vector3.new(self.elements[0].y, self.elements[1].y, self.elements[2].y).length(), Vector3.new(self.elements[0].z, self.elements[1].z, self.elements[2].z).length()).mulScalar(det_sign);
     }
 
     pub inline fn slerp(self: *const Self, other: *const Basis, t: f32) Self {
@@ -242,20 +228,17 @@ pub const Basis = extern struct {
                     euler.x = 0.0;
                     euler.y = atan2(self.elements[0].z, self.elements[0].x);
                     euler.z = 0.0;
-                }
-                else {
+                } else {
                     euler.x = atan2(-self.elements[1].z, self.elements[2].z);
                     euler.y = asin(sy);
                     euler.z = atan2(-self.elements[0].y, self.elements[0].x);
                 }
-            }
-            else {
+            } else {
                 euler.x = -atan2(self.elements[0].y, self.elements[1].y);
                 euler.y = -std.math.pi * 0.5;
                 euler.z = 0.0;
             }
-        }
-        else {
+        } else {
             euler.x = atan2(self.elements[0].y, self.elements[1].y);
             euler.y = std.math.pi * 0.5;
             euler.z = 0.0;
@@ -290,20 +273,17 @@ pub const Basis = extern struct {
                     euler.x = atan2(-m12, self.elements[1].y);
                     euler.y = 0.0;
                     euler.z = 0.0;
-                }
-                else {
+                } else {
                     euler.x = asin(-m12);
                     euler.y = atan2(self.elements[0].z, self.elements[2].z);
                     euler.z = atan2(self.elements[1].x, self.elements[1].y);
                 }
-            }
-            else {
+            } else {
                 euler.x = std.math.pi * 0.5;
                 euler.y = -atan2(-self.elements[0].y, self.elements[0].x);
                 euler.z = 0.0;
             }
-        }
-        else {
+        } else {
             euler.x = -std.math.pi * 0.5;
             euler.y = -atan2(-self.elements[0].y, self.elements[0].x);
             euler.z = 0.0;
@@ -341,11 +321,7 @@ pub const Basis = extern struct {
     }
 
     pub inline fn xformVector3(self: *const Self, vector: *const Vector3) Vector3 {
-        return Vector3.new(
-            self.elements[0].dot(vector),
-            self.elements[1].dot(vector),
-            self.elements[2].dot(vector)
-        );
+        return Vector3.new(self.elements[0].dot(vector), self.elements[1].dot(vector), self.elements[2].dot(vector));
     }
 
     pub inline fn xformInvVector3(self: *const Self, vector: *const Vector3) Vector3 {
@@ -375,19 +351,11 @@ pub const Basis = extern struct {
     }
 
     pub inline fn mul(self: *const Self, other: *const Basis) Self { // Operator *
-        return Basis.new(
-            other.tdotx(self.elements[0]), other.tdoty(self.elements[0]), other.tdotz(self.elements[0]),
-            other.tdotx(self.elements[1]), other.tdoty(self.elements[1]), other.tdotz(self.elements[1]),
-            other.tdotx(self.elements[2]), other.tdoty(self.elements[2]), other.tdotz(self.elements[2])
-        );
+        return Basis.new(other.tdotx(self.elements[0]), other.tdoty(self.elements[0]), other.tdotz(self.elements[0]), other.tdotx(self.elements[1]), other.tdoty(self.elements[1]), other.tdotz(self.elements[1]), other.tdotx(self.elements[2]), other.tdoty(self.elements[2]), other.tdotz(self.elements[2]));
     }
 
     pub inline fn mulAssign(self: *Self, other: *const Basis) void { // Operator *=
-        self.set(
-            other.tdotx(self.elements[0]), other.tdoty(self.elements[0]), other.tdotz(self.elements[0]),
-            other.tdotx(self.elements[1]), other.tdoty(self.elements[1]), other.tdotz(self.elements[1]),
-            other.tdotx(self.elements[2]), other.tdoty(self.elements[2]), other.tdotz(self.elements[2])
-        );
+        self.set(other.tdotx(self.elements[0]), other.tdoty(self.elements[0]), other.tdotz(self.elements[0]), other.tdotx(self.elements[1]), other.tdoty(self.elements[1]), other.tdotz(self.elements[1]), other.tdotx(self.elements[2]), other.tdoty(self.elements[2]), other.tdotz(self.elements[2]));
     }
 
     pub inline fn plus(self: *const Self, other: *const Basis) Self { // Operator +
@@ -445,17 +413,7 @@ pub const Basis = extern struct {
     }
 
     pub inline fn transposeXform(self: *const Self, other: *const Basis) Self {
-        return Basis.new(
-            self.elements[0].x * other.elements[0].x + self.elements[1].x * other.elements[1].x + self.elements[2].x * other.elements[2].x,
-            self.elements[0].x * other.elements[0].y + self.elements[1].x * other.elements[1].y + self.elements[2].x * other.elements[2].y,
-            self.elements[0].x * other.elements[0].z + self.elements[1].x * other.elements[1].z + self.elements[2].x * other.elements[2].z,
-            self.elements[0].y * other.elements[0].x + self.elements[1].y * other.elements[1].x + self.elements[2].y * other.elements[2].x,
-            self.elements[0].y * other.elements[0].y + self.elements[1].y * other.elements[1].y + self.elements[2].y * other.elements[2].y,
-            self.elements[0].y * other.elements[0].z + self.elements[1].y * other.elements[1].z + self.elements[2].y * other.elements[2].z,
-            self.elements[0].z * other.elements[0].x + self.elements[1].z * other.elements[1].x + self.elements[2].z * other.elements[2].x,
-            self.elements[0].z * other.elements[0].y + self.elements[1].z * other.elements[1].y + self.elements[2].z * other.elements[2].y,
-            self.elements[0].z * other.elements[0].z + self.elements[1].z * other.elements[1].z + self.elements[2].z * other.elements[2].z
-        );
+        return Basis.new(self.elements[0].x * other.elements[0].x + self.elements[1].x * other.elements[1].x + self.elements[2].x * other.elements[2].x, self.elements[0].x * other.elements[0].y + self.elements[1].x * other.elements[1].y + self.elements[2].x * other.elements[2].y, self.elements[0].x * other.elements[0].z + self.elements[1].x * other.elements[1].z + self.elements[2].x * other.elements[2].z, self.elements[0].y * other.elements[0].x + self.elements[1].y * other.elements[1].x + self.elements[2].y * other.elements[2].x, self.elements[0].y * other.elements[0].y + self.elements[1].y * other.elements[1].y + self.elements[2].y * other.elements[2].y, self.elements[0].y * other.elements[0].z + self.elements[1].y * other.elements[1].z + self.elements[2].y * other.elements[2].z, self.elements[0].z * other.elements[0].x + self.elements[1].z * other.elements[1].x + self.elements[2].z * other.elements[2].x, self.elements[0].z * other.elements[0].y + self.elements[1].z * other.elements[1].y + self.elements[2].z * other.elements[2].y, self.elements[0].z * other.elements[0].z + self.elements[1].z * other.elements[1].z + self.elements[2].z * other.elements[2].z);
     }
 
     pub inline fn orthonormalize(self: *Self) void {
@@ -513,18 +471,15 @@ pub const Basis = extern struct {
                 if (el12_2 > el01_2) {
                     i = 1;
                     j = 2;
-                }
-                else {
+                } else {
                     i = 0;
                     j = 1;
                 }
-            }
-            else {
+            } else {
                 if (el12_2 > el02_2) {
                     i = 1;
                     j = 2;
-                }
-                else {
+                } else {
                     i = 0;
                     j = 2;
                 }
@@ -533,8 +488,7 @@ pub const Basis = extern struct {
             var angle: f32 = 0.0;
             if (@fabs(self.elements[j].axis(j) - self.elements[i].axis(i)) < epsilon) {
                 angle = std.math.pi / 4.0;
-            }
-            else {
+            } else {
                 angle = 0.5 * atan(2 * self.elements[i].axis(j) / (self.elements[j].axis(j) - self.elements[i].axis(i)));
             }
 
@@ -555,33 +509,7 @@ pub const Basis = extern struct {
         return acc_rot;
     }
 
-
-    const ortho_bases = [24]Basis {
-        Basis.new(1, 0, 0, 0, 1, 0, 0, 0, 1),
-        Basis.new(0, -1, 0, 1, 0, 0, 0, 0, 1),
-        Basis.new(-1, 0, 0, 0, -1, 0, 0, 0, 1),
-        Basis.new(0, 1, 0, -1, 0, 0, 0, 0, 1),
-        Basis.new(1, 0, 0, 0, 0, -1, 0, 1, 0),
-        Basis.new(0, 0, 1, 1, 0, 0, 0, 1, 0),
-        Basis.new(-1, 0, 0, 0, 0, 1, 0, 1, 0),
-        Basis.new(0, 0, -1, -1, 0, 0, 0, 1, 0),
-        Basis.new(1, 0, 0, 0, -1, 0, 0, 0, -1),
-        Basis.new(0, 1, 0, 1, 0, 0, 0, 0, -1),
-        Basis.new(-1, 0, 0, 0, 1, 0, 0, 0, -1),
-        Basis.new(0, -1, 0, -1, 0, 0, 0, 0, -1),
-        Basis.new(1, 0, 0, 0, 0, 1, 0, -1, 0),
-        Basis.new(0, 0, -1, 1, 0, 0, 0, -1, 0),
-        Basis.new(-1, 0, 0, 0, 0, -1, 0, -1, 0),
-        Basis.new(0, 0, 1, -1, 0, 0, 0, -1, 0),
-        Basis.new(0, 0, 1, 0, 1, 0, -1, 0, 0),
-        Basis.new(0, -1, 0, 0, 0, 1, -1, 0, 0),
-        Basis.new(0, 0, -1, 0, -1, 0, -1, 0, 0),
-        Basis.new(0, 1, 0, 0, 0, -1, -1, 0, 0),
-        Basis.new(0, 0, 1, 0, -1, 0, 1, 0, 0),
-        Basis.new(0, 1, 0, 0, 0, 1, 1, 0, 0),
-        Basis.new(0, 0, -1, 0, 1, 0, 1, 0, 0),
-        Basis.new(0, -1, 0, 0, 0, -1, 1, 0, 0)
-    };
+    const ortho_bases = [24]Basis{ Basis.new(1, 0, 0, 0, 1, 0, 0, 0, 1), Basis.new(0, -1, 0, 1, 0, 0, 0, 0, 1), Basis.new(-1, 0, 0, 0, -1, 0, 0, 0, 1), Basis.new(0, 1, 0, -1, 0, 0, 0, 0, 1), Basis.new(1, 0, 0, 0, 0, -1, 0, 1, 0), Basis.new(0, 0, 1, 1, 0, 0, 0, 1, 0), Basis.new(-1, 0, 0, 0, 0, 1, 0, 1, 0), Basis.new(0, 0, -1, -1, 0, 0, 0, 1, 0), Basis.new(1, 0, 0, 0, -1, 0, 0, 0, -1), Basis.new(0, 1, 0, 1, 0, 0, 0, 0, -1), Basis.new(-1, 0, 0, 0, 1, 0, 0, 0, -1), Basis.new(0, -1, 0, -1, 0, 0, 0, 0, -1), Basis.new(1, 0, 0, 0, 0, 1, 0, -1, 0), Basis.new(0, 0, -1, 1, 0, 0, 0, -1, 0), Basis.new(-1, 0, 0, 0, 0, -1, 0, -1, 0), Basis.new(0, 0, 1, -1, 0, 0, 0, -1, 0), Basis.new(0, 0, 1, 0, 1, 0, -1, 0, 0), Basis.new(0, -1, 0, 0, 0, 1, -1, 0, 0), Basis.new(0, 0, -1, 0, -1, 0, -1, 0, 0), Basis.new(0, 1, 0, 0, 0, -1, -1, 0, 0), Basis.new(0, 0, 1, 0, -1, 0, 1, 0, 0), Basis.new(0, 1, 0, 0, 0, 1, 1, 0, 0), Basis.new(0, 0, -1, 0, 1, 0, 1, 0, 0), Basis.new(0, -1, 0, 0, 0, -1, 1, 0, 0) };
 
     pub fn getOrthogonalIndex(self: *const Self) usize {
         var orth = self.*;
@@ -592,11 +520,9 @@ pub const Basis = extern struct {
                 var v = orth.elements[i].axis(j);
                 if (v > 0.5) {
                     v = 1.0;
-                }
-                else if (v < -0.5) {
+                } else if (v < -0.5) {
                     v = -1.0;
-                }
-                else {
+                } else {
                     v = 0;
                 }
 
@@ -617,8 +543,7 @@ pub const Basis = extern struct {
     pub inline fn setOrthogonalIndex(self: *Self, index: usize) void {
         if (index >= 24)
             return;
-        
+
         self.* = ortho_bases[index];
     }
-
 };
