@@ -5,7 +5,7 @@ const acos = std.math.acos;
 const Vector3 = @import("vector3.zig").Vector3;
 const Basis = @import("basis.zig").Basis;
 
-pub const Quat = struct {
+pub const Quaternion = struct {
 
     const T = f32;
 
@@ -16,7 +16,7 @@ pub const Quat = struct {
 
     const Self = @This();
 
-    const identity = Quat.newIdentity();
+    const identity = Quaternion.newIdentity();
 
     pub inline fn new(x: T, y: T, z: T, w: T) Self {
         const self = Self {
@@ -41,35 +41,35 @@ pub const Quat = struct {
     }
 
 
-    pub inline fn plus(self: *const Self, other: *const Quat) Self { // Operator +
-        return Quat.new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w);
+    pub inline fn plus(self: *const Self, other: *const Quaternion) Self { // Operator +
+        return Quaternion.new(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w);
     }
 
-    pub inline fn plusAssign(self: *Self, other: *const Quat) void { // Operator +=
+    pub inline fn plusAssign(self: *Self, other: *const Quaternion) void { // Operator +=
         self.x += other.x;
         self.y += other.y;
         self.z += other.z;
         self.w += other.w;
     }
 
-    pub inline fn minus(self: *const Self, other: *const Quat) Self { // Operator -
-        return Quat.new(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w);
+    pub inline fn minus(self: *const Self, other: *const Quaternion) Self { // Operator -
+        return Quaternion.new(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w);
     }
 
-    pub inline fn minusAssign(self: *Self, other: *const Quat) void { // Operator -=
+    pub inline fn minusAssign(self: *Self, other: *const Quaternion) void { // Operator -=
         self.x -= other.x;
         self.y -= other.y;
         self.z -= other.z;
         self.w -= other.w;
     }
 
-    pub inline fn mul(self: *const Self, other: *const Quat) Self { // Operator *
+    pub inline fn mul(self: *const Self, other: *const Quaternion) Self { // Operator *
         var quat = self.*;
         quat.mulAssign(other);
         return quat;
     }
 
-    pub inline fn mulAssign(self: *Self, other: *const Quat) void { // Operator *=
+    pub inline fn mulAssign(self: *Self, other: *const Quaternion) void { // Operator *=
         self.x = self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y;
         self.y = self.w * other.y + self.y * other.w + self.z * other.x - self.x * other.z;
         self.z = self.w * other.z + self.z * other.w + self.x * other.y - self.y * other.x;
@@ -77,7 +77,7 @@ pub const Quat = struct {
     }
 
     pub inline fn mulScalar(self: *const Self, scalar: f32) Self { // Operator *
-        return Quat.new(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar);
+        return Quaternion.new(self.x * scalar, self.y * scalar, self.z * scalar, self.w * scalar);
     }
 
     pub inline fn mulAssignScalar(self: *Self, scalar: f32) void { // Operator *=
@@ -96,14 +96,14 @@ pub const Quat = struct {
     }
 
     pub inline fn negative(self: *const Self) Self { // Operator -x
-        return Quat.new(-self.x, -self.y, -self.z, -self.w);
+        return Quaternion.new(-self.x, -self.y, -self.z, -self.w);
     }
 
-    pub inline fn equal(self: *const Self, other: *const Quat) bool { // Operator ==
+    pub inline fn equal(self: *const Self, other: *const Quaternion) bool { // Operator ==
         return self.x == other.x and self.y == other.y and self.z == other.z and self.w == other.w;
     }
 
-    pub inline fn notEqual(self: *const Self, other: *const Quat) bool { // Operator !=
+    pub inline fn notEqual(self: *const Self, other: *const Quaternion) bool { // Operator !=
         return self.x != other.x or self.y != other.y or self.z != other.z or self.w != other.w;
     }
 
@@ -153,7 +153,7 @@ pub const Quat = struct {
         return basis.getEulerYxz();
     }
 
-    pub inline fn dot(self: *const Self, other: *const Quat) f32 {
+    pub inline fn dot(self: *const Self, other: *const Quaternion) f32 {
         return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;
     }
 
@@ -176,11 +176,11 @@ pub const Quat = struct {
     }
 
     pub inline fn inverse(self: *const Self) Self {
-        return Quat.new(-self.x, -self.y, -self.x, self.w);
+        return Quaternion.new(-self.x, -self.y, -self.x, self.w);
     }
 
-    pub fn slerp(self: *const Self, q: *const Quat, t: f32) Self {
-        var to1: Quat = undefined;
+    pub fn slerp(self: *const Self, q: *const Quaternion, t: f32) Self {
+        var to1: Quaternion = undefined;
 
         const cosom = self.dot(q);
 
@@ -214,10 +214,10 @@ pub const Quat = struct {
             scale1 = t;
         }
 
-        return Quat.new(scale0 * self.x + scale1 * to1.x, scale0 * self.y + scale1 * to1.y, scale0 * self.z + scale1 * to1.z, scale0 * self.w + divScalar * to1.w);
+        return Quaternion.new(scale0 * self.x + scale1 * to1.x, scale0 * self.y + scale1 * to1.y, scale0 * self.z + scale1 * to1.z, scale0 * self.w + divScalar * to1.w);
     }
 
-    pub fn slerpni(self: *const Self, q: *const Quat, t: f32) Self {
+    pub fn slerpni(self: *const Self, q: *const Quaternion, t: f32) Self {
         const from = self.*;
 
         const d = from.dot(q);
@@ -230,10 +230,10 @@ pub const Quat = struct {
         const newFactor = @sin(t * theta) * sinT;
         const invFactor = @sin((1.0 - t) * theta) * sinT;
 
-        return Quat.new(invFactor * from.x + newFactor * q.x, invFactor * from.y + newFactor * q.y, invFactor * from.z + newFactor * q.z, invFactor * from.w + newFactor * q.w);
+        return Quaternion.new(invFactor * from.x + newFactor * q.x, invFactor * from.y + newFactor * q.y, invFactor * from.z + newFactor * q.z, invFactor * from.w + newFactor * q.w);
     }
 
-    pub fn cubicSlerp(self: *const Self, q: *const Quat, prep: *const Quat, postq: *const Quat, t: f32) Self {
+    pub fn cubicSlerp(self: *const Self, q: *const Quaternion, prep: *const Quaternion, postq: *const Quaternion, t: f32) Self {
         const t2 = (1.0 - t) * t * 2;
         const sp = self.slerp(q, t);
         const sq = prep.slerpni(postq, t);

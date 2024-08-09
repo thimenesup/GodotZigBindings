@@ -2,19 +2,19 @@ const Basis = @import("basis.zig").Basis;
 const Vector3 = @import("vector3.zig").Vector3;
 const Plane = @import("plane.zig").Plane;
 const AABB = @import("aabb.zig").AABB;
-const Quat = @import("quat.zig").Quat;
+const Quaternion = @import("quat.zig").Quaternion;
 
-pub const Transform = extern struct {
+pub const Transform3D = extern struct {
 
     basis: Basis,
     origin: Vector3,
 
     const Self = @This();
 
-    const identity = Transform.newIdentity();
-    const flip_x = Transform.new(-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0);
-    const flip_y = Transform.new(1, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0);
-    const flip_z = Transform.new(1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0);
+    const identity = Transform3D.newIdentity();
+    const flip_x = Transform3D.new(-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0);
+    const flip_y = Transform3D.new(1, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0);
+    const flip_z = Transform3D.new(1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0);
 
     pub inline fn new(basis: *const Basis, origin: *const Vector3) Self {
         const self = Self {
@@ -159,7 +159,7 @@ pub const Transform = extern struct {
     }
 
     pub inline fn rotated(self: *const Self, axis: *const Vector3, phi: f32) Self {
-        return Transform.new(Basis.new(axis, phi), Vector3.new(0, 0, 0)).mul(self);
+        return Transform3D.new(Basis.new(axis, phi), Vector3.new(0, 0, 0)).mul(self);
     }
 
     pub inline fn rotateBasis(self: *Self, axis: *const Vector3, phi: f32) void {
@@ -191,16 +191,16 @@ pub const Transform = extern struct {
         self.origin = eye;
     }
 
-    pub inline fn interpolateWith(self: *const Self, other: *const Transform, p_c: f32) Self {
+    pub inline fn interpolateWith(self: *const Self, other: *const Transform3D, p_c: f32) Self {
         const src_scale = self.basis.getScale();
-        const src_rot = Quat.newBasis(self.basis);
+        const src_rot = Quaternion.newBasis(self.basis);
         const src_loc = self.origin;
 
         const dst_scale = other.basis.getScale();
-        const dst_rot = Quat.newBasis(other.basis);
+        const dst_rot = Quaternion.newBasis(other.basis);
         const dst_loc = other.origin;
 
-        var dst = Transform.newIdentity();
+        var dst = Transform3D.newIdentity();
         dst.basis = src_rot.slerp(dst_rot, p_c);
         dst.basis.scale(src_scale.linearInterpolate(dst_scale), p_c);
         dst.origin = src_loc.linearInterpolate(dst_loc, p_c);
@@ -244,21 +244,21 @@ pub const Transform = extern struct {
         return transform;
     }
 
-    pub inline fn equal(self: *const Self, other: *const Transform) bool { // Operator ==
+    pub inline fn equal(self: *const Self, other: *const Transform3D) bool { // Operator ==
         return self.basis.equal(other.basis) and self.origin.equal(other.origin);
     }
 
-    pub inline fn notEqual(self: *const Self, other: *const Transform) bool { // Operator !=
+    pub inline fn notEqual(self: *const Self, other: *const Transform3D) bool { // Operator !=
         return self.basis.notEqual(other.basis) or self.origin.notEqual(other.origin);
     }
 
-    pub inline fn mul(self: *const Self, other: *const Transform) Self { // Operator *
+    pub inline fn mul(self: *const Self, other: *const Transform3D) Self { // Operator *
         var transform = self.*;
         transform.mulAssign(other);
         return transform;
     }
 
-    pub inline fn mulAssign(self: *Self, other: *const Transform) void { // Operator *=
+    pub inline fn mulAssign(self: *Self, other: *const Transform3D) void { // Operator *=
         self.origin = self.xformVector3(other.origin);
         self.basis.mulAssign(other.basis);
     }

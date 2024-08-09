@@ -1,27 +1,24 @@
-const gdnative = @import("gdnative");
+const gdextension = @import("gdextension");
+const gi = gdextension.gdextension_interface;
+const godot = gdextension.godot;
 
-const api = gdnative.api;
-const gd = gdnative.gdnative_types;
-const ClassRegistry = gdnative.class_registry;
+const ClassDB = gdextension.class_db.ClassDB;
 
-// Import your custom classes
 const TestNode2D = @import("test_node2d.zig").TestNode2D;
 
-export fn godot_gdnative_init(p_options: [*c]gd.godot_gdnative_init_options) callconv(.C) void {
-    api.gdnativeInit(p_options);
+fn gdextension_initialize(p_level: gi.GDExtensionInitializationLevel) callconv(.C) void {
+    if (p_level == gi.GDExtensionInitializationLevel.GDEXTENSION_INITIALIZATION_SCENE) {
+        ClassDB.registerClass(TestNode2D, false, false);
+    }
 }
 
-export fn godot_gdnative_terminate(p_options: [*c]gd.godot_gdnative_terminate_options) callconv(.C) void {
-    api.gdnativeTerminate(p_options);
+fn gdextension_terminate(p_level: gi.GDExtensionInitializationLevel) callconv(.C) void {
+    _ = p_level;
 }
 
-export fn godot_nativescript_init(p_handle: ?*anyopaque) callconv(.C) void {
-    api.nativescriptInit(p_handle);
-
-    // Register your custom classes
-    ClassRegistry.registerClass(TestNode2D);
-}
-
-export fn godot_nativescript_terminate(p_handle: ?*anyopaque) callconv(.C) void {
-    api.nativescriptTerminate(p_handle);
+pub export fn gdextension_entry_point(p_interface: *const gi.GDExtensionInterface, p_library: gi.GDExtensionClassLibraryPtr, r_initialization: *gi.GDExtensionInitialization) callconv(.C) gi.GDExtensionBool {
+    godot.register_initializer(gdextension_initialize);
+    godot.register_terminator(gdextension_terminate);
+    godot.set_minimum_library_initialization_level(gi.GDExtensionInitializationLevel.GDEXTENSION_INITIALIZATION_SERVERS);
+    return godot.init(p_interface, p_library, r_initialization);
 }

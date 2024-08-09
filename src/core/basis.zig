@@ -5,7 +5,7 @@ const atan2 = std.math.atan2;
 const asin = std.math.asin;
 
 const Vector3 = @import("vector3.zig").Vector3;
-const Quat = @import("quat.zig").Quat;
+const Quaternion = @import("quat.zig").Quaternion;
 
 pub const Basis = extern struct {
 
@@ -73,7 +73,7 @@ pub const Basis = extern struct {
         return self;
     }
 
-    pub inline fn newQuat(quat: *const Quat) Self {
+    pub inline fn newQuat(quat: *const Quaternion) Self {
         const d = quat.lengthSquared();
         const s = 2.0 / d;
         const xs = quat.x * s;
@@ -227,8 +227,8 @@ pub const Basis = extern struct {
     }
 
     pub inline fn slerp(self: *const Self, other: *const Basis, t: f32) Self {
-        const from = Quat.newBasis(self);
-        const to = Quat.newBasis(other);
+        const from = Quaternion.newBasis(self);
+        const to = Quaternion.newBasis(other);
         return Basis.newQuat(from.slerp(to, t));
     }
 

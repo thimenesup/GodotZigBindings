@@ -1,776 +1,801 @@
-const gd = @import("gdnative_types.zig");
-const api = @import("api.zig");
-
 const std = @import("std");
+
+const gi = @import("../gdextension_interface.zig");
+const gd = @import("../godot.zig");
+
+const Object = @import("../gen/classes/object.zig").Object;
 
 const AABB = @import("aabb.zig").AABB;
 const Basis = @import("basis.zig").Basis;
-const Plane = @import("plane.zig").Plane;
-const Quat = @import("quat.zig").Quat;
-const Rect2 = @import("rect2.zig").Rect2;
-const Transform = @import("transform.zig").Transform;
-const Transform2D = @import("transform2d.zig").Transform2D;
-const Vector2 = @import("vector2.zig").Vector2;
-const Vector3 = @import("vector3.zig").Vector3;
 const Color = @import("color.zig").Color;
-const NodePath = @import("node_path.zig").NodePath;
-const RID = @import("rid.zig").RID;
-const Dictionary = @import("dictionary.zig").Dictionary;
-const Array = @import("array.zig").Array;
-const String = @import("string.zig").String;
-const PoolArrays = @import("pool_arrays.zig");
-const PoolByteArray = PoolArrays.PoolByteArray;
-const PoolIntArray = PoolArrays.PoolIntArray;
-const PoolRealArray = PoolArrays.PoolRealArray;
-const PoolStringArray = PoolArrays.PoolStringArray;
-const PoolVector2Array = PoolArrays.PoolVector2Array;
-const PoolVector3Array = PoolArrays.PoolVector3Array;
-const PoolColorArray = PoolArrays.PoolColorArray;
+const Plane = @import("plane.zig").Plane;
+const Projection = @import("projection.zig").Projection;
+const Quaternion = @import("quat.zig").Quaternion;
+const Rect2 = @import("rect2.zig").Rect2;
+const Rect2i = @import("rect2i.zig").Rect2i;
+const Transform2D = @import("transform2d.zig").Transform2D;
+const Transform3D = @import("transform.zig").Transform3D;
+const TypedArray = @import("typed_array.zig").TypedArray;
+const Vector2 = @import("vector2.zig").Vector2;
+const Vector2i = @import("vector2i.zig").Vector2i;
+const Vector3 = @import("vector3.zig").Vector3;
+const Vector3i = @import("vector3i.zig").Vector3i;
+const Vector4 = @import("vector4.zig").Vector4;
+const Vector4i = @import("vector4i.zig").Vector4i;
 
-const Object = @import("../classes/object.zig").Object;
+// Generated
+const Array = @import("../gen/builtin_classes/array.zig").Array;
+const Callable = @import("../gen/builtin_classes/callable.zig").Callable;
+const Dictionary = @import("../gen/builtin_classes/dictionary.zig").Dictionary;
+const NodePath = @import("../gen/builtin_classes/node_path.zig").NodePath;
+const PackedByteArray = @import("../gen/builtin_classes/packed_byte_array.zig").PackedByteArray;
+const PackedColorArray = @import("../gen/builtin_classes/packed_color_array.zig").PackedColorArray;
+const PackedFloat32Array = @import("../gen/builtin_classes/packed_float32_array.zig").PackedFloat32Array;
+const PackedFloat64Array = @import("../gen/builtin_classes/packed_float64_array.zig").PackedFloat64Array;
+const PackedInt32Array = @import("../gen/builtin_classes/packed_int32_array.zig").PackedInt32Array;
+const PackedInt64Array = @import("../gen/builtin_classes/packed_int64_array.zig").PackedInt64Array;
+const PackedStringArray = @import("../gen/builtin_classes/packed_string_array.zig").PackedStringArray;
+const PackedVector2Array = @import("../gen/builtin_classes/packed_vector2_array.zig").PackedVector2Array;
+const PackedVector3Array = @import("../gen/builtin_classes/packed_vector3_array.zig").PackedVector3Array;
+const RID = @import("../gen/builtin_classes/rid.zig").RID;
+const Signal = @import("../gen/builtin_classes/signal.zig").Signal;
+const StringName = @import("../gen/builtin_classes/string_name.zig").StringName;
+const String = @import("../gen/builtin_classes/string.zig").String;
 
 pub const Variant = struct {
 
-    godot_variant: gd.godot_variant,
+    const GODOT_VARIANT_SIZE = 24;
+
+    _opaque: [GODOT_VARIANT_SIZE]u8,
 
     const Self = @This();
 
-    const Type = enum {
+    pub const Type = enum(i64) {
         nil,
-        int,
+
         bool,
-        real,
+        int,
+        float,
         string,
 
         vector2,
+        vector2i,
         rect2,
+        rect2i,
         vector3,
+        vector3i,
         transform2d,
+        vector4,
+        vector4i,
         plane,
-        quat,
+        quaternion,
         aabb,
         basis,
-        transform,
+        transform3d,
+        projection,
 
         color,
+        string_name,
         node_path,
         rid,
         object,
+        callable,
+        signal,
         dictionary,
         array,
 
-        pool_byte_array,
-        pool_int_array,
-        pool_real_array,
-        pool_string_array,
-        pool_vector2_array,
-        pool_vector3_array,
-        pool_color_array,
-
+        packed_byte_array,
+        packed_int32_array,
+        packed_int64_array,
+        packed_float32_array,
+        packed_float64_array,
+        packed_string_array,
+        packed_vector2_array,
+        packed_vector3_array,
+        packed_color_array,
         variant_max,
     };
 
+    pub const Operator = enum(i64) {
+        op_equal,
+        op_not_equal,
+        op_less,
+        op_less_equal,
+        op_greater,
+        op_greater_equal,
+
+        op_add,
+        op_substract,
+        op_multiply,
+        op_divide,
+        op_negate,
+        op_positive,
+        op_module,
+
+        op_shift_left,
+        op_shift_right,
+        op_bit_and,
+        op_bit_or,
+        op_bit_xor,
+        op_bit_negate,
+
+        op_and,
+        op_or,
+        op_xor,
+        op_not,
+
+        op_in,
+        op_max,
+    };
+
+    var from_type_constructor: [@intFromEnum(Type.variant_max)]gi.GDExtensionVariantFromTypeConstructorFunc = undefined;
+    var to_type_constructor: [@intFromEnum(Type.variant_max)]gi.GDExtensionTypeFromVariantConstructorFunc = undefined;
+
+    inline fn fromTypeConstructor(t: Variant.Type) gi.GDExtensionVariantFromTypeConstructorFunc { return from_type_constructor[@intFromEnum(t)]; }
+    inline fn toTypeConstructor(t: Variant.Type) gi.GDExtensionTypeFromVariantConstructorFunc { return to_type_constructor[@intFromEnum(t)]; }
+
+    pub fn initBindings() void {
+        var i: usize = 1; // Start from 1 to skip Nil
+        while (i < @intFromEnum(Type.variant_max)) : (i += 1) {
+            from_type_constructor[i] = gd.interface.?.get_variant_from_type_constructor.?(@enumFromInt(i));
+            to_type_constructor[i] = gd.interface.?.get_variant_to_type_constructor.?(@enumFromInt(i));
+        }
+
+        Array.initBindings();
+        Callable.initBindings();
+        Dictionary.initBindings();
+        NodePath.initBindings();
+        PackedByteArray.initBindings();
+        PackedColorArray.initBindings();
+        PackedFloat32Array.initBindings();
+        PackedFloat64Array.initBindings();
+        PackedInt32Array.initBindings();
+        PackedInt64Array.initBindings();
+        PackedStringArray.initBindings();
+        PackedVector2Array.initBindings();
+        PackedVector3Array.initBindings();
+        RID.initBindings();
+        Signal.initBindings();
+        StringName.initBindings();
+        String.initBindings();
+    }
+
+    pub inline fn _nativePtr(self: *const Self) gi.GDExtensionTypePtr {
+        return @constCast(@ptrCast(&self._opaque));
+    }
+
     pub fn deinit(self: *Self) void {
-        api.core.godot_variant_destroy.?(&self.godot_variant);
+        gd.interface.?.variant_new_nil.?(self._nativePtr());
     }
 
-    pub fn init(any: anytype) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        self.godot_variant = typeAsVariant(@TypeOf(any))(any);
-
+    pub fn init() Self {
+        var self: Self = undefined;
+        gd.interface.?.variant_new_nil.?(self._nativePtr());
         return self;
     }
 
-    pub fn initGodotVariant(godot_variant: gd.godot_variant) Self {
-        const self = Self {
-            .godot_variant = godot_variant,
-        };
-
+    pub fn initVoid(p_void: void) Self {
+        _ = p_void;
+        var self: Self = undefined;
+        gd.interface.?.variant_new_nil.?(self._nativePtr());
         return self;
     }
 
-    pub fn initCopy(other: *const Variant) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_copy.?(&self.godot_variant, &other.godot_variant);
-
+    pub fn initAny(any: anytype) Self {
+        var self: Self = undefined;
+        self = typeAsVariant(@TypeOf(any))(any);
         return self;
     }
 
-    pub fn initNil() Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
+    pub fn initVariantPtr(other: gi.GDExtensionConstVariantPtr) Variant {
+        var self: Self = undefined;
+        gd.interface.?.variant_new_copy.?(self._nativePtr(), other);
+        return self;
+    }
 
-        api.core.godot_variant_new_nil.?(&self.godot_variant);
-
+    pub fn initVariant(other: *const Variant) Variant {
+        var self: Self = undefined;
+        gd.interface.?.variant_new_copy.?(self._nativePtr(), other._nativePtr());
         return self;
     }
 
     pub fn initBool(p_bool: bool) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_bool.?(&self.godot_variant, p_bool);
-
+        var self: Self = undefined;
+        fromTypeConstructor(Type.bool).?(self._nativePtr(), @ptrCast(&p_bool));
         return self;
     }
 
     pub fn initInt(p_int: i64) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_int.?(&self.godot_variant, p_int);
-
+        var self: Self = undefined;
+        fromTypeConstructor(Type.int).?(self._nativePtr(), @ptrCast(&p_int));
         return self;
     }
 
-    pub fn initUint(p_uint: u64) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_uint.?(&self.godot_variant, p_uint);
-
-        return self;
-    }
-
-    pub fn initReal(p_float: f64) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_real.?(&self.godot_variant, p_float);
-
-        return self;
-    }
-
-    pub fn initString(p_string: *const String) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_string.?(&self.godot_variant, &p_string.godot_string);
-
-        return self;
-    }
-
-    pub fn initCString(chars: [*:0]const u8) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        var string = String.initUtf8(chars);
-        api.core.godot_variant_new_string.?(&self.godot_variant, &string.godot_string);
-
-        return self;
-    }
-
-    pub fn initVector2(p_vector2: *const Vector2) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_vector2.?(&self.godot_variant, &p_vector2.godot_vector2);
-
-        return self;
-    }
-
-    pub fn initRect2(p_rect2: *const Rect2) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_rect2.?(&self.godot_variant, &p_rect2.godot_rect2);
-
-        return self;
-    }
-
-    pub fn initVector3(p_vector3: *const Vector3) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_vector3.?(&self.godot_variant, &p_vector3.godot_vector3);
-
-        return self;
-    }
-
-    pub fn initPlane(p_plane: *const Plane) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_plane.?(&self.godot_variant, &p_plane.godot_plane);
-
+    pub fn initFloat(p_float: f64) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.float).?(self._nativePtr(), @ptrCast(&p_float));
         return self;
     }
 
     pub fn initAABB(p_aabb: *const AABB) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_aabb.?(&self.godot_variant, &p_aabb.godot_aabb);
-
-        return self;
-    }
-
-    pub fn initQuat(p_quat: *const Quat) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_quat.?(&self.godot_variant, &p_quat.godot_quat);
-
+        var self: Self = undefined;
+        fromTypeConstructor(Type.aabb).?(self._nativePtr(), @ptrCast(&p_aabb));
         return self;
     }
 
     pub fn initBasis(p_basis: *const Basis) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_basis.?(&self.godot_variant, &p_basis.godot_basis);
-
-        return self;
-    }
-
-    pub fn initTransform2D(p_transform2d: *const Transform2D) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_transform2d.?(&self.godot_variant, &p_transform2d.godot_transform2d);
-
-        return self;
-    }
-
-    pub fn initTransform(p_transform: *const Transform) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_transform.?(&self.godot_variant, &p_transform.godot_transform);
-
+        var self: Self = undefined;
+        fromTypeConstructor(Type.basis).?(self._nativePtr(), @ptrCast(&p_basis));
         return self;
     }
 
     pub fn initColor(p_color: *const Color) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_color.?(&self.godot_variant, &p_color.godot_color);
-
+        var self: Self = undefined;
+        fromTypeConstructor(Type.color).?(self._nativePtr(), @ptrCast(&p_color));
         return self;
     }
 
-    pub fn initNodePath(p_node_path: *const NodePath) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_node_path.?(&self.godot_variant, &p_node_path.godot_node_path);
-
+    pub fn initPlane(p_plane: *const Plane) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.plane).?(self._nativePtr(), @ptrCast(&p_plane));
         return self;
     }
 
-    pub fn initRID(p_rid: *const RID) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_rid.?(&self.godot_variant, &p_rid.godot_rid);
-
+    pub fn initProjection(p_projection: *const Projection) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.projection).?(self._nativePtr(), @ptrCast(&p_projection));
         return self;
     }
 
-    pub fn initObject(p_object: *const Object) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_object.?(&self.godot_variant, p_object.base.owner);
-
+    pub fn initQuaternion(p_quaternion: *const Quaternion) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.quaternion).?(self._nativePtr(), @ptrCast(&p_quaternion));
         return self;
     }
 
-    pub fn initDictionary(p_dictionary: *const Dictionary) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
+    pub fn initRect2(p_rect2: *const Rect2) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.rect2).?(self._nativePtr(), @ptrCast(&p_rect2));
+        return self;
+    }
 
-        api.core.godot_variant_new_dictionary.?(&self.godot_variant, &p_dictionary.godot_dictionary);
+    pub fn initRect2i(p_rect2i: *const Rect2i) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.rect2i).?(self._nativePtr(), @ptrCast(&p_rect2i));
+        return self;
+    }
 
+    pub fn initTransform3D(p_transform3d: *const Transform3D) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.transform3d).?(self._nativePtr(), @ptrCast(&p_transform3d));
+        return self;
+    }
+
+    pub fn initTransform2D(p_transform2d: *const Transform2D) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.transform2d).?(self._nativePtr(), @ptrCast(&p_transform2d));
+        return self;
+    }
+
+    pub fn initVector2(p_vector2: *const Vector2) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.vector2).?(self._nativePtr(), @ptrCast(&p_vector2));
+        return self;
+    }
+
+    pub fn initVector2i(p_vector2i: *const Vector2i) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.vector2i).?(self._nativePtr(), @ptrCast(&p_vector2i));
+        return self;
+    }
+
+    pub fn initVector3(p_vector3: *const Vector3) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.vector3).?(self._nativePtr(), @ptrCast(&p_vector3));
+        return self;
+    }
+
+    pub fn initVector3i(p_vector3i: *const Vector3i) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.vector3i).?(self._nativePtr(), @ptrCast(&p_vector3i));
+        return self;
+    }
+
+    pub fn initVector4(p_vector4: *const Vector4) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.vector4).?(self._nativePtr(), @ptrCast(&p_vector4));
+        return self;
+    }
+
+    pub fn initVector4i(p_vector4i: *const Vector4i) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.vector4i).?(self._nativePtr(), @ptrCast(&p_vector4i));
         return self;
     }
 
     pub fn initArray(p_array: *const Array) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_array.?(&self.godot_variant, &p_array.godot_array);
-
+        var self: Self = undefined;
+        fromTypeConstructor(Type.array).?(self._nativePtr(), @ptrCast(p_array._nativePtr()));
         return self;
     }
 
-    pub fn initPoolByteArray(p_pool_byte_array: *const PoolByteArray) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_byte_array.?(&self.godot_variant, &p_pool_byte_array.godot_pool_byte_array);
-
+    pub fn initCallable(p_callable: *const Callable) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.callable).?(self._nativePtr(), @ptrCast(&p_callable));
         return self;
     }
 
-    pub fn initPoolIntArray(p_pool_int_array: *const PoolIntArray) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_int_array.?(&self.godot_variant, &p_pool_int_array.godot_pool_int_array);
-
+    pub fn initDictionary(p_dictionary: *const Dictionary) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.dictionary).?(self._nativePtr(), @ptrCast(p_dictionary._nativePtr()));
         return self;
     }
 
-    pub fn initPoolReayArray(p_pool_real_array: *const PoolRealArray) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_real_array.?(&self.godot_variant, &p_pool_real_array.godot_pool_real_array);
-
+    pub fn initNodePath(p_node_path: *const NodePath) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.node_path).?(self._nativePtr(), @ptrCast(p_node_path._nativePtr()));
         return self;
     }
 
-    pub fn initPoolStringArray(p_pool_string_array: *const PoolStringArray) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_string_array.?(&self.godot_variant, &p_pool_string_array.godot_pool_string_array);
-
+    pub fn initPackedByteArray(p_packed_byte_array: *const PackedByteArray) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_byte_array).?(self._nativePtr(), @ptrCast(p_packed_byte_array._nativePtr()));
         return self;
     }
 
-    pub fn initPoolVector2Array(p_pool_vector2_array: *const PoolVector2Array) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_vector2_array.?(&self.godot_variant, &p_pool_vector2_array.godot_pool_vector2_array);
-
+    pub fn initPackedColorArray(p_packed_color_array: *const PackedColorArray) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_color_array).?(self._nativePtr(), @ptrCast(p_packed_color_array._nativePtr()));
         return self;
     }
 
-    pub fn initPoolVector3Array(p_godot_pool_vector3_array: *const PoolVector3Array) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_vector3_array.?(&self.godot_variant, &p_godot_pool_vector3_array.godot_pool_vector3_array);
-
+    pub fn initPackedFloat32Array(p_packed_float32_array: *const PackedFloat32Array) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_float32_array).?(self._nativePtr(), @ptrCast(p_packed_float32_array._nativePtr()));
         return self;
     }
 
-    pub fn initPoolColorArray(p_godot_pool_color_array: *const PoolColorArray) Self {
-        var self = Self {
-            .godot_variant = undefined,
-        };
-
-        api.core.godot_variant_new_pool_color_array.?(&self.godot_variant, &p_godot_pool_color_array.godot_pool_color_array);
-
+    pub fn initPackedFloat64Array(p_packed_float64_array: *const PackedFloat32Array) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_float64_array).?(self._nativePtr(), @ptrCast(p_packed_float64_array._nativePtr()));
         return self;
     }
+
+    pub fn initPackedInt32Array(p_packed_int32_array: *const PackedInt32Array) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_int32_array).?(self._nativePtr(), @ptrCast(p_packed_int32_array._nativePtr()));
+        return self;
+    }
+
+    pub fn initPackedInt64Array(p_packed_int64_array: *const PackedInt64Array) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_int64_array).?(self._nativePtr(), @ptrCast(p_packed_int64_array._nativePtr()));
+        return self;
+    }
+
+    pub fn initPackedStringArray(p_packed_string_array: *const PackedStringArray) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_string_array).?(self._nativePtr(), @ptrCast(p_packed_string_array._nativePtr()));
+        return self;
+    }
+
+    pub fn initPackedVector2Array(p_packed_vector2_array: *const PackedVector2Array) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_vector2_array).?(self._nativePtr(), @ptrCast(p_packed_vector2_array._nativePtr()));
+        return self;
+    }
+
+    pub fn initPackedVector3Array(p_packed_vector3_array: *const PackedVector3Array) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.packed_vector3_array).?(self._nativePtr(), @ptrCast(p_packed_vector3_array._nativePtr()));
+        return self;
+    }
+
+    pub fn initRID(p_rid: *const RID) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.rid).?(self._nativePtr(), @ptrCast(p_rid._nativePtr()));
+        return self;
+    }
+
+
+    pub fn initSignal(p_signal: *const Signal) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.signal).?(self._nativePtr(), @ptrCast(&p_signal));
+        return self;
+    }
+
+    pub fn initStringName(p_string_name: *const StringName) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.string_name).?(self._nativePtr(), @ptrCast(&p_string_name));
+        return self;
+    }
+
+    pub fn initString(p_string: *const String) Self {
+        var self: Self = undefined;
+        fromTypeConstructor(Type.string).?(self._nativePtr(), @ptrCast(&p_string));
+        return self;
+    }
+
+    pub fn initObject(p_object: *const Object) Self {
+        var self: Self = undefined;
+        if (p_object != null) {
+            fromTypeConstructor(Type.object).?(self._nativePtr(), @ptrCast(p_object.base._owner));
+        } else {
+            const null_object: ?*anyopaque = null;
+            fromTypeConstructor(Type.object).?(self._nativePtr(), @ptrCast(&null_object));
+        }
+        return self;
+    }
+
 
     pub fn asBool(self: *const Self) bool {
-        return api.core.godot_variant_booleanize.?(&self.godot_variant);
+        var result: gi.GDExtensionBool = undefined;
+        toTypeConstructor(Type.bool).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
     pub fn asInt(self: *const Self) i64 {
-        return api.core.godot_variant_as_int.?(&self.godot_variant);
+        var result: gi.GDExtensionInt = undefined;
+        toTypeConstructor(Type.int).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asUint(self: *const Self) u64 {
-        return api.core.godot_variant_as_uint.?(&self.godot_variant);
-    }
-
-    pub fn asReal(self: *const Self) f64 {
-        return api.core.godot_variant_as_real.?(&self.godot_variant);
-    }
-
-    pub fn asString(self: *const Self) String {
-        return godotVariantAsString(&self.godot_variant);
-    }
-
-    pub fn asVector2(self: *const Self) Vector2 {
-        return godotVariantAsVector2(&self.godot_variant);
-    }
-
-    pub fn asRect2(self: *const Self) Rect2 {
-        return godotVariantAsRect2(&self.godot_variant);
-    }
-
-    pub fn asVector3(self: *const Self) Vector3 {
-        return godotVariantAsVector3(&self.godot_variant);
-    }
-
-    pub fn asPlane(self: *const Self) Vector2 {
-        return godotVariantAsPlane(&self.godot_variant);
+    pub fn asFloat(self: *const Self) f64 {
+        var result: f64 = undefined;
+        toTypeConstructor(Type.float).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
     pub fn asAABB(self: *const Self) AABB {
-        return godotVariantAsAABB(&self.godot_variant);
-    }
-
-    pub fn asQuat(self: *const Self) Quat {
-        return godotVariantAsQuat(&self.godot_variant);
+        var result: AABB = undefined;
+        toTypeConstructor(Type.aabb).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
     pub fn asBasis(self: *const Self) Basis {
-        return godotVariantAsBasis(&self.godot_variant);
-    }
-
-    pub fn asTransform(self: *const Self) Transform {
-        return godotVariantAsTransform(&self.godot_variant);
-    }
-
-    pub fn asTransform2D(self: *const Self) Transform2D {
-        return godotVariantAsTransform2D(&self.godot_variant);
+        var result: Basis = undefined;
+        toTypeConstructor(Type.basis).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
     pub fn asColor(self: *const Self) Color {
-        return godotVariantAsColor(&self.godot_variant);
+        var result: Color = undefined;
+        toTypeConstructor(Type.color).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asNodePath(self: *const Self) NodePath {
-        return godotVariantAsNodePath(&self.godot_variant);
+    pub fn asPlane(self: *const Self) Vector2 {
+        var result: Plane = undefined;
+        toTypeConstructor(Type.plane).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asRID(self: *const Self) RID {
-        return godotVariantAsRID(&self.godot_variant);
+    pub fn asProjection(self: *const Self) Projection {
+        var result: Projection = undefined;
+        toTypeConstructor(Type.projection).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asDictionary(self: *const Self) Dictionary {
-        return godotVariantAsDictionary(&self.godot_variant);
+    pub fn asQuaternion(self: *const Self) Quaternion {
+        var result: Quaternion = undefined;
+        toTypeConstructor(Type.quaternion).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asRect2(self: *const Self) Rect2 {
+        var result: Rect2 = undefined;
+        toTypeConstructor(Type.rect2).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asRect2i(self: *const Self) Rect2i {
+        var result: Rect2i = undefined;
+        toTypeConstructor(Type.rect2i).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asTransform3D(self: *const Self) Transform3D {
+        var result: Transform3D = undefined;
+        toTypeConstructor(Type.transform3d).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asTransform2D(self: *const Self) Transform2D {
+        var result: Transform2D = undefined;
+        toTypeConstructor(Type.transform2d).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asVector2(self: *const Self) Vector2 {
+        var result: Vector2 = undefined;
+        toTypeConstructor(Type.vector2).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asVector2i(self: *const Self) Vector2i {
+        var result: Vector2i = undefined;
+        toTypeConstructor(Type.vector2i).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asVector3(self: *const Self) Vector3 {
+        var result: Vector3 = undefined;
+        toTypeConstructor(Type.vector3).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asVector3i(self: *const Self) Vector3i {
+        var result: Vector3i = undefined;
+        toTypeConstructor(Type.vector3i).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asVector4(self: *const Self) Vector4 {
+        var result: Vector4 = undefined;
+        toTypeConstructor(Type.vector4).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asVector4i(self: *const Self) Vector4i {
+        var result: Vector4i = undefined;
+        toTypeConstructor(Type.vector4i).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
     pub fn asArray(self: *const Self) Array {
-        return godotVariantAsArray(&self.godot_variant);
+        var result: Array = undefined;
+        toTypeConstructor(Type.array).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolByteArray(self: *const Self) PoolByteArray {
-        return godotVariantAsPoolByteArray(&self.godot_variant);
+    pub fn asCallable(self: *const Self) Callable {
+        var result: Callable = undefined;
+        toTypeConstructor(Type.callable).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolIntArray(self: *const Self) PoolIntArray {
-        return godotVariantAsPoolIntArray(&self.godot_variant);
+    pub fn asDictionary(self: *const Self) Dictionary {
+        var result: Dictionary = undefined;
+        toTypeConstructor(Type.dictionary).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolRealArray(self: *const Self) PoolRealArray {
-        return godotVariantAsPoolRealArray(&self.godot_variant);
+    pub fn asNodePath(self: *const Self) NodePath {
+        var result: NodePath = undefined;
+        toTypeConstructor(Type.node_path).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolStringArray(self: *const Self) PoolStringArray {
-        return godotVariantAsPoolStringArray(&self.godot_variant);
+    pub fn asPackedByteArray(self: *const Self) PackedByteArray {
+        var result: PackedByteArray = undefined;
+        toTypeConstructor(Type.packed_byte_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolVector2Array(self: *const Self) PoolVector2Array {
-        return godotVariantAsPoolVector2Array(&self.godot_variant);
+    pub fn asPackedColorArray(self: *const Self) PackedColorArray {
+        var result: PackedColorArray = undefined;
+        toTypeConstructor(Type.packed_color_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolVector3Array(self: *const Self) PoolVector3Array {
-        return godotVariantAsPoolVector3Array(&self.godot_variant);
+    pub fn asPackedFloat32Array(self: *const Self) PackedFloat32Array {
+        var result: PackedFloat32Array = undefined;
+        toTypeConstructor(Type.packed_float32_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
-    pub fn asPoolColorArray(self: *const Self) PoolColorArray {
-        return godotVariantAsPoolColorArray(&self.godot_variant);
+    pub fn asPackedFloat64Array(self: *const Self) PackedFloat64Array {
+        var result: PackedFloat64Array = undefined;
+        toTypeConstructor(Type.packed_float64_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asPackedInt32Array(self: *const Self) PackedInt32Array {
+        var result: PackedInt32Array = undefined;
+        toTypeConstructor(Type.packed_int32_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asPackedInt64Array(self: *const Self) PackedInt64Array {
+        var result: PackedInt64Array = undefined;
+        toTypeConstructor(Type.packed_int64_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asPackedStringArray(self: *const Self) PackedStringArray {
+        var result: PackedStringArray = undefined;
+        toTypeConstructor(Type.packed_string_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asPackedVector2Array(self: *const Self) PackedVector2Array {
+        var result: PackedVector2Array = undefined;
+        toTypeConstructor(Type.packed_vector2_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asPackedVector3Array(self: *const Self) PackedVector3Array {
+        var result: PackedVector3Array = undefined;
+        toTypeConstructor(Type.packed_vector3_array).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asRID(self: *const Self) RID {
+        var result: RID = undefined;
+        toTypeConstructor(Type.rid).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asSignal(self: *const Self) Signal {
+        var result: Signal = undefined;
+        toTypeConstructor(Type.signal).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asStringName(self: *const Self) StringName {
+        var result: StringName = undefined;
+        toTypeConstructor(Type.string_name).?(@ptrCast(&result), self._nativePtr());
+        return result;
+    }
+
+    pub fn asString(self: *const Self) String {
+        var result: String = undefined;
+        toTypeConstructor(Type.string).?(@ptrCast(&result), self._nativePtr());
+        return result;
     }
 
     pub fn asObject(self: *const Self) ?*Object {
-        return godotVariantAsObject(&self.godot_variant);
-    }
-
-    pub fn getType(self: *const Self) Type {
-        return @enumFromInt(api.core.godot_variant_get_type.?(&self.godot_variant));
-    }
-
-    pub fn call(self: *Self, method: *const String, args: *[*]const Variant, arg_count: i32) Variant { // Make sure you call .deinit() on returned struct
-        const godot_value = api.core.godot_variant_call.?(&self.godot_variant, &method.godot_string, @ptrCast(args), arg_count, null);
-        return Variant.initGodotVariant(godot_value);
-    }
-
-    pub fn hasMethod(self: *const Self, method: *const String) bool {
-        return api.core.godot_variant_has_method.?(&self.godot_variant, &method.godot_string);
-    }
-
-    pub fn equal(self: *const Self, other: *const Variant) bool { // Operator ==
-        return api.core.godot_variant_operator_equal.?(&self.godot_variant, &other.godot_variant);
-    }
-
-    pub fn notEqual(self: *const Self, other: *const Variant) bool { // Operator !=
-        return !equal(self, other);
-    }
-
-    pub fn less(self: *const Self, other: *const Variant) bool { // Operator <
-        return api.core.godot_variant_operator_less.?(&self.godot_variant, &other.godot_variant);
-    }
-
-    pub fn lessEqual(self: *const Self, other: *const Variant) bool { // Operator <=
-        return less(self, other) || equal(self, other);
-    }
-
-    pub fn more(self: *const Self, other: *const Variant) bool { // Operator >
-        return !lessEqual(self, other);
-    }
-
-    pub fn moreEqual(self: *const Self, other: *const Variant) bool { // Operator >=
-        return !less(self, other);
-    }
-
-    pub fn hashCompare(self: *const Self, other: *const Variant) bool {
-        return api.core.godot_variant_hash_compare.?(&self.godot_variant, &other.godot_variant);
-    }
-
-
-    inline fn godotVariantAsBool(variant: [*c]gd.godot_variant) bool {
-        return api.core.godot_variant_as_bool.?(variant);
-    }
-
-    fn GodotVariantAsInt(comptime T: type) type {
-        return struct {
-            inline fn function(variant: [*c]gd.godot_variant) T {
-                return @intCast(api.core.godot_variant_as_int.?(variant));
-            }
-        };
-    }
-
-    fn GodotVariantAsUint(comptime T: type) type {
-        return struct {
-            inline fn function(variant: [*c]gd.godot_variant) T {
-                return @intCast(api.core.godot_variant_as_uint.?(variant));
-            }
-        };
-    }
-
-    fn GodotVariantAsFloat(comptime T: type) type {
-        return struct {
-            inline fn function(variant: [*c]gd.godot_variant) T {
-                return @floatCast(api.core.godot_variant_as_real.?(variant));
-            }
-        };
-    }
-
-    // NOTE: These are not working properly! Due to a Zig bug with C ABI compatibility https://github.com/ziglang/zig/issues/1481
-    // any struct returned from a function with sizeof <= 16 will not be correct and cause undefined behaviour, crashes etc
-
-    inline fn godotVariantAsString(variant: [*c]gd.godot_variant) String {
-        return String.initGodotString(api.core.godot_variant_as_string.?(variant));
-    }
-
-    inline fn godotVariantAsVector2(variant: [*c]gd.godot_variant) Vector2 {
-        return Vector2.initGodotVector2(api.core.godot_variant_as_vector2.?(variant));
-    }
-
-    inline fn godotVariantAsRect2(variant: [*c]gd.godot_variant) Rect2 {
-        return Rect2.initGodotRect2(api.core.godot_variant_as_rect2.?(variant));
-    }
-
-    inline fn godotVariantAsVector3(variant: [*c]gd.godot_variant) Vector3 {
-        return Vector3.initGodotVector3(api.core.godot_variant_as_vector3.?(variant));
-    }
-
-    inline fn godotVariantAsTransform2D(variant: [*c]gd.godot_variant) Transform2D {
-        return Transform2D.initGodotTransform2D(api.core.godot_variant_as_transform2d.?(variant));
-    }
-
-    inline fn godotVariantAsPlane(variant: [*c]gd.godot_variant) Plane {
-        return Plane.initGodotPlane(api.core.godot_variant_as_plane.?(variant));
-    }
-
-    inline fn godotVariantAsQuat(variant: [*c]gd.godot_variant) Quat {
-        return Quat.initGodotQuat(api.core.godot_variant_as_quat.?(variant));
-    }
-
-    inline fn godotVariantAsAABB(variant: [*c]gd.godot_variant) AABB {
-        return AABB.initGodotAABB(api.core.godot_variant_as_aabb.?(variant));
-    }
-
-    inline fn godotVariantAsBasis(variant: [*c]gd.godot_variant) Basis {
-        return Basis.initGodotBasis(api.core.godot_variant_as_basis.?(variant));
-    }
-
-    inline fn godotVariantAsTransform(variant: [*c]gd.godot_variant) Transform {
-        return Transform.initGodotTransform(api.core.godot_variant_as_transform.?(variant));
-    }
-
-    inline fn godotVariantAsColor(variant: [*c]gd.godot_variant) Color {
-        return Color.initGodotColor(api.core.godot_variant_as_color.?(variant));
-    }
-
-    inline fn godotVariantAsNodePath(variant: [*c]gd.godot_variant) NodePath {
-        return NodePath.initGodotNodePath(api.core.godot_variant_as_node_path.?(variant));
-    }
-
-    inline fn godotVariantAsRID(variant: [*c]gd.godot_variant) RID {
-        return RID.initGodotRID(api.core.godot_variant_as_rid.?(variant));
-    }
-
-    inline fn godotVariantAsObject(variant: [*c]const gd.godot_variant) ?*Object {
-        const godot_object = api.core.godot_variant_as_object.?(variant);
-        if (godot_object == null) {
+        var object: ?*anyopaque = undefined;
+        toTypeConstructor(Type.object).?(&object, self._nativePtr());
+        if (object == null) {
             return null;
         }
-
-        const custom_instance_data = api.nativescript.godot_nativescript_get_userdata.?(godot_object);
-        if (custom_instance_data != null) {
-            return @ptrCast(@alignCast(custom_instance_data));
-        }
-        else {
-            var instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, godot_object);
-            return @ptrCast(@alignCast(instance_data));
-        }
+        return @ptrCast(gd.interface.?.object_get_instance_binding.?(object, gd.token, &Object._binding_callbacks));
     }
 
-    inline fn godotVariantAsDictionary(variant: [*c]gd.godot_variant) Dictionary {
-        return Dictionary.initGodotDictionary(api.core.godot_variant_as_dictionary.?(variant));
+
+    pub fn getType(self: *const Self) Type {
+        return @enumFromInt(gd.interface.?.variant_get_type.?(self._nativePtr()));
     }
 
-    inline fn godotVariantAsArray(variant: [*c]gd.godot_variant) Array {
-        return Array.initGodotArray(api.core.godot_variant_as_array.?(variant));
+
+    fn VariantAsInt(comptime T: type) type {
+        return struct {
+            fn function(variant: *const Variant) T {
+                return @intCast(variant.asInt());
+            }
+        };
     }
 
-    inline fn godotVariantAsPoolByteArray(variant: [*c]gd.godot_variant) PoolByteArray {
-        return PoolByteArray.initGodotPoolByteArray(api.core.godot_variant_as_pool_byte_array.?(variant));
+    fn VariantAsFloat(comptime T: type) type {
+        return struct {
+            fn function(variant: *const Variant) T {
+                return @floatCast(variant.asFloat());
+            }
+        };
     }
 
-    inline fn godotVariantAsPoolIntArray(variant: [*c]gd.godot_variant) PoolIntArray {
-        return PoolIntArray.initGodotPoolIntArray(api.core.godot_variant_as_pool_int_array.?(variant));
-    }
-
-    inline fn godotVariantAsPoolRealArray(variant: [*c]gd.godot_variant) PoolRealArray {
-        return PoolRealArray.initGodotPoolRealArray(api.core.godot_variant_as_pool_real_array.?(variant));
-    }
-
-    inline fn godotVariantAsPoolStringArray(variant: [*c]gd.godot_variant) PoolStringArray {
-        return PoolStringArray.initGodotPoolStringArray(api.core.godot_variant_as_pool_string_array.?(variant));
-    }
-
-    inline fn godotVariantAsPoolVector2Array(variant: [*c]gd.godot_variant) PoolVector2Array {
-        return PoolVector2Array.initGodotPoolVector2Array(api.core.godot_variant_as_pool_vector2_array.?(variant));
-    }
-
-    inline fn godotVariantAsPoolVector3Array(variant: [*c]gd.godot_variant) PoolVector3Array {
-        return PoolVector3Array.initGodotPoolVector3Array(api.core.godot_variant_as_pool_vector3_array.?(variant));
-    }
-
-    inline fn godotVariantAsPoolColorArray(variant: [*c]gd.godot_variant) PoolColorArray {
-        return PoolColorArray.initGodotPoolColorArray(api.core.godot_variant_as_pool_color_array.?(variant));
-    }
-
-    pub fn variantAsType(comptime T: type) (fn([*c]gd.godot_variant) callconv(.Inline) T) {
+    pub fn variantAsType(comptime T: type) (fn(*const Variant) T) {
         const type_info = @typeInfo(T);
         const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
         switch (type_info) {
             type_tag.Struct => {
                 if (@hasDecl(T, "GodotClass")) {
-                    return godotVariantAsObject;
+                    return Variant.asObject;
                 }
             },
             type_tag.Int => {
-                if (type_info.Int.signedness == std.builtin.Signedness.signed) {
-                    return GodotVariantAsInt(T).function;
-                }
-                else {
-                    return GodotVariantAsUint(T).function;
-                }
+                return VariantAsInt(T).function;
             },
             type_tag.Float => {
-                return GodotVariantAsFloat(T).function;
+                return VariantAsFloat(T).function;
             },
             else => {},
         }
 
         switch (T) {
             bool => {
-                return godotVariantAsBool;
-            },
-            String => {
-                return godotVariantAsString;
-            },
-            Vector2 => {
-                return godotVariantAsVector2;
-            },
-            Rect2 => {
-                return godotVariantAsRect2;
-            },
-            Vector3 => {
-                return godotVariantAsVector3;
-            },
-            Transform2D => {
-                return godotVariantAsTransform2D;
-            },
-            Plane => {
-                return godotVariantAsPlane;
-            },
-            Quat => {
-                return godotVariantAsQuat;
+                return Variant.asBool;
             },
             AABB => {
-                return godotVariantAsAABB;
+                return Variant.asAABB;
             },
             Basis => {
-                return godotVariantAsBasis;
-            },
-            Transform => {
-                return godotVariantAsTransform;
+                return Variant.asBasis;
             },
             Color => {
-                return godotVariantAsColor;
+                return Variant.asColor;
             },
-            NodePath => {
-                return godotVariantAsNodePath;
+            Vector2 => {
+                return Variant.asVector2;
             },
-            RID => {
-                return godotVariantAsRID;
+            Vector2i => {
+                return Variant.asVector2i;
             },
-            Dictionary => {
-                return godotVariantAsDictionary;
+            Rect2 => {
+                return Variant.asRect2;
+            },
+            Rect2i => {
+                return Variant.asRect2i;
+            },
+            Vector3 => {
+                return Variant.asVector3;
+            },
+            Vector3i => {
+                return Variant.asVector3i;
+            },
+            Vector4=> {
+                return Variant.asVector4;
+            },
+            Vector4i => {
+                return Variant.asVector4i;
+            },
+            Transform2D => {
+                return Variant.asTransform2D;
+            },
+            Transform3D => {
+                return Variant.asTransform3D;
+            },
+            Plane => {
+                return Variant.asPlane;
+            },
+            Projection => {
+                return Variant.asProjection;
+            },
+            Quaternion => {
+                return Variant.asQuaternion;
             },
             Array => {
-                return godotVariantAsArray;
+                return Variant.asArray;
             },
-            PoolByteArray => {
-                return godotVariantAsPoolByteArray;
+            Callable => {
+                return Variant.asCallable;
             },
-            PoolIntArray => {
-                return godotVariantAsPoolIntArray;
+            NodePath => {
+                return Variant.asNodePath;
             },
-            PoolRealArray => {
-                return godotVariantAsPoolRealArray;
+            Dictionary => {
+                return Variant.asDictionary;
             },
-            PoolStringArray => {
-                return godotVariantAsPoolStringArray;
+            PackedByteArray => {
+                return Variant.asPackedByteArray;
             },
-            PoolVector2Array => {
-                return godotVariantAsPoolVector2Array;
+            PackedColorArray => {
+                return Variant.asPackedColorArray;
             },
-            PoolVector3Array => {
-                return godotVariantAsPoolVector3Array;
+            PackedFloat32Array => {
+                return Variant.asPackedFloat32Array;
             },
-            PoolColorArray => {
-                return godotVariantAsPoolColorArray;
+            PackedFloat64Array => {
+                return Variant.asPackedFloat64Array;
+            },
+            PackedInt32Array => {
+                return Variant.asPackedInt32Array;
+            },
+            PackedInt64Array => {
+                return Variant.asPackedInt64Array;
+            },
+            PackedStringArray => {
+                return Variant.asPackedStringArray;
+            },
+            PackedVector2Array => {
+                return Variant.asPackedVector2Array;
+            },
+            PackedVector3Array => {
+                return Variant.asPackedVector3Array;
+            },
+            RID => {
+                return Variant.asRID;
+            },
+            Signal => {
+                return Variant.asSignal;
+            },
+            StringName => {
+                return Variant.asStringName;
+            },
+            String => {
+                return Variant.asString;
             },
             else => {
                 @compileLog("Variant can't be converted as type:", T);
@@ -780,352 +805,141 @@ pub const Variant = struct {
         return null;
     }
 
-
-    inline fn voidAsGodotVariant(value: void) gd.godot_variant {
-        _ = value;
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_nil.?(&variant);
-        return variant;
-    }
-
-    inline fn boolAsGodotVariant(value: bool) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_bool.?(&variant, value);
-        return variant;
-    }
-
-    fn IntAsGodotVariant(comptime T: type) type {
-        return struct {
-            inline fn function(value: T) gd.godot_variant {
-                var variant: gd.godot_variant = undefined;
-                api.core.godot_variant_new_int.?(&variant, value);
-                return variant;
-            }
-        };
-    }
-
-    fn UintAsGodotVariant(comptime T: type) type {
-        return struct {
-            inline fn function(value: T) gd.godot_variant {
-                var variant: gd.godot_variant = undefined;
-                api.core.godot_variant_new_uint.?(&variant, value);
-                return variant;
-            }
-        };
-    }
-
-    fn FloatAsGodotVariant(comptime T: type) type {
-        return struct {
-            inline fn function(value: T) gd.godot_variant {
-                var variant: gd.godot_variant = undefined;
-                api.core.godot_variant_new_real.?(&variant, value);
-                return variant;
-            }
-        };
-    }
-
-    inline fn comptimeIntAsGodotVariant(comptime value: comptime_int) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_int.?(&variant, @as(i64, value));
-        return variant;
-    }
-
-    inline fn comptimeFloatAsGodotVariant(comptime value: comptime_float) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_real.?(&variant, @as(f64, value));
-        return variant;
-    }
-
-    inline fn cstringAsGodotVariant(value: [*:0]const u8) gd.godot_variant {
-        var string = String.initUtf8(value);
-        defer string.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_string.?(&variant, &string.godot_string);
-        return variant;
-    }
-
-    inline fn stringAsGodotVariant(value: String) gd.godot_variant {
-        var mutable_value = value; //So deinit can be called
-        defer mutable_value.deinit(); //This will be copied when converted to a godot variant, so deinit to free any allocated memory, or it will leak
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_string.?(&variant, &mutable_value.godot_string);
-        return variant;
-    }
-
-    inline fn vector2AsGodotVariant(value: Vector2) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_vector2.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn rect2AsGodotVariant(value: Rect2) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_rect2.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn vector3AsGodotVariant(value: Vector3) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_vector3.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn transform2DAsGodotVariant(value: Transform2D) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_transform2d.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn planeAsGodotVariant(value: Plane) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_plane.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn quatAsGodotVariant(value: Quat) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_quat.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn aabbAsGodotVariant(value: AABB) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_aabb.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn basisAsGodotVariant(value: Basis) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_basis.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn transformAsGodotVariant(value: Transform) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_transform.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn colorAsGodotVariant(value: Color) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_color.?(&variant, @ptrCast(&value));
-        return variant;
-    }
-
-    inline fn nodePathAsGodotVariant(value: NodePath) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_node_path.?(&variant, &mutable_value.godot_node_path);
-        return variant;
-    }
-
-    inline fn ridAsGodotVariant(value: RID) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_rid.?(&variant, &mutable_value.godot_rid);
-        return variant;
-    }
-
-    inline fn objectAsGodotVariant(value: *const Object) gd.godot_variant {
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_object.?(&variant, value.base.owner);
-        return variant;
-    }
-
-    inline fn dictionaryAsGodotVariant(value: Dictionary) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_dictionary.?(&variant, &mutable_value.godot_dictionary);
-        return variant;
-    }
-
-    inline fn arrayAsGodotVariant(value: Array) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolByteArrayAsGodotVariant(value: PoolByteArray) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_byte_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolIntArrayAsGodotVariant(value: PoolIntArray) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_int_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolRealArrayAsGodotVariant(value: PoolRealArray) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_real_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolStringArrayAsGodotVariant(value: PoolStringArray) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_string_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolVector2ArrayAsGodotVariant(value: PoolVector2Array) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_vector2_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolVector3ArrayAsGodotVariant(value: PoolVector3Array) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_vector3_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    inline fn poolColorArrayAsGodotVariant(value: PoolColorArray) gd.godot_variant {
-        var mutable_value = value;
-        defer mutable_value.deinit();
-
-        var variant: gd.godot_variant = undefined;
-        api.core.godot_variant_new_pool_color_array.?(&variant, &mutable_value.godot_array);
-        return variant;
-    }
-
-    pub fn typeAsVariant(comptime T: type) (fn(T) callconv(.Inline) gd.godot_variant) {
+    pub fn typeAsVariant(comptime T: type) (fn(T) Variant) {
         const type_info = @typeInfo(T);
         const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
         switch (type_info) {
             type_tag.Struct => {
                 if (@hasDecl(T, "GodotClass")) {
-                    return godotVariantAsObject;
+                    return Variant.initObject;
                 }
             },
             type_tag.Int => {
-                if (type_info.Int.signedness == std.builtin.Signedness.signed) {
-                    return IntAsGodotVariant(T).function;
-                }
-                else {
-                    return UintAsGodotVariant(T).function;
-                }
+                return Variant.initInt;
             },
             type_tag.Float => {
-                return FloatAsGodotVariant(T).function;
+                return Variant.initFloat;
             },
             type_tag.ComptimeInt => {
-                return comptimeIntAsGodotVariant;
+                return Variant.initInt;
             },
             type_tag.ComptimeFloat => {
-                return comptimeFloatAsGodotVariant;
+                return Variant.initFloat;
             },
-            type_tag.Pointer => {
-                if (type_info.Pointer.child == u8) {
-                    return cstringAsGodotVariant;
-                }
-            },
+            // type_tag.Pointer => {
+            //     if (type_info.Pointer.child == u8) {
+            //         return cstringAsGodotVariant;
+            //     }
+            // },
             else => {},
         }
 
         switch (T) {
             void => {
-                return voidAsGodotVariant;
+                return Variant.initVoid;
             },
             bool => {
-                return boolAsGodotVariant;
-            },
-            String => {
-                return stringAsGodotVariant;
-            },
-            Vector2 => {
-                return vector2AsGodotVariant;
-            },
-            Rect2 => {
-                return rect2AsGodotVariant;
-            },
-            Vector3 => {
-                return vector3AsGodotVariant;
-            },
-            Transform2D => {
-                return transform2DAsGodotVariant;
-            },
-            Plane => {
-                return planeAsGodotVariant;
-            },
-            Quat => {
-                return quatAsGodotVariant;
+                return Variant.initBool;
             },
             AABB => {
-                return aabbAsGodotVariant;
+                return Variant.initAABB;
             },
             Basis => {
-                return basisAsGodotVariant;
-            },
-            Transform => {
-                return transformAsGodotVariant;
+                return Variant.initBasis;
             },
             Color => {
-                return colorAsGodotVariant;
+                return Variant.initColor;
             },
-            NodePath => {
-                return nodePathAsGodotVariant;
+            Vector2 => {
+                return Variant.initVector2;
             },
-            RID => {
-                return ridAsGodotVariant;
+            Vector2i => {
+                return Variant.initVector2i;
             },
-            Dictionary => {
-                return dictionaryAsGodotVariant;
+            Rect2 => {
+                return Variant.initRect2;
+            },
+            Rect2i => {
+                return Variant.initRect2i;
+            },
+            Vector3 => {
+                return Variant.initVector3;
+            },
+            Vector3i => {
+                return Variant.initVector3i;
+            },
+            Vector4=> {
+                return Variant.initVector4;
+            },
+            Vector4i => {
+                return Variant.initVector4i;
+            },
+            Transform2D => {
+                return Variant.initTransform2D;
+            },
+            Transform3D => {
+                return Variant.initTransform3D;
+            },
+            Plane => {
+                return Variant.initPlane;
+            },
+            Projection => {
+                return Variant.initProjection;
+            },
+            Quaternion => {
+                return Variant.initQuaternion;
             },
             Array => {
-                return arrayAsGodotVariant;
+                return Variant.initArray;
             },
-            PoolByteArray => {
-                return poolByteArrayAsGodotVariant;
+            Callable => {
+                return Variant.initCallable;
             },
-            PoolIntArray => {
-                return poolIntArrayAsGodotVariant;
+            NodePath => {
+                return Variant.initNodePath;
             },
-            PoolRealArray => {
-                return poolRealArrayAsGodotVariant;
+            Dictionary => {
+                return Variant.initDictionary;
             },
-            PoolStringArray => {
-                return poolStringArrayAsGodotVariant;
+            PackedByteArray => {
+                return Variant.initPackedByteArray;
             },
-            PoolVector2Array => {
-                return poolVector2ArrayAsGodotVariant;
+            PackedColorArray => {
+                return Variant.initPackedColorArray;
             },
-            PoolVector3Array => {
-                return poolVector3ArrayAsGodotVariant;
+            PackedFloat32Array => {
+                return Variant.initPackedFloat32Array;
             },
-            PoolColorArray => {
-                return poolColorArrayAsGodotVariant;
+            PackedFloat64Array => {
+                return Variant.initPackedFloat64Array;
+            },
+            PackedInt32Array => {
+                return Variant.initPackedInt32Array;
+            },
+            PackedInt64Array => {
+                return Variant.initPackedInt64Array;
+            },
+            PackedStringArray => {
+                return Variant.initPackedStringArray;
+            },
+            PackedVector2Array => {
+                return Variant.initPackedVector2Array;
+            },
+            PackedVector3Array => {
+                return Variant.initPackedVector3Array;
+            },
+            RID => {
+                return Variant.initRID;
+            },
+            Signal => {
+                return Variant.initSignal;
+            },
+            StringName => {
+                return Variant.initStringName;
+            },
+            String => {
+                return Variant.initString;
             },
             else => {
                 @compileLog("Unsupported return type:", T);
@@ -1149,7 +963,7 @@ pub const Variant = struct {
                 return Type.int;
             },
             type_tag.Float => {
-                return Type.real;
+                return Type.float;
             },
             else => {},
         }
@@ -1158,29 +972,11 @@ pub const Variant = struct {
             @TypeOf(null) => {
                 return Type.nil;
             },
+            void => {
+                return Type.nil;
+            },
             bool => {
                 return Type.bool;
-            },
-            String => {
-                return Type.string;
-            },
-            Vector2 => {
-                return Type.vector2;
-            },
-            Rect2 => {
-                return Type.rect2;
-            },
-            Vector3 => {
-                return Type.vector3;
-            },
-            Transform2D => {
-                return Type.transform2d;
-            },
-            Plane => {
-                return Type.plane;
-            },
-            Quat => {
-                return Type.quat;
             },
             AABB => {
                 return Type.aabb;
@@ -1188,44 +984,98 @@ pub const Variant = struct {
             Basis => {
                 return Type.basis;
             },
-            Transform => {
-                return Type.transform;
-            },
             Color => {
                 return Type.color;
             },
-            NodePath => {
-                return Type.node_path;
+            Vector2 => {
+                return Type.vector2;
             },
-            RID => {
-                return Type.rid;
+            Vector2i => {
+                return Type.vector2i;
             },
-            Dictionary => {
-                return Type.dictionary;
+            Rect2 => {
+                return Type.rect2;
+            },
+            Rect2i => {
+                return Type.rect2i;
+            },
+            Vector3 => {
+                return Type.vector3;
+            },
+            Vector3i => {
+                return Type.vector3i;
+            },
+            Vector4=> {
+                return Type.vector4;
+            },
+            Vector4i => {
+                return Type.vector4i;
+            },
+            Transform2D => {
+                return Type.transform2d;
+            },
+            Transform3D => {
+                return Type.transform3d;
+            },
+            Plane => {
+                return Type.plane;
+            },
+            Projection => {
+                return Type.projection;
+            },
+            Quaternion => {
+                return Type.quaternion;
             },
             Array => {
                 return Type.array;
             },
-            PoolByteArray => {
-                return Type.pool_byte_array;
+            Callable => {
+                return Type.callable;
             },
-            PoolIntArray => {
-                return Type.pool_int_array;
+            NodePath => {
+                return Type.node_path;
             },
-            PoolRealArray => {
-                return Type.pool_real_array;
+            Dictionary => {
+                return Type.dictionary;
             },
-            PoolStringArray => {
-                return Type.pool_string_array;
+            PackedByteArray => {
+                return Type.packed_byte_array;
             },
-            PoolVector2Array => {
-                return Type.pool_vector2_array;
+            PackedColorArray => {
+                return Type.packed_color_array;
             },
-            PoolVector3Array => {
-                return Type.pool_vector3_array;
+            PackedFloat32Array => {
+                return Type.packed_float32_array;
             },
-            PoolColorArray => {
-                return Type.pool_color_array;
+            PackedFloat64Array => {
+                return Type.packed_float64_array;
+            },
+            PackedInt32Array => {
+                return Type.packed_int32_array;
+            },
+            PackedInt64Array => {
+                return Type.packed_int64_array;
+            },
+            PackedStringArray => {
+                return Type.packed_string_array;
+            },
+            PackedVector2Array => {
+                return Type.packed_vector2_array;
+            },
+            PackedVector3Array => {
+                return Type.packed_vector3_array;
+            },
+            RID => {
+                return Type.rid;
+            },
+            Signal => {
+                return Type.signal;
+            },
+            StringName => {
+                return Type.string_name;
+            },
+            String => {
+                return Type.string;
             },
             else => {
                 @compileLog("Unknown type:", T);
