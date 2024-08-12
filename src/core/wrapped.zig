@@ -8,7 +8,24 @@ const StringName = @import("../gen/builtin_classes/string_name.zig").StringName;
 const String = @import("../gen/builtin_classes/string.zig").String;
 
 pub const Wrapped = struct {
-    _owner: ?*anyopaque,
+    _owner: ?*anyopaque = undefined,
+
+    const Self = @This();
+
+    pub fn initStringName(godot_class: *const StringName) Self {
+        var self: Self = undefined;
+        self._owner = gd.interface.?.classdb_construct_object.?(godot_class._nativePtr());
+        return self;
+    }
+
+    pub fn postInitialize(self: *Self, comptime class: type) void {
+        const extension_class = class._getExtensionClassName();
+        if (extension_class != null) {
+            gd.interface.?.object_set_instance.?(self._owner, @ptrCast(extension_class), @ptrCast(self));
+        }
+        gd.interface.?.object_set_instance_binding.?(self._owner, gd.token, @ptrCast(self), class._getBindingCallbacks());
+    }
+
 };
 
 fn classTypeName(comptime class: type) []const u8 {
@@ -44,7 +61,7 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
         pub fn _propertyGetRevertBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, value: gi.GDExtensionVariantPtr) callconv(.C) gi.GDExtensionBool { _ = instance; _ = name; _ = value; return false; }
         pub fn _toStringBind(instance: gi.GDExtensionClassInstancePtr, is_valid: *gi.GDExtensionBool, out: gi.GDExtensionStringPtr) callconv(.C) void { _ = instance; _ = is_valid; _ = out; }
 
-        pub fn _getBindMethods() callconv(.C) ?*const fn() callconv(.C) void {
+        pub fn _getBindMembers() callconv(.C) ?*const fn() callconv(.C) void {
             return null;
         }
 
@@ -100,7 +117,7 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
             _ = token;
             const class_instance: *class = @alignCast(@ptrCast(instance));
             class_instance.deinit();
-            gd.interface.?.mem_free.?(binding); //Memory.freeStatic
+            gd.interface.?.mem_free.?(binding);
         }
 
         pub fn _bindingReferenceCallback(token: ?*anyopaque, instance: ?*anyopaque, reference: gi.GDExtensionBool) callconv(.C) gi.GDExtensionBool {
@@ -116,8 +133,8 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
             .reference_callback = _bindingReferenceCallback,
         };
 
-        pub fn _getBindingsCallbacks() callconv(.C) gi.GDExtensionInstanceBindingCallbacks {
-            return _binding_callbacks;
+        pub fn _getBindingCallbacks() callconv(.C) *const gi.GDExtensionInstanceBindingCallbacks {
+            return &_binding_callbacks;
         }
 
     };
@@ -138,13 +155,13 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
         pub fn _propertyGetRevert(self: *const Wrapped, name: *const StringName, property: *Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
         pub fn _toString(self: *const Wrapped) callconv(.C) String { _ = self; const string = String.init(); return string; }
 
-        pub fn _getExtensionClassName() callconv(.C) *const StringName {
+        pub fn _getExtensionClassName() callconv(.C) ?*const StringName {
             class_string_name = gd.stringNameFromUtf8(classTypeName(class));
             return &class_string_name;
         }
 
-        pub fn _getBindMethods() callconv(.C) ?*const fn() callconv(.C) void {
-            return class._bindMethods;
+        pub fn _getBindMembers() callconv(.C) ?*const fn() callconv(.C) void {
+            return class._bindMembers;
         }
 
         pub fn _getNotification() callconv(.C) ?*const fn(*Wrapped, i32) callconv(.C) void {
@@ -187,8 +204,8 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
                 return;
             }
             base_class._initializeClass();
-            if (class._getBindMethods() != base_class._getBindMethods()) {
-                class._bindMethods();
+            if (class._getBindMembers() != base_class._getBindMembers()) {
+                class._bindMembers();
                 //base_class.registerVirtuals(class, base_class);
             }
             static.initialized = true;
@@ -205,9 +222,16 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _create(data: ?*anyopaque) callconv(.C) gi.GDExtensionObjectPtr {
             _ = data;
-            const allocation = gd.interface.?.mem_alloc.?(@sizeOf(class)); //memnew(class)
-            const new_object: *Wrapped = @alignCast(@ptrCast(allocation));
-            return new_object._owner;
+
+            const allocation = gd.interface.?.mem_alloc.?(@sizeOf(class));
+            const new_class: *class = @alignCast(@ptrCast(allocation));
+            new_class.* = class.init();
+
+            const new_wrapped: *Wrapped = @alignCast(@ptrCast(allocation));
+            new_wrapped.* = Wrapped.initStringName(class.getParentClassStatic());
+            new_wrapped.postInitialize(class);
+
+            return new_wrapped._owner;
         }
 
         pub fn _free(data: ?*anyopaque, ptr: gi.GDExtensionClassInstancePtr) callconv(.C) void {
@@ -215,7 +239,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             if (ptr != null) {
                 const class_instance: *class = @alignCast(@ptrCast(ptr));
                 class_instance.deinit();
-                gd.interface.?.mem_free.?(class_instance); //Memory.freeStatic
+                gd.interface.?.mem_free.?(class_instance);
             }
         }
 
@@ -281,8 +305,8 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             .reference_callback = _bindingReferenceCallback,
         };
 
-        pub fn _getBindingsCallbacks() callconv(.C) gi.GDExtensionInstanceBindingCallbacks {
-            return _binding_callbacks;
+        pub fn _getBindingCallbacks() callconv(.C) *const gi.GDExtensionInstanceBindingCallbacks {
+            return &_binding_callbacks;
         }
 
     };
