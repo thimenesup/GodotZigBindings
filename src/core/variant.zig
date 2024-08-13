@@ -131,8 +131,13 @@ pub const Variant = struct {
     var from_type_constructor: [@intFromEnum(Type.variant_max)]gi.GDExtensionVariantFromTypeConstructorFunc = undefined;
     var to_type_constructor: [@intFromEnum(Type.variant_max)]gi.GDExtensionTypeFromVariantConstructorFunc = undefined;
 
-    inline fn fromTypeConstructor(t: Variant.Type) gi.GDExtensionVariantFromTypeConstructorFunc { return from_type_constructor[@intFromEnum(t)]; }
-    inline fn toTypeConstructor(t: Variant.Type) gi.GDExtensionTypeFromVariantConstructorFunc { return to_type_constructor[@intFromEnum(t)]; }
+    inline fn fromTypeConstructor(vtype: Variant.Type, variant: *Self, value: anytype) void {
+        from_type_constructor[@intFromEnum(vtype)].?(variant._nativePtr(), @constCast(@ptrCast(value)));
+    }
+
+    inline fn toTypeConstructor(vtype: Variant.Type, value: anytype, variant: *const Self) void {
+        to_type_constructor[@intFromEnum(vtype)].?(@constCast(@ptrCast(value)), variant._nativePtr());
+    }
 
     pub fn initBindings() void {
         var i: usize = 1; // Start from 1 to skip Nil
@@ -174,7 +179,7 @@ pub const Variant = struct {
         return self;
     }
 
-    pub fn initVoid(p_void: void) Self {
+    pub fn initVoid(p_void: *const void) Self {
         _ = p_void;
         var self: Self = undefined;
         gd.interface.?.variant_new_nil.?(self._nativePtr());
@@ -199,230 +204,229 @@ pub const Variant = struct {
         return self;
     }
 
-    pub fn initBool(p_bool: bool) Self {
+    pub fn initBool(p_bool: *const bool) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.bool).?(self._nativePtr(), @ptrCast(&p_bool));
+        fromTypeConstructor(Type.bool, &self, p_bool);
         return self;
     }
 
-    pub fn initInt(p_int: i64) Self {
+    pub fn initInt(p_int: *const i64) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.int).?(self._nativePtr(), @ptrCast(&p_int));
+        fromTypeConstructor(Type.int, &self, p_int);
         return self;
     }
 
-    pub fn initFloat(p_float: f64) Self {
+    pub fn initFloat(p_float: *const f64) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.float).?(self._nativePtr(), @ptrCast(&p_float));
+        fromTypeConstructor(Type.float, &self, p_float);
         return self;
     }
 
     pub fn initAABB(p_aabb: *const AABB) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.aabb).?(self._nativePtr(), @ptrCast(&p_aabb));
+        fromTypeConstructor(Type.aabb, &self, p_aabb);
         return self;
     }
 
     pub fn initBasis(p_basis: *const Basis) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.basis).?(self._nativePtr(), @ptrCast(&p_basis));
+        fromTypeConstructor(Type.basis, &self, p_basis);
         return self;
     }
 
     pub fn initColor(p_color: *const Color) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.color).?(self._nativePtr(), @ptrCast(&p_color));
+        fromTypeConstructor(Type.color, &self, p_color);
         return self;
     }
 
     pub fn initPlane(p_plane: *const Plane) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.plane).?(self._nativePtr(), @ptrCast(&p_plane));
+        fromTypeConstructor(Type.plane, &self, p_plane);
         return self;
     }
 
     pub fn initProjection(p_projection: *const Projection) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.projection).?(self._nativePtr(), @ptrCast(&p_projection));
+        fromTypeConstructor(Type.projection, &self, p_projection);
         return self;
     }
 
     pub fn initQuaternion(p_quaternion: *const Quaternion) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.quaternion).?(self._nativePtr(), @ptrCast(&p_quaternion));
+        fromTypeConstructor(Type.quaternion, &self, p_quaternion);
         return self;
     }
 
     pub fn initRect2(p_rect2: *const Rect2) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.rect2).?(self._nativePtr(), @ptrCast(&p_rect2));
+        fromTypeConstructor(Type.rect2, &self, p_rect2);
         return self;
     }
 
     pub fn initRect2i(p_rect2i: *const Rect2i) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.rect2i).?(self._nativePtr(), @ptrCast(&p_rect2i));
+        fromTypeConstructor(Type.rect2i, &self, p_rect2i);
         return self;
     }
 
     pub fn initTransform3D(p_transform3d: *const Transform3D) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.transform3d).?(self._nativePtr(), @ptrCast(&p_transform3d));
+        fromTypeConstructor(Type.transform3d, &self, p_transform3d);
         return self;
     }
 
     pub fn initTransform2D(p_transform2d: *const Transform2D) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.transform2d).?(self._nativePtr(), @ptrCast(&p_transform2d));
+        fromTypeConstructor(Type.transform2d, &self, p_transform2d);
         return self;
     }
 
     pub fn initVector2(p_vector2: *const Vector2) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.vector2).?(self._nativePtr(), @ptrCast(&p_vector2));
+        fromTypeConstructor(Type.vector2, &self, p_vector2);
         return self;
     }
 
     pub fn initVector2i(p_vector2i: *const Vector2i) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.vector2i).?(self._nativePtr(), @ptrCast(&p_vector2i));
+        fromTypeConstructor(Type.vector2i, &self, p_vector2i);
         return self;
     }
 
     pub fn initVector3(p_vector3: *const Vector3) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.vector3).?(self._nativePtr(), @ptrCast(&p_vector3));
+        fromTypeConstructor(Type.vector3, &self, p_vector3);
         return self;
     }
 
     pub fn initVector3i(p_vector3i: *const Vector3i) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.vector3i).?(self._nativePtr(), @ptrCast(&p_vector3i));
+        fromTypeConstructor(Type.vector3i, &self, p_vector3i);
         return self;
     }
 
     pub fn initVector4(p_vector4: *const Vector4) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.vector4).?(self._nativePtr(), @ptrCast(&p_vector4));
+        fromTypeConstructor(Type.vector4, &self, p_vector4);
         return self;
     }
 
     pub fn initVector4i(p_vector4i: *const Vector4i) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.vector4i).?(self._nativePtr(), @ptrCast(&p_vector4i));
+        fromTypeConstructor(Type.vector4i, &self, p_vector4i);
         return self;
     }
 
     pub fn initArray(p_array: *const Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.array).?(self._nativePtr(), @ptrCast(p_array._nativePtr()));
+        fromTypeConstructor(Type.array, &self, p_array);
         return self;
     }
 
     pub fn initCallable(p_callable: *const Callable) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.callable).?(self._nativePtr(), @ptrCast(&p_callable));
+        fromTypeConstructor(Type.callable, &self, p_callable);
         return self;
     }
 
     pub fn initDictionary(p_dictionary: *const Dictionary) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.dictionary).?(self._nativePtr(), @ptrCast(p_dictionary._nativePtr()));
+        fromTypeConstructor(Type.dictionary, &self, p_dictionary);
         return self;
     }
 
     pub fn initNodePath(p_node_path: *const NodePath) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.node_path).?(self._nativePtr(), @ptrCast(p_node_path._nativePtr()));
+        fromTypeConstructor(Type.node_path, &self, p_node_path);
         return self;
     }
 
     pub fn initPackedByteArray(p_packed_byte_array: *const PackedByteArray) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_byte_array).?(self._nativePtr(), @ptrCast(p_packed_byte_array._nativePtr()));
+        fromTypeConstructor(Type.packed_byte_array, &self, p_packed_byte_array);
         return self;
     }
 
     pub fn initPackedColorArray(p_packed_color_array: *const PackedColorArray) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_color_array).?(self._nativePtr(), @ptrCast(p_packed_color_array._nativePtr()));
+        fromTypeConstructor(Type.packed_color_array, &self, p_packed_color_array);
         return self;
     }
 
     pub fn initPackedFloat32Array(p_packed_float32_array: *const PackedFloat32Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_float32_array).?(self._nativePtr(), @ptrCast(p_packed_float32_array._nativePtr()));
+        fromTypeConstructor(Type.packed_float32_array, &self, p_packed_float32_array);
         return self;
     }
 
     pub fn initPackedFloat64Array(p_packed_float64_array: *const PackedFloat32Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_float64_array).?(self._nativePtr(), @ptrCast(p_packed_float64_array._nativePtr()));
+        fromTypeConstructor(Type.packed_float64_array, &self, p_packed_float64_array);
         return self;
     }
 
     pub fn initPackedInt32Array(p_packed_int32_array: *const PackedInt32Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_int32_array).?(self._nativePtr(), @ptrCast(p_packed_int32_array._nativePtr()));
+        fromTypeConstructor(Type.packed_int32_array, &self, p_packed_int32_array);
         return self;
     }
 
     pub fn initPackedInt64Array(p_packed_int64_array: *const PackedInt64Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_int64_array).?(self._nativePtr(), @ptrCast(p_packed_int64_array._nativePtr()));
+        fromTypeConstructor(Type.packed_int64_array, &self, p_packed_int64_array);
         return self;
     }
 
     pub fn initPackedStringArray(p_packed_string_array: *const PackedStringArray) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_string_array).?(self._nativePtr(), @ptrCast(p_packed_string_array._nativePtr()));
+        fromTypeConstructor(Type.packed_string_array, &self, p_packed_string_array);
         return self;
     }
 
     pub fn initPackedVector2Array(p_packed_vector2_array: *const PackedVector2Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_vector2_array).?(self._nativePtr(), @ptrCast(p_packed_vector2_array._nativePtr()));
+        fromTypeConstructor(Type.packed_vector2_array, &self, p_packed_vector2_array);
         return self;
     }
 
     pub fn initPackedVector3Array(p_packed_vector3_array: *const PackedVector3Array) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.packed_vector3_array).?(self._nativePtr(), @ptrCast(p_packed_vector3_array._nativePtr()));
+        fromTypeConstructor(Type.packed_vector3_array, &self, p_packed_vector3_array);
         return self;
     }
 
     pub fn initRID(p_rid: *const RID) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.rid).?(self._nativePtr(), @ptrCast(p_rid._nativePtr()));
+        fromTypeConstructor(Type.rid, &self, p_rid);
         return self;
     }
 
-
     pub fn initSignal(p_signal: *const Signal) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.signal).?(self._nativePtr(), @ptrCast(&p_signal));
+        fromTypeConstructor(Type.signal, &self, p_signal);
         return self;
     }
 
     pub fn initStringName(p_string_name: *const StringName) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.string_name).?(self._nativePtr(), @ptrCast(&p_string_name));
+        fromTypeConstructor(Type.string_name, &self, p_string_name);
         return self;
     }
 
     pub fn initString(p_string: *const String) Self {
         var self: Self = undefined;
-        fromTypeConstructor(Type.string).?(self._nativePtr(), @ptrCast(&p_string));
+        fromTypeConstructor(Type.string, &self, p_string);
         return self;
     }
 
     pub fn initObject(p_object: *const Object) Self {
         var self: Self = undefined;
         if (p_object != null) {
-            fromTypeConstructor(Type.object).?(self._nativePtr(), @ptrCast(p_object.base._owner));
+            fromTypeConstructor(Type.object, &self, p_object.base._owner);
         } else {
             const null_object: ?*anyopaque = null;
-            fromTypeConstructor(Type.object).?(self._nativePtr(), @ptrCast(&null_object));
+            fromTypeConstructor(Type.object, &self, &null_object);
         }
         return self;
     }
@@ -430,223 +434,223 @@ pub const Variant = struct {
 
     pub fn asBool(self: *const Self) bool {
         var result: gi.GDExtensionBool = undefined;
-        toTypeConstructor(Type.bool).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.bool, &result, self);
         return result;
     }
 
     pub fn asInt(self: *const Self) i64 {
         var result: gi.GDExtensionInt = undefined;
-        toTypeConstructor(Type.int).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.int, &result, self);
         return result;
     }
 
     pub fn asFloat(self: *const Self) f64 {
         var result: f64 = undefined;
-        toTypeConstructor(Type.float).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.float, &result, self);
         return result;
     }
 
     pub fn asAABB(self: *const Self) AABB {
         var result: AABB = undefined;
-        toTypeConstructor(Type.aabb).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.aabb, &result, self);
         return result;
     }
 
     pub fn asBasis(self: *const Self) Basis {
         var result: Basis = undefined;
-        toTypeConstructor(Type.basis).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.basis, &result, self);
         return result;
     }
 
     pub fn asColor(self: *const Self) Color {
         var result: Color = undefined;
-        toTypeConstructor(Type.color).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.color, &result, self);
         return result;
     }
 
     pub fn asPlane(self: *const Self) Vector2 {
         var result: Plane = undefined;
-        toTypeConstructor(Type.plane).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.plane, &result, self);
         return result;
     }
 
     pub fn asProjection(self: *const Self) Projection {
         var result: Projection = undefined;
-        toTypeConstructor(Type.projection).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.projection, &result, self);
         return result;
     }
 
     pub fn asQuaternion(self: *const Self) Quaternion {
         var result: Quaternion = undefined;
-        toTypeConstructor(Type.quaternion).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.quaternion, &result, self);
         return result;
     }
 
     pub fn asRect2(self: *const Self) Rect2 {
         var result: Rect2 = undefined;
-        toTypeConstructor(Type.rect2).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.rect2, &result, self);
         return result;
     }
 
     pub fn asRect2i(self: *const Self) Rect2i {
         var result: Rect2i = undefined;
-        toTypeConstructor(Type.rect2i).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.rect2i, &result, self);
         return result;
     }
 
     pub fn asTransform3D(self: *const Self) Transform3D {
         var result: Transform3D = undefined;
-        toTypeConstructor(Type.transform3d).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.transform3d, &result, self);
         return result;
     }
 
     pub fn asTransform2D(self: *const Self) Transform2D {
         var result: Transform2D = undefined;
-        toTypeConstructor(Type.transform2d).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.transform2d, &result, self);
         return result;
     }
 
     pub fn asVector2(self: *const Self) Vector2 {
         var result: Vector2 = undefined;
-        toTypeConstructor(Type.vector2).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.vector2, &result, self);
         return result;
     }
 
     pub fn asVector2i(self: *const Self) Vector2i {
         var result: Vector2i = undefined;
-        toTypeConstructor(Type.vector2i).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.vector2i, &result, self);
         return result;
     }
 
     pub fn asVector3(self: *const Self) Vector3 {
         var result: Vector3 = undefined;
-        toTypeConstructor(Type.vector3).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.vector3, &result, self);
         return result;
     }
 
     pub fn asVector3i(self: *const Self) Vector3i {
         var result: Vector3i = undefined;
-        toTypeConstructor(Type.vector3i).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.vector3i, &result, self);
         return result;
     }
 
     pub fn asVector4(self: *const Self) Vector4 {
         var result: Vector4 = undefined;
-        toTypeConstructor(Type.vector4).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.vector4, &result, self);
         return result;
     }
 
     pub fn asVector4i(self: *const Self) Vector4i {
         var result: Vector4i = undefined;
-        toTypeConstructor(Type.vector4i).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.vector4i, &result, self);
         return result;
     }
 
     pub fn asArray(self: *const Self) Array {
         var result: Array = undefined;
-        toTypeConstructor(Type.array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.array, &result, self);
         return result;
     }
 
     pub fn asCallable(self: *const Self) Callable {
         var result: Callable = undefined;
-        toTypeConstructor(Type.callable).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.callable, &result, self);
         return result;
     }
 
     pub fn asDictionary(self: *const Self) Dictionary {
         var result: Dictionary = undefined;
-        toTypeConstructor(Type.dictionary).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.dictionary, &result, self);
         return result;
     }
 
     pub fn asNodePath(self: *const Self) NodePath {
         var result: NodePath = undefined;
-        toTypeConstructor(Type.node_path).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.node_path, &result, self);
         return result;
     }
 
     pub fn asPackedByteArray(self: *const Self) PackedByteArray {
         var result: PackedByteArray = undefined;
-        toTypeConstructor(Type.packed_byte_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_byte_array, &result, self);
         return result;
     }
 
     pub fn asPackedColorArray(self: *const Self) PackedColorArray {
         var result: PackedColorArray = undefined;
-        toTypeConstructor(Type.packed_color_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_color_array, &result, self);
         return result;
     }
 
     pub fn asPackedFloat32Array(self: *const Self) PackedFloat32Array {
         var result: PackedFloat32Array = undefined;
-        toTypeConstructor(Type.packed_float32_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_float32_array, &result, self);
         return result;
     }
 
     pub fn asPackedFloat64Array(self: *const Self) PackedFloat64Array {
         var result: PackedFloat64Array = undefined;
-        toTypeConstructor(Type.packed_float64_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_float64_array, &result, self);
         return result;
     }
 
     pub fn asPackedInt32Array(self: *const Self) PackedInt32Array {
         var result: PackedInt32Array = undefined;
-        toTypeConstructor(Type.packed_int32_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_int32_array, &result, self);
         return result;
     }
 
     pub fn asPackedInt64Array(self: *const Self) PackedInt64Array {
         var result: PackedInt64Array = undefined;
-        toTypeConstructor(Type.packed_int64_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_int64_array, &result, self);
         return result;
     }
 
     pub fn asPackedStringArray(self: *const Self) PackedStringArray {
         var result: PackedStringArray = undefined;
-        toTypeConstructor(Type.packed_string_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_string_array, &result, self);
         return result;
     }
 
     pub fn asPackedVector2Array(self: *const Self) PackedVector2Array {
         var result: PackedVector2Array = undefined;
-        toTypeConstructor(Type.packed_vector2_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_vector2_array, &result, self);
         return result;
     }
 
     pub fn asPackedVector3Array(self: *const Self) PackedVector3Array {
         var result: PackedVector3Array = undefined;
-        toTypeConstructor(Type.packed_vector3_array).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.packed_vector3_array, &result, self);
         return result;
     }
 
     pub fn asRID(self: *const Self) RID {
         var result: RID = undefined;
-        toTypeConstructor(Type.rid).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.rid, &result, self);
         return result;
     }
 
     pub fn asSignal(self: *const Self) Signal {
         var result: Signal = undefined;
-        toTypeConstructor(Type.signal).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.signal, &result, self);
         return result;
     }
 
     pub fn asStringName(self: *const Self) StringName {
         var result: StringName = undefined;
-        toTypeConstructor(Type.string_name).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.string_name, &result, self);
         return result;
     }
 
     pub fn asString(self: *const Self) String {
         var result: String = undefined;
-        toTypeConstructor(Type.string).?(@ptrCast(&result), self._nativePtr());
+        toTypeConstructor(Type.string, &result, self);
         return result;
     }
 
     pub fn asObject(self: *const Self) ?*Object {
         var object: ?*anyopaque = undefined;
-        toTypeConstructor(Type.object).?(&object, self._nativePtr());
+        toTypeConstructor(Type.object, &object, self);
         if (object == null) {
             return null;
         }
@@ -658,6 +662,24 @@ pub const Variant = struct {
         return @enumFromInt(gd.interface.?.variant_get_type.?(self._nativePtr()));
     }
 
+
+    fn IntAsVariant(comptime T: type) type {
+        return struct {
+            fn function(int: *const T) Variant {
+                const converted: i64 = @intCast(int.*);
+                return Variant.initInt(&converted);
+            }
+        };
+    }
+
+    fn FloatAsVariant(comptime T: type) type {
+        return struct {
+            fn function(float: *const T) Variant {
+                const converted: f64 = @floatCast(float.*);
+                return Variant.initFloat(&converted);
+            }
+        };
+    }
 
     fn VariantAsInt(comptime T: type) type {
         return struct {
@@ -674,6 +696,7 @@ pub const Variant = struct {
             }
         };
     }
+
 
     pub fn variantAsType(comptime T: type) (fn(*const Variant) T) {
         const type_info = @typeInfo(T);
@@ -805,7 +828,7 @@ pub const Variant = struct {
         return null;
     }
 
-    pub fn typeAsVariant(comptime T: type) (fn(T) Variant) {
+    pub fn typeAsVariant(comptime T: type) (fn(*const T) Variant) {
         const type_info = @typeInfo(T);
         const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
@@ -816,10 +839,10 @@ pub const Variant = struct {
                 }
             },
             type_tag.Int => {
-                return Variant.initInt;
+                return IntAsVariant(T).function;
             },
             type_tag.Float => {
-                return Variant.initFloat;
+                return FloatAsVariant(T).function;
             },
             type_tag.ComptimeInt => {
                 return Variant.initInt;

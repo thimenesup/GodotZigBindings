@@ -22,7 +22,7 @@ inline fn callFunction(comptime function: anytype, args: [*]const gi.GDExtension
     }
 
     const result = @call(.auto, function, arg_tuple);
-    r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(result);
+    r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
 }
 
 inline fn callMethod(comptime class: type, comptime function: anytype, instance: gi.GDExtensionClassInstancePtr, args: [*]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
@@ -55,7 +55,7 @@ inline fn callMethod(comptime class: type, comptime function: anytype, instance:
     }
 
     const result = @call(.auto, function, arg_tuple);
-    r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(result);
+    r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
 }
 
 

@@ -52,12 +52,13 @@ pub const ClassDB = struct {
         const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
         switch (type_info) {
             type_tag.Struct => {
-                return StringName.initStringName(T.getClassStatic());
+                if (@hasDecl(T, "GodotClass")) {
+                    return T.getClassStatic();
+                }
             },
-            else => {
-                return StringName.init();
-            }
+            else => { }
         }
+        return StringName.init();
     }
 
 
@@ -220,7 +221,11 @@ pub const ClassDB = struct {
         var info = SignatureInfo.init(function, true, arg_names);
         defer info.deinit();
 
-        const method_flags = method_flag_default;
+        const is_const = fn_info.params[0].type == *const class;
+        comptime var method_flags = method_flag_default;
+        if (is_const) {
+            method_flags |= method_flag_const;
+        }
 
         const wrapper_call = BindWrapper.MethodCall(class, function);
         const wrapper_ptrcall = BindWrapper.MethodPtrCall(class, function);

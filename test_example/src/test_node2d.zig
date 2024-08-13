@@ -32,8 +32,9 @@ pub const TestNode2D = struct {
         ClassDB.bindStaticMethod(Self, testStaticMethod, "testStaticMethod", .{ "a", "b" });
     }
 
-    pub fn testMethod(self: *const Self, a: i32, b: bool) void {
+    pub fn testMethod(self: *const Self, a: i32, b: bool) f32 {
         std.debug.print("testMethod a:{} b:{}\n", .{a + self.data, b});
+        return -42.24;
     }
 
     pub fn testStaticMethod(a: i32, b: bool) void {
