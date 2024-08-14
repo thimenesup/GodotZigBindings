@@ -62,14 +62,14 @@ pub const ClassDB = struct {
     }
 
 
+    const StringStorage = extern struct {
+        name: StringName,
+        class: StringName,
+        hint: String,
+    };
+
     const SignatureInfo = extern struct {
         const max_argument_count = 16;
-
-        const StringStorage = extern struct {
-            name: StringName,
-            class: StringName,
-            hint: String,
-        };
 
         storage: [max_argument_count + 1]StringStorage, // Plus one for return value
 
@@ -230,7 +230,8 @@ pub const ClassDB = struct {
         const wrapper_call = BindWrapper.MethodCall(class, function);
         const wrapper_ptrcall = BindWrapper.MethodPtrCall(class, function);
 
-        const string_name = gd.stringNameFromUtf8(name);
+        var string_name = gd.stringNameFromUtf8(name);
+        defer string_name.deinit();
 
         const method_info = gi.GDExtensionClassMethodInfo {
             .name = string_name._nativePtr(),
@@ -261,7 +262,8 @@ pub const ClassDB = struct {
         const wrapper_call = BindWrapper.FunctionCall(function);
         const wrapper_ptrcall = BindWrapper.FunctionPtrCall(function);
 
-        const string_name = gd.stringNameFromUtf8(name);
+        var string_name = gd.stringNameFromUtf8(name);
+        defer string_name.deinit();
 
         const method_info = gi.GDExtensionClassMethodInfo {
             .name = string_name._nativePtr(),
@@ -340,6 +342,45 @@ pub const ClassDB = struct {
 
         const class_name = class.getClassStatic();
         gd.interface.?.classdb_register_extension_class_property.?(gd.library, class_name._nativePtr(), &info, setter_string._nativePtr(), getter_string._nativePtr());
+    }
+
+    pub fn bindSignal(comptime class: type, name: []const u8, comptime arg_types: anytype, comptime arg_names: anytype) void {
+        var string_storage: [arg_types.len]StringStorage = undefined;
+        var args_info: [arg_types.len]gi.GDExtensionPropertyInfo = undefined;
+
+        inline for (arg_types, 0..) |arg_type, i| {
+            const arg_name = if (i < arg_names.len) arg_names[i] else "unnamed_arg";
+            const base_type = TypeGetBase(arg_type);
+            const variant_type = Variant.typeToVariantType(base_type);
+
+            var storage = &string_storage[i];
+            storage.name = gd.stringNameFromUtf8(arg_name);
+            storage.class = classStringName(base_type);
+            storage.hint = String.init();
+
+            var info: gi.GDExtensionPropertyInfo = undefined;
+            info.name = storage.name._nativePtr();
+            info._type = @enumFromInt(@intFromEnum(variant_type));
+            info.class_name = storage.class._nativePtr();
+            info.hint = 0;
+            info.hint_string = storage.hint._nativePtr();
+            info.usage = 0;
+            args_info[i] = info;
+        }
+
+        var string_name = gd.stringNameFromUtf8(name);
+        defer string_name.deinit();
+
+        const class_name = class.getClassStatic();
+        gd.interface.?.classdb_register_extension_class_signal.?(gd.library, class_name._nativePtr(), string_name._nativePtr(), &args_info, arg_types.len);
+
+        inline for (arg_types, 0..) |arg_type, i| {
+            _ = arg_type;
+            var storage = &string_storage[i];
+            storage.name.deinit();
+            storage.class.deinit();
+            storage.hint.deinit();
+        }
     }
 
 };

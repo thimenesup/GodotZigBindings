@@ -36,6 +36,7 @@ pub const TestNode2D = struct {
         ClassDB.bindStaticMethod(Self, testStaticMethod, "test_static_method", .{ "a", "b" });
         ClassDB.bindProperty(Self, "test_property", "test_property", null, null);
         ClassDB.bindProperty(Self, "setget_property", "setget_property", setSetgetProperty, getSetgetProperty);
+        ClassDB.bindSignal(Self, "test_signal", .{ i32, f32 }, .{ "a", "b" });
     }
 
     pub fn testMethod(self: *const Self, a: i32, b: bool) f32 {
