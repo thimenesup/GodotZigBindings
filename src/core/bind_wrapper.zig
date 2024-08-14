@@ -5,7 +5,7 @@ const gd = @import("../godot.zig");
 
 const Variant = @import("../core/variant.zig").Variant;
 
-inline fn callFunction(comptime function: anytype, args: [*]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
+inline fn callFunction(comptime function: anytype, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
     const fn_info = @typeInfo(@TypeOf(function)).Fn;
 
     const r_variant: *Variant = @ptrCast(r_return);
@@ -25,7 +25,7 @@ inline fn callFunction(comptime function: anytype, args: [*]const gi.GDExtension
     r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
 }
 
-inline fn callMethod(comptime class: type, comptime function: anytype, instance: gi.GDExtensionClassInstancePtr, args: [*]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
+inline fn callMethod(comptime class: type, comptime function: anytype, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
     const fn_info = @typeInfo(@TypeOf(function)).Fn;
     const struct_instance: *class = @ptrCast(@alignCast(instance));
 

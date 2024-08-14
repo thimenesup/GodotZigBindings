@@ -283,4 +283,63 @@ pub const ClassDB = struct {
         gd.interface.?.classdb_register_extension_class_method.?(gd.library, class_name._nativePtr(), &method_info);
     }
 
+
+    fn PropertyDefaultSetter(comptime class: type, comptime field_name: []const u8) type {
+        return struct {
+            const class_instance: class = undefined;
+            const field_type = @TypeOf(@field(class_instance, field_name));
+            inline fn function(instance: *class, value: field_type) void {
+                @field(instance, field_name) = value;
+            }
+        };
+    }
+
+    fn PropertyDefaultGetter(comptime class: type, comptime field_name: []const u8) type {
+        return struct {
+            const class_instance: class = undefined;
+            const field_type = @TypeOf(@field(class_instance, field_name));
+            inline fn function(instance: *const class) field_type {
+                return @field(instance, field_name);
+            }
+        };
+    }
+
+    pub fn bindProperty(comptime class: type, comptime field: []const u8, name: []const u8, comptime setter: anytype, comptime getter: anytype) void {
+        const class_instance: class = undefined;
+        const field_type = @TypeOf(@field(class_instance, field));
+        const variant_type = Variant.typeToVariantType(field_type);
+
+        // Must create and bind setter and getter methods
+        const setter_name = "set_" ++ field;
+        const getter_name = "get_" ++ field;
+        var setter_string = gd.stringNameFromUtf8(setter_name);
+        defer setter_string.deinit();
+        var getter_string = gd.stringNameFromUtf8(getter_name);
+        defer getter_string.deinit();
+
+        const setter_func = if (@TypeOf(setter) == @TypeOf(null)) PropertyDefaultSetter(class, field).function else setter;
+        const getter_func = if (@TypeOf(getter) == @TypeOf(null)) PropertyDefaultGetter(class, field).function else getter;
+
+        bindMethod(class, setter_func, setter_name, .{});
+        bindMethod(class, getter_func, getter_name, .{});
+
+        var name_string = gd.stringNameFromUtf8(name);
+        defer name_string.deinit();
+        var property_class_name = classStringName(field_type);
+        defer property_class_name.deinit();
+        var hint_string = String.init();
+        defer hint_string.deinit();
+
+        var info: gi.GDExtensionPropertyInfo = undefined;
+        info.name = name_string._nativePtr();
+        info._type = @enumFromInt(@intFromEnum(variant_type));
+        info.class_name = property_class_name._nativePtr();
+        info.hint = 0;
+        info.hint_string = hint_string._nativePtr();
+        info.usage = 0;
+
+        const class_name = class.getClassStatic();
+        gd.interface.?.classdb_register_extension_class_property.?(gd.library, class_name._nativePtr(), &info, setter_string._nativePtr(), getter_string._nativePtr());
+    }
+
 };
