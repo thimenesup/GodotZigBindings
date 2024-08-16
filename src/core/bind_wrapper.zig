@@ -8,7 +8,7 @@ const Variant = @import("../core/variant.zig").Variant;
 inline fn callFunction(comptime function: anytype, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
     const fn_info = @typeInfo(@TypeOf(function)).Fn;
 
-    const r_variant: *Variant = @ptrCast(r_return);
+    const r_variant: ?*Variant = @ptrCast(r_return);
 
     comptime var arg_types: [fn_info.params.len]type = undefined;
     inline for (fn_info.params, 0..) |param, i| {
@@ -22,7 +22,9 @@ inline fn callFunction(comptime function: anytype, args: [*c]const gi.GDExtensio
     }
 
     const result = @call(.auto, function, arg_tuple);
-    r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+    if (r_variant != null) {
+        r_variant.?.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+    }
 }
 
 inline fn callMethod(comptime class: type, comptime function: anytype, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
@@ -37,7 +39,7 @@ inline fn callMethod(comptime class: type, comptime function: anytype, instance:
         @compileError("The first parameter of a method should be the struct");
     };
 
-    const r_variant: *Variant = @ptrCast(r_return);
+    const r_variant: ?*Variant = @ptrCast(r_return);
 
     comptime var arg_types: [fn_info.params.len]type = undefined;
     inline for (fn_info.params, 0..) |param, i| {
@@ -55,7 +57,9 @@ inline fn callMethod(comptime class: type, comptime function: anytype, instance:
     }
 
     const result = @call(.auto, function, arg_tuple);
-    r_variant.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+    if (r_variant != null) {
+        r_variant.?.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+    }
 }
 
 
@@ -108,6 +112,16 @@ pub fn MethodCall(comptime class: type, comptime function: anytype) type {
             _ = argument_count;
             _ = r_error;
 
+            callMethod(class, function, instance, args, r_return);
+        }
+
+    };
+}
+
+pub fn VirtualMethodCall(comptime class: type, comptime function: anytype) type {
+    return extern struct {
+
+        pub fn functionWrap(instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) callconv(.C) void {
             callMethod(class, function, instance, args, r_return);
         }
 

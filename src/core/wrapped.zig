@@ -147,6 +147,30 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
 
         var class_string_name: StringName = undefined;
 
+        // These will be used by ClassDB
+        var virtual_methods: std.AutoHashMap(StringName, gi.GDExtensionClassCallVirtual) = undefined;
+
+        fn _initVirtualMethods() void {
+            virtual_methods = std.AutoHashMap(StringName, gi.GDExtensionClassCallVirtual).init(std.heap.page_allocator);
+        }
+
+        pub fn _addVirtualMethod(name: []const u8, function_ptr: gi.GDExtensionClassCallVirtual) void {
+            const string_name = gd.stringNameFromUtf8(name);
+            virtual_methods.putNoClobber(string_name, function_ptr) catch {};
+        }
+
+        pub fn _getVirtualMethod(user_data: ?*anyopaque, name: gi.GDExtensionConstStringNamePtr) callconv(.C) gi.GDExtensionClassCallVirtual {
+            _ = user_data;
+            const string_name: *const StringName = @ptrCast(name);
+            const function_ptr = virtual_methods.get(string_name.*);
+            if (function_ptr != null) {
+                return function_ptr.?;
+            } else {
+                return null;
+            }
+        }
+
+
         pub fn _notification(self: *Wrapped, what: i32) callconv(.C) void { _ = self; _ = what; }
         pub fn _set(self: *Wrapped, name: *const StringName, property: *const Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
         pub fn _get(self: *const Wrapped, name: *const StringName, property: *Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
@@ -192,10 +216,6 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             return _toString;
         }
 
-        pub fn _registerVirtuals(comptime T: type, comptime B: type) callconv(.C) void {
-            base_class.registerVirtuals(T, B);
-        }
-
         pub fn _initializeClass() callconv(.C) void {
             const static = struct {
                 var initialized = false;
@@ -203,11 +223,15 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             if (static.initialized) {
                 return;
             }
+
             base_class._initializeClass();
+
+            _initVirtualMethods();
+
             if (class._getBindMembers() != base_class._getBindMembers()) {
                 class._bindMembers();
-                //base_class.registerVirtuals(class, base_class);
             }
+
             static.initialized = true;
         }
 

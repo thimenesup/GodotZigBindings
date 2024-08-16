@@ -195,7 +195,7 @@ pub const ClassDB = struct {
             .unreference_func = null,
             .create_instance_func = class._create,
             .free_instance_func = class._free,
-            .get_virtual_func = null,
+            .get_virtual_func = class._getVirtualMethod,
             .get_rid_func = null,
             .class_userdata = null,
         };
@@ -283,6 +283,12 @@ pub const ClassDB = struct {
 
         const class_name = class.getClassStatic();
         gd.interface.?.classdb_register_extension_class_method.?(gd.library, class_name._nativePtr(), &method_info);
+    }
+
+    pub fn bindVirtualMethod(comptime class: type, comptime function: anytype, name: []const u8, arg_names: anytype) void {
+        _ = arg_names;
+        const wrapper_call = BindWrapper.VirtualMethodCall(class, function);
+        class._addVirtualMethod(name, wrapper_call.functionWrap);
     }
 
 
