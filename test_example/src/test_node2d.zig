@@ -38,11 +38,16 @@ pub const TestNode2D = struct {
         ClassDB.bindProperty(Self, "setget_property", "setget_property", setSetgetProperty, getSetgetProperty);
         ClassDB.bindSignal(Self, "test_signal", .{ i32, f32 }, .{ "a", "b" });
         ClassDB.bindVirtualMethod(Self, _ready, "_ready", .{});
+        ClassDB.bindVirtualMethod(Self, _process, "_process", .{ "delta" });
     }
 
-     pub fn _ready(self: *Self) void {
+    pub fn _ready(self: *Self) void {
         _ = self;
         std.debug.print("_ready\n", .{});
+    }
+
+    pub fn _process(self: *Self, delta: f64) void {
+        self.base.rotate(delta);
     }
 
     pub fn testMethod(self: *const Self, a: i32, b: bool) f32 {
