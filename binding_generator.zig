@@ -699,12 +699,12 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
             defer args_tuple.deinit();
 
             if (std.mem.eql(u8, return_type, "void")) { // No return
-                try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, self._owner, {s});\n", .{ args_tuple.items });
+                try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, {s});\n", .{ args_tuple.items });
             } else {
                 if (isClassType(return_type)) {
-                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, self._owner, {s});\n", .{ converted_return_type.items, args_tuple.items });
+                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, {s});\n", .{ converted_return_type.items, args_tuple.items });
                 } else {
-                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, self._owner, {s});\n", .{ converted_return_type.items, args_tuple.items });
+                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, {s});\n", .{ converted_return_type.items, args_tuple.items });
                 }
             }
 
@@ -976,7 +976,7 @@ fn stringArgs(arguments: ?*const std.json.Array) String { //Must deinit string
             const arg_type = argument.get("type").?.string;
 
             if (isClassType(arg_type)) {
-                std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*Wrapped, p_{s})._owner else null)", .{ arg_name, arg_name }) catch {};
+                std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*Wrapped, @ptrCast(p_{s}))._owner else null)", .{ arg_name, arg_name }) catch {};
             } else if (isPrimitive(arg_type)) {
                 std.fmt.format(string.writer(), "&p_{s}", .{ arg_name }) catch {};
             } else {
@@ -1233,7 +1233,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
                 .{ operator_identifier, right_type, converted_right_type.items, converted_return_type.items });
             
             // Method content
-            try std.fmt.format(impl_binds.writer(), "        return gd.callBuiltinOperator(binds.{s}, @ptrCast(&self._opaque), @ptrCast(other));\n", .{ bind_name.items});
+            try std.fmt.format(impl_binds.writer(), "        return gd.callBuiltinOperatorPtr({s}, binds.{s}, @ptrCast(&self._opaque), @ptrCast(other));\n", .{ converted_return_type.items, bind_name.items});
 
             // Method end
             try impl_binds.appendSlice("    }\n\n");
