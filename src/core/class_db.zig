@@ -93,7 +93,7 @@ pub const ClassDB = struct {
                 @compileError("Too many arguments");
             }
 
-            var signature: SignatureInfo = undefined;
+            var signature = std.mem.zeroes(Self);
             signature.argument_count = excluded_argument_count;
 
             inline for (fn_info.params, 0..) |param, all_index| {

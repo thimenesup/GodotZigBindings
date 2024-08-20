@@ -174,254 +174,254 @@ pub const Variant = struct {
     }
 
     pub fn init() Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         gd.interface.?.variant_new_nil.?(self._nativePtr());
         return self;
     }
 
     pub fn initVoid(p_void: *const void) Self {
         _ = p_void;
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         gd.interface.?.variant_new_nil.?(self._nativePtr());
         return self;
     }
 
     pub fn initAny(any: anytype) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         self = typeAsVariant(@TypeOf(any))(any);
         return self;
     }
 
     pub fn initVariantPtr(other: gi.GDExtensionConstVariantPtr) Variant {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         gd.interface.?.variant_new_copy.?(self._nativePtr(), other);
         return self;
     }
 
     pub fn initVariant(other: *const Variant) Variant {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         gd.interface.?.variant_new_copy.?(self._nativePtr(), other._nativePtr());
         return self;
     }
 
     pub fn initBool(p_bool: *const bool) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.bool, &self, p_bool);
         return self;
     }
 
     pub fn initInt(p_int: *const i64) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.int, &self, p_int);
         return self;
     }
 
     pub fn initFloat(p_float: *const f64) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.float, &self, p_float);
         return self;
     }
 
     pub fn initAABB(p_aabb: *const AABB) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.aabb, &self, p_aabb);
         return self;
     }
 
     pub fn initBasis(p_basis: *const Basis) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.basis, &self, p_basis);
         return self;
     }
 
     pub fn initColor(p_color: *const Color) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.color, &self, p_color);
         return self;
     }
 
     pub fn initPlane(p_plane: *const Plane) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.plane, &self, p_plane);
         return self;
     }
 
     pub fn initProjection(p_projection: *const Projection) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.projection, &self, p_projection);
         return self;
     }
 
     pub fn initQuaternion(p_quaternion: *const Quaternion) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.quaternion, &self, p_quaternion);
         return self;
     }
 
     pub fn initRect2(p_rect2: *const Rect2) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.rect2, &self, p_rect2);
         return self;
     }
 
     pub fn initRect2i(p_rect2i: *const Rect2i) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.rect2i, &self, p_rect2i);
         return self;
     }
 
     pub fn initTransform3D(p_transform3d: *const Transform3D) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.transform3d, &self, p_transform3d);
         return self;
     }
 
     pub fn initTransform2D(p_transform2d: *const Transform2D) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.transform2d, &self, p_transform2d);
         return self;
     }
 
     pub fn initVector2(p_vector2: *const Vector2) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.vector2, &self, p_vector2);
         return self;
     }
 
     pub fn initVector2i(p_vector2i: *const Vector2i) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.vector2i, &self, p_vector2i);
         return self;
     }
 
     pub fn initVector3(p_vector3: *const Vector3) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.vector3, &self, p_vector3);
         return self;
     }
 
     pub fn initVector3i(p_vector3i: *const Vector3i) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.vector3i, &self, p_vector3i);
         return self;
     }
 
     pub fn initVector4(p_vector4: *const Vector4) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.vector4, &self, p_vector4);
         return self;
     }
 
     pub fn initVector4i(p_vector4i: *const Vector4i) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.vector4i, &self, p_vector4i);
         return self;
     }
 
     pub fn initArray(p_array: *const Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.array, &self, p_array);
         return self;
     }
 
     pub fn initCallable(p_callable: *const Callable) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.callable, &self, p_callable);
         return self;
     }
 
     pub fn initDictionary(p_dictionary: *const Dictionary) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.dictionary, &self, p_dictionary);
         return self;
     }
 
     pub fn initNodePath(p_node_path: *const NodePath) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.node_path, &self, p_node_path);
         return self;
     }
 
     pub fn initPackedByteArray(p_packed_byte_array: *const PackedByteArray) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_byte_array, &self, p_packed_byte_array);
         return self;
     }
 
     pub fn initPackedColorArray(p_packed_color_array: *const PackedColorArray) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_color_array, &self, p_packed_color_array);
         return self;
     }
 
     pub fn initPackedFloat32Array(p_packed_float32_array: *const PackedFloat32Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_float32_array, &self, p_packed_float32_array);
         return self;
     }
 
     pub fn initPackedFloat64Array(p_packed_float64_array: *const PackedFloat32Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_float64_array, &self, p_packed_float64_array);
         return self;
     }
 
     pub fn initPackedInt32Array(p_packed_int32_array: *const PackedInt32Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_int32_array, &self, p_packed_int32_array);
         return self;
     }
 
     pub fn initPackedInt64Array(p_packed_int64_array: *const PackedInt64Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_int64_array, &self, p_packed_int64_array);
         return self;
     }
 
     pub fn initPackedStringArray(p_packed_string_array: *const PackedStringArray) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_string_array, &self, p_packed_string_array);
         return self;
     }
 
     pub fn initPackedVector2Array(p_packed_vector2_array: *const PackedVector2Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_vector2_array, &self, p_packed_vector2_array);
         return self;
     }
 
     pub fn initPackedVector3Array(p_packed_vector3_array: *const PackedVector3Array) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.packed_vector3_array, &self, p_packed_vector3_array);
         return self;
     }
 
     pub fn initRID(p_rid: *const RID) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.rid, &self, p_rid);
         return self;
     }
 
     pub fn initSignal(p_signal: *const Signal) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.signal, &self, p_signal);
         return self;
     }
 
     pub fn initStringName(p_string_name: *const StringName) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.string_name, &self, p_string_name);
         return self;
     }
 
     pub fn initString(p_string: *const String) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.string, &self, p_string);
         return self;
     }
 
     pub fn initObject(p_object: *const Object) Self {
-        var self: Self = undefined;
+        var self = std.mem.zeroes(Self);
         if (p_object != null) {
             fromTypeConstructor(Type.object, &self, p_object.base._owner);
         } else {
@@ -547,109 +547,109 @@ pub const Variant = struct {
     }
 
     pub fn asArray(self: *const Self) Array {
-        var result: Array = undefined;
+        var result = std.mem.zeroes(Array);
         toTypeConstructor(Type.array, &result, self);
         return result;
     }
 
     pub fn asCallable(self: *const Self) Callable {
-        var result: Callable = undefined;
+        var result = std.mem.zeroes(Callable);
         toTypeConstructor(Type.callable, &result, self);
         return result;
     }
 
     pub fn asDictionary(self: *const Self) Dictionary {
-        var result: Dictionary = undefined;
+        var result = std.mem.zeroes(Dictionary);
         toTypeConstructor(Type.dictionary, &result, self);
         return result;
     }
 
     pub fn asNodePath(self: *const Self) NodePath {
-        var result: NodePath = undefined;
+        var result = std.mem.zeroes(NodePath);
         toTypeConstructor(Type.node_path, &result, self);
         return result;
     }
 
     pub fn asPackedByteArray(self: *const Self) PackedByteArray {
-        var result: PackedByteArray = undefined;
+        var result = std.mem.zeroes(PackedByteArray);
         toTypeConstructor(Type.packed_byte_array, &result, self);
         return result;
     }
 
     pub fn asPackedColorArray(self: *const Self) PackedColorArray {
-        var result: PackedColorArray = undefined;
+        var result = std.mem.zeroes(PackedColorArray);
         toTypeConstructor(Type.packed_color_array, &result, self);
         return result;
     }
 
     pub fn asPackedFloat32Array(self: *const Self) PackedFloat32Array {
-        var result: PackedFloat32Array = undefined;
+        var result = std.mem.zeroes(PackedFloat32Array);
         toTypeConstructor(Type.packed_float32_array, &result, self);
         return result;
     }
 
     pub fn asPackedFloat64Array(self: *const Self) PackedFloat64Array {
-        var result: PackedFloat64Array = undefined;
+        var result = std.mem.zeroes(PackedFloat64Array);
         toTypeConstructor(Type.packed_float64_array, &result, self);
         return result;
     }
 
     pub fn asPackedInt32Array(self: *const Self) PackedInt32Array {
-        var result: PackedInt32Array = undefined;
+        var result = std.mem.zeroes(PackedInt32Array);
         toTypeConstructor(Type.packed_int32_array, &result, self);
         return result;
     }
 
     pub fn asPackedInt64Array(self: *const Self) PackedInt64Array {
-        var result: PackedInt64Array = undefined;
+        var result = std.mem.zeroes(PackedInt64Array);
         toTypeConstructor(Type.packed_int64_array, &result, self);
         return result;
     }
 
     pub fn asPackedStringArray(self: *const Self) PackedStringArray {
-        var result: PackedStringArray = undefined;
+        var result = std.mem.zeroes(PackedStringArray);
         toTypeConstructor(Type.packed_string_array, &result, self);
         return result;
     }
 
     pub fn asPackedVector2Array(self: *const Self) PackedVector2Array {
-        var result: PackedVector2Array = undefined;
+        var result = std.mem.zeroes(PackedVector2Array);
         toTypeConstructor(Type.packed_vector2_array, &result, self);
         return result;
     }
 
     pub fn asPackedVector3Array(self: *const Self) PackedVector3Array {
-        var result: PackedVector3Array = undefined;
+        var result = std.mem.zeroes(PackedVector3Array);
         toTypeConstructor(Type.packed_vector3_array, &result, self);
         return result;
     }
 
     pub fn asRID(self: *const Self) RID {
-        var result: RID = undefined;
+        var result = std.mem.zeroes(RID);
         toTypeConstructor(Type.rid, &result, self);
         return result;
     }
 
     pub fn asSignal(self: *const Self) Signal {
-        var result: Signal = undefined;
+        var result = std.mem.zeroes(Signal);
         toTypeConstructor(Type.signal, &result, self);
         return result;
     }
 
     pub fn asStringName(self: *const Self) StringName {
-        var result: StringName = undefined;
+        var result = std.mem.zeroes(StringName);
         toTypeConstructor(Type.string_name, &result, self);
         return result;
     }
 
     pub fn asString(self: *const Self) String {
-        var result: String = undefined;
+        var result = std.mem.zeroes(String);
         toTypeConstructor(Type.string, &result, self);
         return result;
     }
 
     pub fn asObject(self: *const Self) ?*Object {
-        var object: ?*anyopaque = undefined;
+        var object: ?*anyopaque = null;
         toTypeConstructor(Type.object, &object, self);
         if (object == null) {
             return null;

@@ -1010,6 +1010,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
     // Import api
     {
+        try class_string.appendSlice("const std = @import(\"std\");\n"); // Only imported to use std.mem.zeroes()
         try class_string.appendSlice("const gi = @import(\"../../gdextension_interface.zig\");\n");
         try class_string.appendSlice("const gd = @import(\"../../godot.zig\");\n\n");
     }
@@ -1126,7 +1127,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
             try impl_binds.appendSlice(signature.items);
 
-            try std.fmt.format(impl_binds.writer(), "        var self: Self = undefined;\n" ++
+            try std.fmt.format(impl_binds.writer(), "        var self = std.mem.zeroes(Self);\n" ++
                     "        gd.callBuiltinConstructor(binds.constructor_{}, @ptrCast(&self._opaque), {s});\n" ++
                     "        return self;\n",
                 .{ index, args_tuple.items });
