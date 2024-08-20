@@ -132,11 +132,11 @@ pub const Variant = struct {
     var to_type_constructor: [@intFromEnum(Type.variant_max)]gi.GDExtensionTypeFromVariantConstructorFunc = undefined;
 
     inline fn fromTypeConstructor(vtype: Variant.Type, variant: *Self, value: anytype) void {
-        from_type_constructor[@intFromEnum(vtype)].?(variant._nativePtr(), @constCast(@ptrCast(value)));
+        from_type_constructor[@bitCast(@intFromEnum(vtype))].?(variant._nativePtr(), @constCast(@ptrCast(value)));
     }
 
     inline fn toTypeConstructor(vtype: Variant.Type, value: anytype, variant: *const Self) void {
-        to_type_constructor[@intFromEnum(vtype)].?(@constCast(@ptrCast(value)), variant._nativePtr());
+        to_type_constructor[@bitCast(@intFromEnum(vtype))].?(@ptrCast(value), variant._nativePtr());
     }
 
     pub fn initBindings() void {
@@ -432,223 +432,204 @@ pub const Variant = struct {
     }
 
 
+    inline fn builtinConversion(self: *const Self, comptime T: type) T { // Converts to struct type if it matches, else returns a default constructed struct, for safe conversion
+        if (self.getType() == Variant.typeToVariantType(T)) {
+            var result = std.mem.zeroes(T);
+            toTypeConstructor(self.getType(), &result, self);
+            return result;
+        } else {
+            if (@hasDecl(T, "init")) {
+                const fn_info = @typeInfo(@TypeOf(T.init)).Fn;
+                if (fn_info.params.len == 0) {
+                    return T.init();
+                }
+            } else if (@hasDecl(T, "new")) {
+                const fn_info = @typeInfo(@TypeOf(T.new)).Fn;
+                if (fn_info.params.len == 0) {
+                    return T.new();
+                }
+            }
+            return std.mem.zeroes(T);
+        }
+    }
+
+
     pub fn asBool(self: *const Self) bool {
-        var result: gi.GDExtensionBool = undefined;
-        toTypeConstructor(Type.bool, &result, self);
-        return result;
+        return gd.interface.?.variant_booleanize.?(self._nativePtr());
     }
 
     pub fn asInt(self: *const Self) i64 {
-        var result: gi.GDExtensionInt = undefined;
-        toTypeConstructor(Type.int, &result, self);
-        return result;
+        switch (self.getType()) {
+            Type.int => {
+                var result: gi.GDExtensionInt = undefined;
+                toTypeConstructor(Type.int, &result, self);
+                return result;
+            },
+            Type.float => {
+                var result: f64 = undefined;
+                toTypeConstructor(Type.float, &result, self);
+                return @intFromFloat(result);
+            },
+            else => {
+                return 0;
+            },
+        }
     }
 
     pub fn asFloat(self: *const Self) f64 {
-        var result: f64 = undefined;
-        toTypeConstructor(Type.float, &result, self);
-        return result;
+        switch (self.getType()) {
+            Type.int => {
+                var result: gi.GDExtensionInt = undefined;
+                toTypeConstructor(Type.int, &result, self);
+                return @floatFromInt(result);
+            },
+            Type.float => {
+                var result: f64 = undefined;
+                toTypeConstructor(Type.float, &result, self);
+                return result;
+            },
+            else => {
+                return 0;
+            },
+        }
     }
 
     pub fn asAABB(self: *const Self) AABB {
-        var result: AABB = undefined;
-        toTypeConstructor(Type.aabb, &result, self);
-        return result;
+        return self.builtinConversion(AABB);
     }
 
     pub fn asBasis(self: *const Self) Basis {
-        var result: Basis = undefined;
-        toTypeConstructor(Type.basis, &result, self);
-        return result;
+        return self.builtinConversion(Basis);
     }
 
     pub fn asColor(self: *const Self) Color {
-        var result: Color = undefined;
-        toTypeConstructor(Type.color, &result, self);
-        return result;
+        return self.builtinConversion(Color);
     }
 
-    pub fn asPlane(self: *const Self) Vector2 {
-        var result: Plane = undefined;
-        toTypeConstructor(Type.plane, &result, self);
-        return result;
+    pub fn asPlane(self: *const Self) Plane {
+        return self.builtinConversion(Plane);
     }
 
     pub fn asProjection(self: *const Self) Projection {
-        var result: Projection = undefined;
-        toTypeConstructor(Type.projection, &result, self);
-        return result;
+        return self.builtinConversion(Projection);
     }
 
     pub fn asQuaternion(self: *const Self) Quaternion {
-        var result: Quaternion = undefined;
-        toTypeConstructor(Type.quaternion, &result, self);
-        return result;
+        return self.builtinConversion(Quaternion);
     }
 
     pub fn asRect2(self: *const Self) Rect2 {
-        var result: Rect2 = undefined;
-        toTypeConstructor(Type.rect2, &result, self);
-        return result;
+        return self.builtinConversion(Rect2);
     }
 
     pub fn asRect2i(self: *const Self) Rect2i {
-        var result: Rect2i = undefined;
-        toTypeConstructor(Type.rect2i, &result, self);
-        return result;
+        return self.builtinConversion(Rect2i);
     }
 
     pub fn asTransform3D(self: *const Self) Transform3D {
-        var result: Transform3D = undefined;
-        toTypeConstructor(Type.transform3d, &result, self);
-        return result;
+        return self.builtinConversion(Transform3D);
     }
 
     pub fn asTransform2D(self: *const Self) Transform2D {
-        var result: Transform2D = undefined;
-        toTypeConstructor(Type.transform2d, &result, self);
-        return result;
+        return self.builtinConversion(Transform2D);
     }
 
     pub fn asVector2(self: *const Self) Vector2 {
-        var result: Vector2 = undefined;
-        toTypeConstructor(Type.vector2, &result, self);
-        return result;
+        return self.builtinConversion(Vector2);
     }
 
     pub fn asVector2i(self: *const Self) Vector2i {
-        var result: Vector2i = undefined;
-        toTypeConstructor(Type.vector2i, &result, self);
-        return result;
+        return self.builtinConversion(Vector2i);
     }
 
     pub fn asVector3(self: *const Self) Vector3 {
-        var result: Vector3 = undefined;
-        toTypeConstructor(Type.vector3, &result, self);
-        return result;
+        return self.builtinConversion(Vector3);
     }
 
     pub fn asVector3i(self: *const Self) Vector3i {
-        var result: Vector3i = undefined;
-        toTypeConstructor(Type.vector3i, &result, self);
-        return result;
+        return self.builtinConversion(Vector3i);
     }
 
     pub fn asVector4(self: *const Self) Vector4 {
-        var result: Vector4 = undefined;
-        toTypeConstructor(Type.vector4, &result, self);
-        return result;
+        return self.builtinConversion(Vector4);
     }
 
     pub fn asVector4i(self: *const Self) Vector4i {
-        var result: Vector4i = undefined;
-        toTypeConstructor(Type.vector4i, &result, self);
-        return result;
+        return self.builtinConversion(Vector4i);
     }
 
     pub fn asArray(self: *const Self) Array {
-        var result = std.mem.zeroes(Array);
-        toTypeConstructor(Type.array, &result, self);
-        return result;
+        return self.builtinConversion(Array);
     }
 
     pub fn asCallable(self: *const Self) Callable {
-        var result = std.mem.zeroes(Callable);
-        toTypeConstructor(Type.callable, &result, self);
-        return result;
+        return self.builtinConversion(Callable);
     }
 
     pub fn asDictionary(self: *const Self) Dictionary {
-        var result = std.mem.zeroes(Dictionary);
-        toTypeConstructor(Type.dictionary, &result, self);
-        return result;
+        return self.builtinConversion(Dictionary);
     }
 
     pub fn asNodePath(self: *const Self) NodePath {
-        var result = std.mem.zeroes(NodePath);
-        toTypeConstructor(Type.node_path, &result, self);
-        return result;
+        return self.builtinConversion(NodePath);
     }
 
     pub fn asPackedByteArray(self: *const Self) PackedByteArray {
-        var result = std.mem.zeroes(PackedByteArray);
-        toTypeConstructor(Type.packed_byte_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedByteArray);
     }
 
     pub fn asPackedColorArray(self: *const Self) PackedColorArray {
-        var result = std.mem.zeroes(PackedColorArray);
-        toTypeConstructor(Type.packed_color_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedColorArray);
     }
 
     pub fn asPackedFloat32Array(self: *const Self) PackedFloat32Array {
-        var result = std.mem.zeroes(PackedFloat32Array);
-        toTypeConstructor(Type.packed_float32_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedFloat32Array);
     }
 
     pub fn asPackedFloat64Array(self: *const Self) PackedFloat64Array {
-        var result = std.mem.zeroes(PackedFloat64Array);
-        toTypeConstructor(Type.packed_float64_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedFloat64Array);
     }
 
     pub fn asPackedInt32Array(self: *const Self) PackedInt32Array {
-        var result = std.mem.zeroes(PackedInt32Array);
-        toTypeConstructor(Type.packed_int32_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedInt32Array);
     }
 
     pub fn asPackedInt64Array(self: *const Self) PackedInt64Array {
-        var result = std.mem.zeroes(PackedInt64Array);
-        toTypeConstructor(Type.packed_int64_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedInt64Array);
     }
 
     pub fn asPackedStringArray(self: *const Self) PackedStringArray {
-        var result = std.mem.zeroes(PackedStringArray);
-        toTypeConstructor(Type.packed_string_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedStringArray);
     }
 
     pub fn asPackedVector2Array(self: *const Self) PackedVector2Array {
-        var result = std.mem.zeroes(PackedVector2Array);
-        toTypeConstructor(Type.packed_vector2_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedVector2Array);
     }
 
     pub fn asPackedVector3Array(self: *const Self) PackedVector3Array {
-        var result = std.mem.zeroes(PackedVector3Array);
-        toTypeConstructor(Type.packed_vector3_array, &result, self);
-        return result;
+        return self.builtinConversion(PackedVector3Array);
     }
 
     pub fn asRID(self: *const Self) RID {
-        var result = std.mem.zeroes(RID);
-        toTypeConstructor(Type.rid, &result, self);
-        return result;
+        return self.builtinConversion(RID);
     }
 
     pub fn asSignal(self: *const Self) Signal {
-        var result = std.mem.zeroes(Signal);
-        toTypeConstructor(Type.signal, &result, self);
-        return result;
+        return self.builtinConversion(Signal);
     }
 
     pub fn asStringName(self: *const Self) StringName {
-        var result = std.mem.zeroes(StringName);
-        toTypeConstructor(Type.string_name, &result, self);
-        return result;
+        return self.builtinConversion(StringName);
     }
 
     pub fn asString(self: *const Self) String {
-        var result = std.mem.zeroes(String);
-        toTypeConstructor(Type.string, &result, self);
-        return result;
+        return self.builtinConversion(String);
     }
 
     pub fn asObject(self: *const Self) ?*Object {
+        if (self.getType() != Type.object) {
+            return null;
+        }
         var object: ?*anyopaque = null;
         toTypeConstructor(Type.object, &object, self);
         if (object == null) {
@@ -659,7 +640,7 @@ pub const Variant = struct {
 
 
     pub fn getType(self: *const Self) Type {
-        return @enumFromInt(gd.interface.?.variant_get_type.?(self._nativePtr()));
+        return @enumFromInt(@intFromEnum(gd.interface.?.variant_get_type.?(self._nativePtr())));
     }
 
 

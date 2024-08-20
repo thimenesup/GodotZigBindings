@@ -114,6 +114,43 @@ inline fn variantCallMethod(comptime class: type, comptime function: anytype, in
 }
 
 
+inline fn variantCallValidate(comptime function: anytype, comptime is_method: bool, args: [*c]const gi.GDExtensionConstTypePtr, argument_count: gi.GDExtensionInt, r_error: *gi.GDExtensionCallError) bool {
+    const fn_info = @typeInfo(@TypeOf(function)).Fn;
+    const variant_arg_count = if (is_method) fn_info.params.len - 1 else fn_info.params.len;
+    if (argument_count < variant_arg_count) {
+        r_error._error = gi.GDExtensionCallErrorType.GDEXTENSION_CALL_ERROR_TOO_FEW_ARGUMENTS;
+        r_error.argument = variant_arg_count;
+        return false;
+    }
+    if (argument_count > variant_arg_count) {
+        r_error._error = gi.GDExtensionCallErrorType.GDEXTENSION_CALL_ERROR_TOO_MANY_ARGUMENTS;
+        r_error.argument = variant_arg_count;
+        return false;
+    }
+
+    inline for (fn_info.params, 0..) |param, i| {
+        if (is_method and i == 0) { // Skip instance struct
+            continue;
+        }
+        const variant_arg_index = if (is_method) i - 1 else i;
+
+        const variant_arg: *const Variant = @ptrCast(args[variant_arg_index]);
+        const expected_variant_type = Variant.typeToVariantType(param.type.?);
+        const gi_variant_type: gi.GDExtensionVariantType = @enumFromInt(@intFromEnum(variant_arg.getType()));
+        const gi_expected_type: gi.GDExtensionVariantType = @enumFromInt(@intFromEnum(expected_variant_type));
+        if (!gd.interface.?.variant_can_convert_strict.?(gi_variant_type, gi_expected_type)) {
+            r_error._error = gi.GDExtensionCallErrorType.GDEXTENSION_CALL_ERROR_INVALID_ARGUMENT;
+            r_error.argument = variant_arg_index;
+            r_error.expected = @bitCast(@intFromEnum(gi_expected_type));
+            return false;
+        }
+    }
+
+    r_error._error = gi.GDExtensionCallErrorType.GDEXTENSION_CALL_OK;
+    return true;
+}
+
+
 pub fn FunctionPtrCall(comptime function: anytype) type {
     return extern struct {
 
@@ -133,9 +170,10 @@ pub fn FunctionCall(comptime function: anytype) type {
         pub fn functionWrap(method_userdata: ?*anyopaque, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, argument_count: gi.GDExtensionInt, r_return: gi.GDExtensionVariantPtr, r_error: [*c]gi.GDExtensionCallError) callconv(.C) void {
             _ = method_userdata;
             _ = instance;
-            _ = argument_count;
-            _ = r_error;
 
+            if (!variantCallValidate(function, false, args, argument_count, r_error)) {
+                return;
+            }
             variantCallFunction(function, args, r_return);
         }
 
@@ -160,9 +198,10 @@ pub fn MethodCall(comptime class: type, comptime function: anytype) type {
 
         pub fn functionWrap(method_userdata: ?*anyopaque, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, argument_count: gi.GDExtensionInt, r_return: gi.GDExtensionVariantPtr, r_error: [*c]gi.GDExtensionCallError) callconv(.C) void {
             _ = method_userdata;
-            _ = argument_count;
-            _ = r_error;
 
+            if (!variantCallValidate(function, true, args, argument_count, r_error)) {
+                return;
+            }
             variantCallMethod(class, function, instance, args, r_return);
         }
 
