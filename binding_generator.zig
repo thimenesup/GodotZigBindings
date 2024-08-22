@@ -698,16 +698,16 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
 
             // Method call args
             const arg_arguments = if (method.get("arguments")) |get_arguments| &get_arguments.array else null;
-            const args_tuple = stringArgsTuple(arg_arguments);
+            const args_tuple = stringArgs(arg_arguments);
             defer args_tuple.deinit();
 
             if (std.mem.eql(u8, return_type, "void")) { // No return
-                try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, {s});\n", .{ args_tuple.items });
+                try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
             } else {
                 if (isClassType(return_type)) {
-                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, {s});\n", .{ converted_return_type.items, args_tuple.items });
+                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
                 } else {
-                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, {s});\n", .{ converted_return_type.items, args_tuple.items });
+                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
                 }
             }
 
@@ -994,18 +994,6 @@ fn stringArgs(arguments: ?*const std.json.Array) String { //Must deinit string
     return string;
 }
 
-//NOTE: Only purpose of this is that the formatter seems to not like nested {} so these slices must be append manually if we want a tuple...
-fn stringArgsTuple(arguments: ?*const std.json.Array) String { //Must deinit string
-    const args = stringArgs(arguments);
-    defer args.deinit();
-
-    var args_tuple = String.init(std.heap.page_allocator);
-    args_tuple.appendSlice(".{ ") catch {};
-    args_tuple.appendSlice(args.items) catch {};
-    args_tuple.appendSlice(" }") catch {};
-    return args_tuple;
-}
-
 fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const std.json.Array) !String { //Must deinit string
     var class_string = String.init(std.heap.page_allocator);
 
@@ -1135,13 +1123,13 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             const signature = stringBuiltinConstructorSignature(arg_arguments);
             defer signature.deinit();
 
-            const args_tuple = stringArgsTuple(arg_arguments);
+            const args_tuple = stringArgs(arg_arguments);
             defer args_tuple.deinit();
 
             try impl_binds.appendSlice(signature.items);
 
             try std.fmt.format(impl_binds.writer(), "        var self = std.mem.zeroes(Self);\n" ++
-                    "        gd.callBuiltinConstructor(binds.constructor_{}, @ptrCast(&self._opaque), {s});\n" ++
+                    "        gd.callBuiltinConstructor(binds.constructor_{}, @ptrCast(&self._opaque), .{{ {s} }});\n" ++
                     "        return self;\n",
                 .{ index, args_tuple.items });
 
@@ -1191,16 +1179,16 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             try impl_binds.appendSlice(method_signature.items);
 
             // Method call args
-            const args_tuple = stringArgsTuple(arg_arguments);
+            const args_tuple = stringArgs(arg_arguments);
             defer args_tuple.deinit();
 
             if (std.mem.eql(u8, return_type, "void")) { // No return
                 try std.fmt.format(impl_binds.writer(),
-                    "        gd.callBuiltinMbNoRet(binds.{s}, @ptrCast(&self._opaque), {s});\n",
+                    "        gd.callBuiltinMbNoRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
                     .{ escaped_method_name.items, args_tuple.items });
             } else {
                 try std.fmt.format(impl_binds.writer(),
-                    "        return gd.callBuiltinMbRet({s}, binds.{s}, @ptrCast(&self._opaque), {s});\n",
+                    "        return gd.callBuiltinMbRet({s}, binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
                     .{ converted_return_type.items, escaped_method_name.items, args_tuple.items });
             }
 
