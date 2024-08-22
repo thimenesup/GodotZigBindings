@@ -3,7 +3,7 @@ const std = @import("std");
 const gi = @import("../gdextension_interface.zig");
 const gd = @import("../godot.zig");
 
-const Variant = @import("../core/variant.zig").Variant;
+const Variant = @import("../variant/variant.zig").Variant;
 
 inline fn ArgBaseType(comptime T: type) type {
     const type_info = @typeInfo(T);

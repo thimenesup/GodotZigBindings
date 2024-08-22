@@ -5,7 +5,7 @@ const atan2 = std.math.atan2;
 const asin = std.math.asin;
 
 const Vector3 = @import("vector3.zig").Vector3;
-const Quaternion = @import("quat.zig").Quaternion;
+const Quaternion = @import("quaternion.zig").Quaternion;
 
 pub const Basis = extern struct {
 

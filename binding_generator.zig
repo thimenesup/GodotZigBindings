@@ -500,8 +500,8 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
 
     // Import core types, must declare every identifier so we can have a local scope of it, since they removed that behaviour from usingnamespace...
     {
-        try string.appendSlice("const TypedArray = @import(\"../../core/typed_array.zig\").TypedArray;\n");
         try string.appendSlice("const ct = @import(\"../../core/core_types.zig\");\n");
+        try string.appendSlice("const TypedArray = ct.TypedArray;\n");
         const type_imports = stringImportCoreTypes();
         defer type_imports.deinit();
         try string.appendSlice(type_imports.items);

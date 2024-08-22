@@ -3,7 +3,7 @@ const std = @import("std");
 const gi = @import("../gdextension_interface.zig");
 const gd = @import("../godot.zig");
 
-const Variant = @import("variant.zig").Variant;
+const Variant = @import("../variant/variant.zig").Variant;
 const StringName = @import("../gen/builtin_classes/string_name.zig").StringName;
 const String = @import("../gen/builtin_classes/string.zig").String;
 

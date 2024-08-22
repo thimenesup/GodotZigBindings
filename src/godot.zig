@@ -3,7 +3,7 @@ const std = @import("std");
 const gi = @import("gdextension_interface.zig");
 
 const ClassDB = @import("core/class_db.zig").ClassDB;
-const Variant = @import("core/variant.zig").Variant;
+const Variant = @import("variant/variant.zig").Variant;
 
 pub var interface: ?*const gi.GDExtensionInterface = null;
 pub var library: gi.GDExtensionClassLibraryPtr = null;

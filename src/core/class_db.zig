@@ -4,7 +4,7 @@ const gd = @import("../godot.zig");
 
 const BindWrapper = @import("bind_wrapper.zig");
 
-const Variant = @import("../core/variant.zig").Variant;
+const Variant = @import("../variant/variant.zig").Variant;
 const StringName = @import("../gen/builtin_classes/string_name.zig").StringName;
 const String = @import("../gen/builtin_classes/string.zig").String;
 

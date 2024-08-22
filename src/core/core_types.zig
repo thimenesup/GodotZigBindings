@@ -1,26 +1,24 @@
-pub const Error = enum(i64) {};
-
 pub const Wrapped = @import("wrapped.zig").Wrapped;
-pub const Variant = @import("variant.zig").Variant;
+pub const Variant = @import("../variant/variant.zig").Variant;
 
 // Math
-pub const AABB = @import("aabb.zig").AABB;
-pub const Basis = @import("basis.zig").Basis;
-pub const Color = @import("color.zig").Color;
-pub const Plane = @import("plane.zig").Plane;
-pub const Projection = @import("projection.zig").Projection;
-pub const Quaternion = @import("quat.zig").Quaternion;
-pub const Rect2 = @import("rect2.zig").Rect2;
-pub const Rect2i = @import("rect2i.zig").Rect2i;
-pub const Transform2D = @import("transform2d.zig").Transform2D;
-pub const Transform3D = @import("transform.zig").Transform3D;
-pub const TypedArray = @import("typed_array.zig").TypedArray;
-pub const Vector2 = @import("vector2.zig").Vector2;
-pub const Vector2i = @import("vector2i.zig").Vector2i;
-pub const Vector3 = @import("vector3.zig").Vector3;
-pub const Vector3i = @import("vector3i.zig").Vector3i;
-pub const Vector4 = @import("vector4.zig").Vector4;
-pub const Vector4i = @import("vector4i.zig").Vector4i;
+pub const AABB = @import("../variant/aabb.zig").AABB;
+pub const Basis = @import("../variant/basis.zig").Basis;
+pub const Color = @import("../variant/color.zig").Color;
+pub const Plane = @import("../variant/plane.zig").Plane;
+pub const Projection = @import("../variant/projection.zig").Projection;
+pub const Quaternion = @import("../variant/quaternion.zig").Quaternion;
+pub const Rect2 = @import("../variant/rect2.zig").Rect2;
+pub const Rect2i = @import("../variant/rect2i.zig").Rect2i;
+pub const Transform2D = @import("../variant/transform2d.zig").Transform2D;
+pub const Transform3D = @import("../variant/transform3d.zig").Transform3D;
+pub const TypedArray = @import("../variant/typed_array.zig").TypedArray;
+pub const Vector2 = @import("../variant/vector2.zig").Vector2;
+pub const Vector2i = @import("../variant/vector2i.zig").Vector2i;
+pub const Vector3 = @import("../variant/vector3.zig").Vector3;
+pub const Vector3i = @import("../variant/vector3i.zig").Vector3i;
+pub const Vector4 = @import("../variant/vector4.zig").Vector4;
+pub const Vector4i = @import("../variant/vector4i.zig").Vector4i;
 
 // Generated
 pub const Array = @import("../gen/builtin_classes/array.zig").Array;

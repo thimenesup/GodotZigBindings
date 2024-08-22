@@ -2,7 +2,7 @@ const Basis = @import("basis.zig").Basis;
 const Vector3 = @import("vector3.zig").Vector3;
 const Plane = @import("plane.zig").Plane;
 const AABB = @import("aabb.zig").AABB;
-const Quaternion = @import("quat.zig").Quaternion;
+const Quaternion = @import("quaternion.zig").Quaternion;
 
 pub const Transform3D = extern struct {
 

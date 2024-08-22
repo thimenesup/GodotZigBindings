@@ -3,7 +3,7 @@ const stdinf = std.math.inf(f32);
 const epsilon = std.math.epsilon(f32);
 const atan2 = std.math.atan2;
 
-const math = @import("math.zig");
+const math = @import("../core/math.zig");
 
 pub const Vector2 = extern struct {
 
