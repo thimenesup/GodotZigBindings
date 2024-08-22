@@ -133,9 +133,15 @@ pub fn callNativeMbRetObj(comptime O: type, mb: gi.GDExtensionMethodBindPtr, ins
 const String = @import("gen/builtin_classes/string.zig").String;
 const StringName = @import("gen/builtin_classes/string_name.zig").StringName;
 
-pub fn stringNameFromUtf8(chars: []const u8) StringName {
+pub fn stringFromUtf8(chars: []const u8) String {
     var string = std.mem.zeroes(String);
     interface.?.string_new_with_utf8_chars_and_len.?(@ptrCast(&string), @ptrCast(chars.ptr), @intCast(chars.len));
+    return string;
+}
+
+pub fn stringNameFromUtf8(chars: []const u8) StringName {
+    var string = stringFromUtf8(chars);
+    defer string.deinit();
 
     const string_name_type = gi.GDExtensionVariantType.GDEXTENSION_VARIANT_TYPE_STRING_NAME;
     const string_constructor_index = 2;

@@ -146,23 +146,31 @@ pub const Variant = struct {
             to_type_constructor[i] = gd.interface.?.get_variant_to_type_constructor.?(@enumFromInt(i));
         }
 
-        Array.initBindings();
-        Callable.initBindings();
-        Dictionary.initBindings();
-        NodePath.initBindings();
-        PackedByteArray.initBindings();
-        PackedColorArray.initBindings();
-        PackedFloat32Array.initBindings();
-        PackedFloat64Array.initBindings();
-        PackedInt32Array.initBindings();
-        PackedInt64Array.initBindings();
-        PackedStringArray.initBindings();
-        PackedVector2Array.initBindings();
-        PackedVector3Array.initBindings();
-        RID.initBindings();
-        Signal.initBindings();
-        StringName.initBindings();
-        String.initBindings();
+        const gen_types = [_]type {
+            Array,
+            Callable,
+            Dictionary,
+            NodePath,
+            PackedByteArray,
+            PackedColorArray,
+            PackedFloat32Array,
+            PackedFloat64Array,
+            PackedInt32Array,
+            PackedInt64Array,
+            PackedStringArray,
+            PackedVector2Array,
+            PackedVector3Array,
+            RID,
+            Signal,
+            StringName,
+            String,
+        };
+        inline for (gen_types) |gen_type| {
+            gen_type.initConstructorBinds();
+        }
+        inline for (gen_types) |gen_type| {
+            gen_type.initMethodBinds();
+        }
     }
 
     pub inline fn _nativePtr(self: *const Self) gi.GDExtensionTypePtr {

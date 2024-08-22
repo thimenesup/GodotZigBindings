@@ -686,8 +686,11 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
             try string.appendSlice("        const __class_name = Self.getClassStatic();\n");
 
             try std.fmt.format(string.writer(),
-                "        const __method_name = gd.stringNameFromUtf8(\"{s}\");\n",
+                "        var __method_name = gd.stringNameFromUtf8(\"{s}\");\n",
                 .{ escaped_method_name.items });
+
+            try string.appendSlice(
+                "        defer __method_name.deinit();\n");
 
             try std.fmt.format(string.writer(), 
                 "        const _gde_method_bind = gd.interface.?.classdb_get_method_bind.?(__class_name._nativePtr(), __method_name._nativePtr(), {});\n", 
@@ -1060,11 +1063,15 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
     }
 
     // Use multiple strings so we can process de/con/structors, methods and operators in a single pass
+    // NOTE: Separate de/con/structors from method binds to ensure its initalization before usage, particularly important due to constructing StringName to get the methods
     var def_binds = String.init(std.heap.page_allocator);
     defer def_binds.deinit();
 
-    var init_binds = String.init(std.heap.page_allocator);
-    defer init_binds.deinit();
+    var init_ctr_binds = String.init(std.heap.page_allocator);
+    defer init_ctr_binds.deinit();
+
+    var init_mb_binds = String.init(std.heap.page_allocator);
+    defer init_mb_binds.deinit();
 
     var impl_binds = String.init(std.heap.page_allocator);
     defer impl_binds.deinit();
@@ -1076,16 +1083,22 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
     // Init binds begin
     {
-        try init_binds.appendSlice("    pub fn initBindings() void {\n");
-
         const variant_type_enum = getVariantTypeEnum(class_name);
         defer variant_type_enum.deinit();
 
+        // De/con/structors
+        try init_ctr_binds.appendSlice("    pub fn initConstructorBinds() void {\n");
         // Convenience shorthands
-        try std.fmt.format(init_binds.writer(), "        const this_vt = gi.GDExtensionVariantType.GDEXTENSION_VARIANT_TYPE_{s};\n", .{ variant_type_enum.items });
-        try init_binds.appendSlice("        const ptr_ctor = gd.interface.?.variant_get_ptr_constructor.?;\n");
-        try init_binds.appendSlice("        const ptr_mb = gd.interface.?.variant_get_ptr_builtin_method.?;\n");
-        try init_binds.appendSlice("        const ptr_op = gd.interface.?.variant_get_ptr_operator_evaluator.?;\n");
+        try std.fmt.format(init_ctr_binds.writer(), "        const this_vt = gi.GDExtensionVariantType.GDEXTENSION_VARIANT_TYPE_{s};\n", .{ variant_type_enum.items });
+        try init_ctr_binds.appendSlice("        const ptr_ctor = gd.interface.?.variant_get_ptr_constructor.?;\n");
+
+        // Regular methods
+        try init_mb_binds.appendSlice("    pub fn initMethodBinds() void {\n");
+        // Convenience shorthands
+        try std.fmt.format(init_mb_binds.writer(), "        const this_vt = gi.GDExtensionVariantType.GDEXTENSION_VARIANT_TYPE_{s};\n", .{ variant_type_enum.items });
+        try init_mb_binds.appendSlice(
+            "        const ptr_mb = gd.interface.?.variant_get_ptr_builtin_method.?;\n" ++
+            "        const ptr_op = gd.interface.?.variant_get_ptr_operator_evaluator.?;\n");
     }
 
     // Implicit methods
@@ -1100,7 +1113,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
     if (has_destructor) {
         try def_binds.appendSlice("        destructor: gi.GDExtensionPtrDestructor,\n");
 
-        try init_binds.appendSlice("        binds.destructor = gd.interface.?.variant_get_ptr_destructor.?(this_vt);\n");
+        try init_ctr_binds.appendSlice("        binds.destructor = gd.interface.?.variant_get_ptr_destructor.?(this_vt);\n");
 
         try impl_binds.appendSlice(
             "    pub fn deinit(self: *Self) void {\n" ++
@@ -1116,7 +1129,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             const index = constructor.get("index").?.integer;
             try std.fmt.format(def_binds.writer(), "        constructor_{}: gi.GDExtensionPtrConstructor,\n", .{ index });
 
-            try std.fmt.format(init_binds.writer(), "        binds.constructor_{} = ptr_ctor(this_vt, {});\n", .{ index, index });
+            try std.fmt.format(init_ctr_binds.writer(), "        binds.constructor_{} = ptr_ctor(this_vt, {});\n", .{ index, index });
 
             const arg_arguments = if (constructor.get("arguments")) |get_arguments| &get_arguments.array else null;
             const signature = stringBuiltinConstructorSignature(arg_arguments);
@@ -1150,9 +1163,9 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
             try std.fmt.format(def_binds.writer(), "        {s}: gi.GDExtensionPtrBuiltInMethod,\n", .{ escaped_method_name.items });
 
-            try std.fmt.format(init_binds.writer(),
-                "        binds.{s} = ptr_mb(this_vt, gd.stringNameFromUtf8(\"{s}\")._nativePtr(), {});\n",
-                . { escaped_method_name.items, method_name, method_hash });
+            try std.fmt.format(init_mb_binds.writer(),
+                "        {{ var __method_name = gd.stringNameFromUtf8(\"{s}\"); defer __method_name.deinit(); binds.{s} = ptr_mb(this_vt, __method_name._nativePtr(), {}); }}\n",
+                . { method_name, escaped_method_name.items, method_hash });
 
             var return_type: []const u8 = "void";
             if (method.get("return_type")) |get_return_type| {
@@ -1219,7 +1232,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             const right_variant_type_enum = getVariantTypeEnum(right_type);
             defer right_variant_type_enum.deinit();
 
-            try std.fmt.format(init_binds.writer(),
+            try std.fmt.format(init_mb_binds.writer(),
                 "        binds.{s} = ptr_op(gi.GDExtensionVariantOperator.GDEXTENSION_VARIANT_OP_{s}, this_vt, gi.GDExtensionVariantType.GDEXTENSION_VARIANT_TYPE_{s});\n",
                 . { bind_name.items, operator_type_enum.items, right_variant_type_enum.items });
 
@@ -1247,15 +1260,20 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
         try def_binds.appendSlice("    var binds: Binds = undefined;\n\n");
     }
 
-    // Init binds end
+    { // Init constructor binds end
+        try init_ctr_binds.appendSlice("    }\n\n");
+    }
+
+    // Init method binds end
     {
-        try init_binds.appendSlice("    }\n\n");
+        try init_mb_binds.appendSlice("    }\n\n");
     }
 
     // Assemble string segments
     {
         try class_string.appendSlice(def_binds.items);
-        try class_string.appendSlice(init_binds.items);
+        try class_string.appendSlice(init_ctr_binds.items);
+        try class_string.appendSlice(init_mb_binds.items);
         try class_string.appendSlice(impl_binds.items);
     }
 
