@@ -108,15 +108,12 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _bindingCreateCallback(token: ?*anyopaque, instance: ?*anyopaque) callconv(.C) ?*anyopaque {
             _ = token;
-            const class_instance: *class = @alignCast(@ptrCast(instance));
-            class_instance.init();
             return instance;
         }
 
         pub fn _bindingFreeCallback(token: ?*anyopaque, instance: ?*anyopaque, binding: ?*anyopaque) callconv(.C) void {
             _ = token;
-            const class_instance: *class = @alignCast(@ptrCast(instance));
-            class_instance.deinit();
+            _ = instance;
             gd.interface.?.mem_free.?(binding);
         }
 
@@ -135,6 +132,14 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _getBindingCallbacks() callconv(.C) *const gi.GDExtensionInstanceBindingCallbacks {
             return &_binding_callbacks;
+        }
+
+
+        pub fn _memnew() *class {
+            const allocation = gd.interface.?.mem_alloc.?(@sizeOf(class));
+            const new_wrapped: *Wrapped = @alignCast(@ptrCast(allocation));
+            new_wrapped.* = Wrapped.initStringName(class.getClassStatic());
+            return @alignCast(@ptrCast(allocation));
         }
 
     };
@@ -244,9 +249,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             return base_class.getClassStatic();
         }
 
-        pub fn _create(data: ?*anyopaque) callconv(.C) gi.GDExtensionObjectPtr {
-            _ = data;
-
+        pub fn _memnew() *class {
             const allocation = gd.interface.?.mem_alloc.?(@sizeOf(class));
             const new_class: *class = @alignCast(@ptrCast(allocation));
             new_class.* = class.init();
@@ -255,7 +258,14 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             new_wrapped.* = Wrapped.initStringName(class.getParentClassStatic());
             new_wrapped.postInitialize(class);
 
-            return new_wrapped._owner;
+            return new_class;
+        }
+
+        pub fn _create(data: ?*anyopaque) callconv(.C) gi.GDExtensionObjectPtr {
+            _ = data;
+
+            const instance = class._memnew();
+            return @as(*const Wrapped, @ptrCast(instance))._owner;
         }
 
         pub fn _free(data: ?*anyopaque, ptr: gi.GDExtensionClassInstancePtr) callconv(.C) void {

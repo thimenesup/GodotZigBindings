@@ -4,6 +4,7 @@ const gd = @import("../godot.zig");
 
 const BindWrapper = @import("bind_wrapper.zig");
 
+const Wrapped = @import("../core/wrapped.zig").Wrapped;
 const Variant = @import("../variant/variant.zig").Variant;
 const StringName = @import("../gen/builtin_classes/string_name.zig").StringName;
 const String = @import("../gen/builtin_classes/string.zig").String;
@@ -387,6 +388,17 @@ pub const ClassDB = struct {
             storage.class.deinit();
             storage.hint.deinit();
         }
+    }
+
+
+    pub fn castTo(instance: anytype, comptime class: type) ?*class {
+        const class_name = class.getClassStatic();
+        const class_tag = gd.interface.?.classdb_get_class_tag.?(class_name._nativePtr());
+        const casted: gi.GDExtensionObjectPtr = @ptrCast(gd.interface.?.object_cast_to.?(@as(*const Wrapped, @ptrCast(instance))._owner, class_tag));
+        if (casted == null) {
+            return null;
+        }
+        return @alignCast(@ptrCast(gd.interface.?.object_get_instance_binding.?(casted, gd.token, class._getBindingCallbacks())));
     }
 
 };

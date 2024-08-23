@@ -39,6 +39,7 @@ pub const TestNode2D = struct {
         ClassDB.bindSignal(Self, "test_signal", .{ i32, f32 }, .{ "a", "b" });
         ClassDB.bindVirtualMethod(Self, _ready, "_ready", .{});
         ClassDB.bindVirtualMethod(Self, _process, "_process", .{ "delta" });
+        ClassDB.bindMethod(Self, testMemnewCast, "test_memnew_cast", .{});
     }
 
     pub fn _ready(self: *Self) void {
@@ -65,6 +66,30 @@ pub const TestNode2D = struct {
 
     pub fn getSetgetProperty(self: *const Self) u16 {
         return self.setget_property + 1;
+    }
+
+    pub fn testMemnewCast(self: *const Self) void {
+        const Node3D = gdextension.classes.node3d.Node3D;
+        {
+            const cast = ClassDB.castTo(self, Node2D);
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});
+        }
+        {
+            const cast = ClassDB.castTo(self, Node3D);
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)}); //Null
+        }
+        {
+            const node = TestNode2D._memnew();
+            defer node.base.base.base.queueFree();
+            const cast = ClassDB.castTo(node, Node2D);
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});
+        }
+        {
+            const node = Node3D._memnew();
+            defer node.base.queueFree();
+            const cast = ClassDB.castTo(node, Node2D);
+            std.debug.print("Cast:{}\n", .{@intFromPtr(cast)}); //Null
+        }
     }
 
 };
