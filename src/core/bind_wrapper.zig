@@ -2,35 +2,9 @@ const std = @import("std");
 
 const gi = @import("../gdextension_interface.zig");
 const gd = @import("../godot.zig");
+const type_utils = @import("type_utils.zig");
 
 const Variant = @import("../variant/variant.zig").Variant;
-
-inline fn ArgBaseType(comptime T: type) type {
-    const type_info = @typeInfo(T);
-    const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
-    switch (type_info) {
-        type_tag.Pointer => {
-            return type_info.Pointer.child;
-        },
-        else => {
-            return T;
-        }
-    }
-}
-
-inline fn isPointerType(comptime T: type) bool {
-    const type_info = @typeInfo(T);
-    const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
-    switch (type_info) {
-        type_tag.Pointer => {
-            return true;
-        },
-        else => {
-            return false;
-        }
-    }
-}
-
 
 inline fn ptrCall(comptime class: type, comptime function: anytype, comptime is_method: bool, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
     const fn_info = @typeInfo(@TypeOf(function)).Fn;
@@ -49,9 +23,9 @@ inline fn ptrCall(comptime class: type, comptime function: anytype, comptime is_
             arg_tuple[i] = @ptrCast(struct_instance);
         } else {
             const arg_index = if (is_method) i - 1 else i; // Minus 1 to offset struct
-            const base_type = ArgBaseType(param.type.?);
+            const base_type = type_utils.BaseType(param.type.?);
             const arg_typed_ptr: *base_type = @alignCast(@constCast(@ptrCast(args[arg_index])));
-            if (isPointerType(param.type.?)) {
+            if (type_utils.isPointerType(param.type.?)) {
                 arg_tuple[i] = arg_typed_ptr;
             } else {
                 arg_tuple[i] = arg_typed_ptr.*;
@@ -93,7 +67,7 @@ inline fn variantCall(comptime class: type, comptime function: anytype, comptime
         if (is_method and i == 0) {
             arg_base_types[i] = param.type.?;
         } else {
-            arg_base_types[i] = ArgBaseType(param.type.?);
+            arg_base_types[i] = type_utils.BaseType(param.type.?);
         }
     }
 
@@ -123,7 +97,7 @@ inline fn variantCall(comptime class: type, comptime function: anytype, comptime
         if (is_method and i == 0) {
             arg_tuple[i] = @ptrCast(struct_instance);
         } else {
-            if (isPointerType(param.type.?)) {
+            if (type_utils.isPointerType(param.type.?)) {
                 arg_tuple[i] = &arg_storage[i];
             } else {
                 arg_tuple[i] = arg_storage[i];
@@ -176,7 +150,7 @@ inline fn variantCallValidate(comptime function: anytype, comptime is_method: bo
         const variant_arg_index = if (is_method) i - 1 else i;
 
         const variant_arg: *const Variant = @ptrCast(args[variant_arg_index]);
-        const param_base_type = ArgBaseType(param.type.?);
+        const param_base_type = type_utils.BaseType(param.type.?);
         const expected_variant_type = Variant.typeToVariantType(param_base_type);
         const gi_variant_type: gi.GDExtensionVariantType = @enumFromInt(@intFromEnum(variant_arg.getType()));
         const gi_expected_type: gi.GDExtensionVariantType = @enumFromInt(@intFromEnum(expected_variant_type));

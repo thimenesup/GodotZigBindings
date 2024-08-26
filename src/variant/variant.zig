@@ -230,6 +230,16 @@ pub const Variant = struct {
         return self;
     }
 
+    pub fn initComptimeInt(comptime p_int: *const comptime_int) Self {
+        const converted: i64 = @intCast(p_int.*);
+        return initInt(&converted);
+    }
+
+    pub fn initComptimeFloat(comptime p_float: *const comptime_float) Self {
+        const converted: f64 = @floatCast(p_float.*);
+        return initFloat(&converted);
+    }
+
     pub fn initAABB(p_aabb: *const AABB) Self {
         var self = std.mem.zeroes(Self);
         fromTypeConstructor(Type.aabb, &self, p_aabb);
@@ -834,10 +844,10 @@ pub const Variant = struct {
                 return FloatAsVariant(T).function;
             },
             type_tag.ComptimeInt => {
-                return Variant.initInt;
+                return Variant.initComptimeInt;
             },
             type_tag.ComptimeFloat => {
-                return Variant.initFloat;
+                return Variant.initComptimeFloat;
             },
             // type_tag.Pointer => {
             //     if (type_info.Pointer.child == u8) {

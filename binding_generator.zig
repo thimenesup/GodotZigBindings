@@ -379,6 +379,71 @@ fn convertRawTypeToZigParameter(raw_type: []const u8, is_return_type: bool) Stri
 }
 
 
+fn stringMethodSignature(method_name: []const u8, converted_return_type: []const u8, is_const: bool, is_vararg: bool, arguments: ?*const std.json.Array) String { //Must deinit string
+    var signature_args = String.init(std.heap.page_allocator);
+    defer signature_args.deinit();
+
+    if (arguments != null) {
+        for (arguments.?.items) |arguments_item| {
+            const argument = arguments_item.object;
+
+            const arg_name = argument.get("name").?.string;
+            const arg_type = argument.get("type").?.string;
+
+            const converted_arg_type = convertRawTypeToZigParameter(arg_type, false);
+            defer converted_arg_type.deinit();
+
+            // NOTE: Zig doesn't really have default arguments
+            // const arg_has_default = argument.get("has_default_value").?.bool;
+            // const arg_default_value = argument.get("default_value").?.string;
+
+            std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, converted_arg_type.items }) catch {};
+        }
+    }
+    if (is_vararg) {
+        signature_args.appendSlice(", p_vararg: anytype") catch {};
+    }
+
+    const camel_method_name = toCamelCase(method_name);
+    defer camel_method_name.deinit();
+
+    var string = String.init(std.heap.page_allocator);
+
+    const constness_string = if (is_const) "const " else "";
+    const return_string = if (is_vararg) "Variant" else converted_return_type;
+    std.fmt.format(string.writer(),
+        "    pub fn {s}(self: *{s}Self{s}) {s} {{\n",
+        .{ camel_method_name.items, constness_string, signature_args.items, return_string }) catch {};
+
+    return string;
+}
+
+fn stringArgs(arguments: ?*const std.json.Array) String { //Must deinit string
+    var string = String.init(std.heap.page_allocator);
+    if (arguments != null) {
+        for (arguments.?.items, 0..) |arguments_item, index| {
+            const argument = arguments_item.object;
+
+            const arg_name = argument.get("name").?.string;
+            const arg_type = argument.get("type").?.string;
+
+            if (isClassType(arg_type)) {
+                std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*Wrapped, @ptrCast(p_{s}))._owner else null)", .{ arg_name, arg_name }) catch {};
+            } else if (isPrimitive(arg_type)) {
+                std.fmt.format(string.writer(), "&p_{s}", .{ arg_name }) catch {};
+            } else {
+                std.fmt.format(string.writer(), "p_{s}", .{ arg_name }) catch {};
+            }
+
+            if (index < (arguments.?.items.len - 1)) {
+                string.appendSlice(", ") catch {};
+            }
+        }
+    }
+    return string;
+}
+
+
 fn usedProcessType(raw_type: []const u8, classes: *std.StringHashMap(void)) void {
     // Ignore builtin types since they already get imported by default
     if (isClassEnum(raw_type)) {
@@ -644,41 +709,17 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
                 continue;
             }
 
-            const has_varargs = method.get("is_vararg").?.bool;
-            if (has_varargs) {
-                // TODO: Implement
-                continue;
-            }
-
+            const is_vararg = method.get("is_vararg").?.bool;
             const is_const = method.get("is_const").?.bool;
             const method_hash = method.get("hash").?.integer;
 
-            { // Method signature
-                const camel_method_name = toCamelCase(escaped_method_name.items);
-                defer camel_method_name.deinit();
+            const arg_arguments = if (method.get("arguments")) |get_arguments| &get_arguments.array else null;
 
-                var signature_args = String.init(std.heap.page_allocator);
-                defer signature_args.deinit();
-                if (method.get("arguments")) |get_arguments| {
-                    const arguments = get_arguments.array;
-                    for (arguments.items) |arguments_item| {
-                        const argument = arguments_item.object;
-
-                        const arg_name = argument.get("name").?.string;
-                        const arg_type = argument.get("type").?.string;
-                        const converted_arg_type = convertRawTypeToZigParameter(arg_type, false);
-                        defer converted_arg_type.deinit();
-
-                        // const arg_has_default = argument.get("has_default_value").?.bool;
-                        // const arg_default_value = argument.get("default_value").?.string;
-
-                        try std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, converted_arg_type.items });
-                    }
-                }
-
-                const constness_string = if (is_const) "const " else "";
-                try std.fmt.format(string.writer(), "    pub fn {s}(self: *{s}Self{s}) {s} {{\n",
-                    .{ camel_method_name.items, constness_string, signature_args.items, converted_return_type.items });
+            // Method signature
+            {
+                const method_signature = stringMethodSignature(escaped_method_name.items, converted_return_type.items, is_const, is_vararg, arg_arguments);
+                defer method_signature.deinit();
+                try string.appendSlice(method_signature.items);
             }
 
             // Method content
@@ -697,17 +738,20 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
                 .{ method_hash });
 
             // Method call args
-            const arg_arguments = if (method.get("arguments")) |get_arguments| &get_arguments.array else null;
             const args_tuple = stringArgs(arg_arguments);
             defer args_tuple.deinit();
 
-            if (std.mem.eql(u8, return_type, "void")) { // No return
-                try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
+            if (is_vararg) {
+                try std.fmt.format(string.writer(), "        return gd.callMbRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
             } else {
-                if (isClassType(return_type)) {
-                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                if (std.mem.eql(u8, return_type, "void")) { // No return
+                    try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
                 } else {
-                    try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                    if (isClassType(return_type)) {
+                        try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                    } else {
+                        try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                    }
                 }
             }
 
@@ -935,64 +979,6 @@ fn stringBuiltinConstructorSignature(arguments: ?*const std.json.Array) String {
     return string;
 }
 
-fn stringBuiltinMethodSignature(method_name: []const u8, converted_return_type: []const u8, is_const: bool, arguments: ?*const std.json.Array) String { //Must deinit string
-    var signature_args = String.init(std.heap.page_allocator);
-    defer signature_args.deinit();
-
-    if (arguments != null) {
-        for (arguments.?.items) |arguments_item| {
-            const argument = arguments_item.object;
-
-            const arg_name = argument.get("name").?.string;
-            const arg_type = argument.get("type").?.string;
-
-            const converted_arg_type = convertRawTypeToZigParameter(arg_type, false);
-            defer converted_arg_type.deinit();
-
-            // const arg_has_default = argument.get("has_default_value").?.bool;
-            // const arg_default_value = argument.get("default_value").?.string;
-
-            std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, converted_arg_type.items }) catch {};
-        }
-    }
-
-    const camel_method_name = toCamelCase(method_name);
-    defer camel_method_name.deinit();
-
-    var string = String.init(std.heap.page_allocator);
-
-    const constness_string = if (is_const) "const " else "";
-    std.fmt.format(string.writer(),
-        "    pub fn {s}(self: *{s}Self{s}) {s} {{\n",
-        .{ camel_method_name.items, constness_string, signature_args.items, converted_return_type }) catch {};
-
-    return string;
-}
-
-fn stringArgs(arguments: ?*const std.json.Array) String { //Must deinit string
-    var string = String.init(std.heap.page_allocator);
-    if (arguments != null) {
-        for (arguments.?.items, 0..) |arguments_item, index| {
-            const argument = arguments_item.object;
-
-            const arg_name = argument.get("name").?.string;
-            const arg_type = argument.get("type").?.string;
-
-            if (isClassType(arg_type)) {
-                std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*Wrapped, @ptrCast(p_{s}))._owner else null)", .{ arg_name, arg_name }) catch {};
-            } else if (isPrimitive(arg_type)) {
-                std.fmt.format(string.writer(), "&p_{s}", .{ arg_name }) catch {};
-            } else {
-                std.fmt.format(string.writer(), "p_{s}", .{ arg_name }) catch {};
-            }
-
-            if (index < (arguments.?.items.len - 1)) {
-                string.appendSlice(", ") catch {};
-            }
-        }
-    }
-    return string;
-}
 
 fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const std.json.Array) !String { //Must deinit string
     var class_string = String.init(std.heap.page_allocator);
@@ -1164,17 +1150,12 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             defer converted_return_type.deinit();
 
             const is_vararg = method.get("is_vararg").?.bool;
-            if (is_vararg) {
-                //TODO: Implement vararg functions
-                continue;
-            }
-
             const is_const = method.get("is_const").?.bool;
 
             const arg_arguments = if (method.get("arguments")) |get_arguments| &get_arguments.array else null;
 
             // Method signature
-            const method_signature = stringBuiltinMethodSignature(escaped_method_name.items, converted_return_type.items, is_const, arg_arguments);
+            const method_signature = stringMethodSignature(escaped_method_name.items, converted_return_type.items, is_const, is_vararg, arg_arguments);
             defer method_signature.deinit();
             try impl_binds.appendSlice(method_signature.items);
 
@@ -1182,14 +1163,20 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             const args_tuple = stringArgs(arg_arguments);
             defer args_tuple.deinit();
 
-            if (std.mem.eql(u8, return_type, "void")) { // No return
+            if (is_vararg) {
                 try std.fmt.format(impl_binds.writer(),
-                    "        gd.callBuiltinMbNoRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
+                    "        return gd.callMbRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }} ++ p_vararg);\n",
                     .{ escaped_method_name.items, args_tuple.items });
             } else {
-                try std.fmt.format(impl_binds.writer(),
-                    "        return gd.callBuiltinMbRet({s}, binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
-                    .{ converted_return_type.items, escaped_method_name.items, args_tuple.items });
+                if (std.mem.eql(u8, return_type, "void")) { // No return
+                    try std.fmt.format(impl_binds.writer(),
+                        "        gd.callBuiltinMbNoRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
+                        .{ escaped_method_name.items, args_tuple.items });
+                } else {
+                    try std.fmt.format(impl_binds.writer(),
+                        "        return gd.callBuiltinMbRet({s}, binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
+                        .{ converted_return_type.items, escaped_method_name.items, args_tuple.items });
+                }
             }
 
             // Method end

@@ -1,6 +1,7 @@
 const std = @import("std");
 const gi = @import("../gdextension_interface.zig");
 const gd = @import("../godot.zig");
+const type_utils = @import("type_utils.zig");
 
 const BindWrapper = @import("bind_wrapper.zig");
 
@@ -31,22 +32,6 @@ pub const ClassDB = struct {
         _ = p_level;
     }
 
-
-    fn TypeGetBase(comptime T: type) type {
-        const type_info = @typeInfo(T);
-        const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
-        switch (type_info) {
-            type_tag.Pointer => {
-                return type_info.Pointer.child;
-            },
-            type_tag.Optional => {
-                return type_info.Optional.child;
-            },
-            else => {
-                return T;
-            },
-        }
-    }
 
     fn classStringName(comptime T: type) StringName {
         const type_info = @typeInfo(T);
@@ -104,7 +89,7 @@ pub const ClassDB = struct {
                 const i = all_index - exclude_struct_offset; // Offset due to excluded member struct
 
                 const arg_name = if (i < arg_names.len) arg_names[i] else "unnamed_arg";
-                const base_type = TypeGetBase(param.type.?);
+                const base_type = type_utils.BaseType(param.type.?);
                 const variant_type = Variant.typeToVariantType(base_type);
 
                 var storage = &signature.storage[i];
@@ -130,7 +115,7 @@ pub const ClassDB = struct {
             signature.has_return_value = fn_info.return_type.? != void;
             if (signature.has_return_value) {
                 const name = "ret";
-                const base_type = TypeGetBase(fn_info.return_type.?);
+                const base_type = type_utils.BaseType(fn_info.return_type.?);
                 const variant_type = Variant.typeToVariantType(base_type);
 
                 var storage = &signature.storage[max_argument_count];
@@ -357,7 +342,7 @@ pub const ClassDB = struct {
 
         inline for (arg_types, 0..) |arg_type, i| {
             const arg_name = if (i < arg_names.len) arg_names[i] else "unnamed_arg";
-            const base_type = TypeGetBase(arg_type);
+            const base_type = type_utils.BaseType(arg_type);
             const variant_type = Variant.typeToVariantType(base_type);
 
             var storage = &string_storage[i];

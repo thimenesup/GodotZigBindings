@@ -40,6 +40,7 @@ pub const TestNode2D = struct {
         ClassDB.bindVirtualMethod(Self, _ready, "_ready", .{});
         ClassDB.bindVirtualMethod(Self, _process, "_process", .{ "delta" });
         ClassDB.bindMethod(Self, testMemnewCast, "test_memnew_cast", .{});
+        ClassDB.bindMethod(Self, testVararg, "test_vararg", .{});
     }
 
     pub fn _ready(self: *Self) void {
@@ -90,6 +91,12 @@ pub const TestNode2D = struct {
             const cast = ClassDB.castTo(node, Node2D);
             std.debug.print("Cast:{}\n", .{@intFromPtr(cast)}); //Null
         }
+    }
+
+    pub fn testVararg(self: *Self) void {
+        var signal_name = gdextension.godot.stringNameFromUtf8("test_signal");
+        defer signal_name.deinit();
+        _ = self.base.base.base.base.emitSignal(&signal_name, .{ 123, 3.21 });
     }
 
 };

@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const gi = @import("gdextension_interface.zig");
+const type_utils = @import("core/type_utils.zig");
 
 const ClassDB = @import("core/class_db.zig").ClassDB;
 const Variant = @import("variant/variant.zig").Variant;
@@ -97,6 +98,29 @@ pub fn callBuiltinPtrGetter(comptime T: type, getter: gi.GDExtensionPtrGetter, b
     return ret;
 }
 
+
+pub fn callMbRet(mb: gi.GDExtensionMethodBindPtr, instance: ?*anyopaque, args: anytype) Variant {
+    var variants: [args.len]Variant = undefined;
+    inline for (args, 0..) |arg, i| {
+        const arg_type = @TypeOf(arg);
+        const base_type = type_utils.BaseType(arg_type);
+        const convert_fn = Variant.typeAsVariant(base_type);
+        if (type_utils.isPointerType(arg_type)) {
+            variants[i] = convert_fn(arg);
+        } else {
+            variants[i] = convert_fn(&arg);
+        }
+    }
+
+    var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
+    inline for (variants, 0..) |variant, i| {
+        payload[i] = @ptrCast(&variant);
+    }
+    var _error: gi.GDExtensionCallError = undefined;
+    var ret: Variant = undefined;
+    interface.?.object_method_bind_call.?(mb, instance, &payload, args.len, &ret, &_error);
+    return ret;
+}
 
 pub fn callNativeMbNoRet(mb: gi.GDExtensionMethodBindPtr, instance: ?*anyopaque, args: anytype) void {
     var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
