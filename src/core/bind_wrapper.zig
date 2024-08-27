@@ -26,7 +26,7 @@ inline fn ptrCall(comptime class: type, comptime function: anytype, comptime is_
             const base_type = type_utils.BaseType(param.type.?);
             const arg_typed_ptr: *base_type = @alignCast(@constCast(@ptrCast(args[arg_index])));
             if (type_utils.isPointerType(param.type.?)) {
-                arg_tuple[i] = arg_typed_ptr;
+                arg_tuple[i] = @ptrCast(arg_typed_ptr);
             } else {
                 arg_tuple[i] = arg_typed_ptr.*;
             }
@@ -45,14 +45,6 @@ inline fn ptrCallFunction(comptime function: anytype, args: [*c]const gi.GDExten
 }
 
 inline fn ptrCallMethod(comptime class: type, comptime function: anytype, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) void {
-    const fn_info = @typeInfo(@TypeOf(function)).Fn;
-    comptime if (fn_info.params.len == 0) {
-        @compileError("A method needs to take atleast the struct parameter");
-    };
-    comptime if (fn_info.params[0].type.? != *class and fn_info.params[0].type.? != *const class) {
-        @compileError("The first parameter of a method should be the struct");
-    };
-
     ptrCall(class, function, true, instance, args, r_return);
 }
 
@@ -202,6 +194,14 @@ pub fn MethodPtrCall(comptime class: type, comptime function: anytype) type {
 
         pub fn functionWrap(method_userdata: ?*anyopaque, instance: gi.GDExtensionClassInstancePtr, args: [*c]const gi.GDExtensionConstTypePtr, r_return: gi.GDExtensionTypePtr) callconv(.C) void {
             _ = method_userdata;
+
+            const fn_info = @typeInfo(@TypeOf(function)).Fn;
+            comptime if (fn_info.params.len == 0) {
+                @compileError("A method needs to take atleast the struct parameter");
+            };
+            comptime if (fn_info.params[0].type.? != *class and fn_info.params[0].type.? != *const class) {
+                @compileError("The first parameter of a method should be the struct");
+            };
 
             ptrCallMethod(class, function, instance, args, r_return);
         }

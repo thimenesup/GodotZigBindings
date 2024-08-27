@@ -221,6 +221,10 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             return _toString;
         }
 
+        pub fn bindVirtuals(comptime T: type, comptime B: type) void {
+            base_class.bindVirtuals(T, B);
+        }
+
         pub fn _initializeClass() callconv(.C) void {
             const static = struct {
                 var initialized = false;
@@ -235,6 +239,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
 
             if (class._getBindMembers() != base_class._getBindMembers()) {
                 class._bindMembers();
+                base_class.bindVirtuals(class, base_class);
             }
 
             static.initialized = true;

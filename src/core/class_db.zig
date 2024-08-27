@@ -376,6 +376,22 @@ pub const ClassDB = struct {
     }
 
 
+    pub fn findVirtualMethodClass(comptime T: type, comptime method_name: []const u8) ?type {
+        var class = T;
+        while (true) {
+            if (@hasDecl(class, method_name)) {
+                return class;
+            }
+            if (!@hasField(class, "base")) {
+                return null;
+            }
+            const instance: class = undefined;
+            class = @TypeOf(@field(instance, "base"));
+        }
+        return null;
+    }
+
+
     pub fn castTo(instance: anytype, comptime class: type) ?*class {
         const class_name = class.getClassStatic();
         const class_tag = gd.interface.?.classdb_get_class_tag.?(class_name._nativePtr());

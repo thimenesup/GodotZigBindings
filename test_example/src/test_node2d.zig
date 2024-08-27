@@ -37,18 +37,16 @@ pub const TestNode2D = struct {
         ClassDB.bindProperty(Self, "test_property", "test_property", null, null);
         ClassDB.bindProperty(Self, "setget_property", "setget_property", setSetgetProperty, getSetgetProperty);
         ClassDB.bindSignal(Self, "test_signal", .{ i32, f32 }, .{ "a", "b" });
-        ClassDB.bindVirtualMethod(Self, _ready, "_ready", .{});
-        ClassDB.bindVirtualMethod(Self, _process, "_process", .{ "delta" });
         ClassDB.bindMethod(Self, testMemnewCast, "test_memnew_cast", .{});
         ClassDB.bindMethod(Self, testVararg, "test_vararg", .{});
     }
 
-    pub fn _ready(self: *Self) void {
+    pub fn _ready(self: *Self) void { // Virtual methods are automatically binded if defined/overriden
         _ = self;
         std.debug.print("_ready\n", .{});
     }
 
-    pub fn _process(self: *Self, delta: f64) void {
+    pub fn _process(self: *Self, delta: f64) void { // Same as above
         self.base.rotate(delta);
     }
 

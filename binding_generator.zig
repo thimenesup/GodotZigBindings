@@ -548,19 +548,15 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
     var stripped_base_name = stripName(base_class_name);
     defer stripped_base_name.deinit();
 
-    if (base_class_name.len == 0) { // Base class is Wrapped
-        stripped_base_name.clearRetainingCapacity();
-        try stripped_base_name.appendSlice("Wrapped");
-        base_class_name = stripped_base_name.items;
-    }
-
     // Import api
     {
+        try string.appendSlice("const std = @import(\"std\");\n");
         try string.appendSlice("const gi = @import(\"../../gdextension_interface.zig\");\n");
         try string.appendSlice("const gd = @import(\"../../godot.zig\");\n\n");
 
         try string.appendSlice("const Wrapped = @import(\"../../core/wrapped.zig\").Wrapped;\n");
-        try string.appendSlice("const GDExtensionClass = @import(\"../../core/wrapped.zig\").GDExtensionClass;\n\n");
+        try string.appendSlice("const GDExtensionClass = @import(\"../../core/wrapped.zig\").GDExtensionClass;\n");
+        try string.appendSlice("const _ClassDB = @import(\"../../core/class_db.zig\").ClassDB;\n\n"); // Underscore so it doesn't conflict with generated ClassDB
     }
 
     // Import core types, must declare every identifier so we can have a local scope of it, since they removed that behaviour from usingnamespace...
@@ -608,11 +604,11 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
     {
         try std.fmt.format(string.writer(), "pub const {s} = struct {{\n\n", .{ stripped_class_name.items }); // Extra { to escape it
 
-        try std.fmt.format(string.writer(), "    base: {s},\n\n", .{ base_class_name });
+        try std.fmt.format(string.writer(), "    base: {s},\n\n", .{ stripped_base_name.items });
 
         try string.appendSlice("    const Self = @This();\n\n");
 
-        try std.fmt.format(string.writer(),"    pub const GodotClass = GDExtensionClass(Self, {s});\n", .{ base_class_name });
+        try std.fmt.format(string.writer(),"    pub const GodotClass = GDExtensionClass(Self, {s});\n", .{ stripped_base_name.items });
         try string.appendSlice("    pub usingnamespace GodotClass;\n\n");
     }
 
@@ -676,6 +672,19 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
         }
     }
 
+    // Use another string for virtual binds so we can do both in a single method pass
+    var virtuals_string = String.init(std.heap.page_allocator);
+    defer virtuals_string.deinit();
+
+    {
+        try virtuals_string.appendSlice("    pub fn bindVirtuals(comptime T: type, comptime B: type) void {\n");
+        if (class.get("inherits")) |_| {
+            try std.fmt.format(virtuals_string.writer(), "        {s}.bindVirtuals(T, B);\n", .{ stripped_base_name.items });
+        } else {
+            try virtuals_string.appendSlice("        _ = T; _ = B;\n");
+        }
+    }
+
     if (class.get("methods")) |get_methods| {
         const methods = get_methods.array;
 
@@ -686,6 +695,9 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
             const method_name = method.get("name").?.string;
             const escaped_method_name = escapeFunctionName(method_name);
             defer escaped_method_name.deinit();
+
+            const camel_method_name = toCamelCase(escaped_method_name.items);
+            defer camel_method_name.deinit();
 
             var return_type: []const u8 = "void";
             if (method.get("return_value")) |get_return_value| {
@@ -703,15 +715,10 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
             const converted_return_type = convertRawTypeToZigParameter(return_type, true);
             defer converted_return_type.deinit();
 
-            const is_virtual = method.get("is_virtual").?.bool;
-            if (is_virtual) {
-                // TODO: Implement
-                continue;
-            }
-
             const is_vararg = method.get("is_vararg").?.bool;
             const is_const = method.get("is_const").?.bool;
-            const method_hash = method.get("hash").?.integer;
+            const is_virtual = method.get("is_virtual").?.bool;
+            const method_hash = if (method.get("hash")) |get_hash| get_hash.integer else 0;
 
             const arg_arguments = if (method.get("arguments")) |get_arguments| &get_arguments.array else null;
 
@@ -723,34 +730,54 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
             }
 
             // Method content
+            if (is_virtual) {
+                // Bind
+                try std.fmt.format(virtuals_string.writer(), "        if (comptime _ClassDB.findVirtualMethodClass(T, \"{s}\")) |overrided| {{\n", .{ camel_method_name.items });
+                try std.fmt.format(virtuals_string.writer(), "            _ClassDB.bindVirtualMethod(T, overrided.{s}, \"{s}\", .{{}});\n", .{ camel_method_name.items, escaped_method_name.items });
+                try virtuals_string.appendSlice("        }\n");
 
-            try string.appendSlice("        const __class_name = Self.getClassStatic();\n");
+                // Virtual functions are only meant to be stubs
+                try string.appendSlice("        _ = self;\n");
+                if (arg_arguments != null) {
+                    for (arg_arguments.?.items) |arguments_item| {
+                        const argument = arguments_item.object;
 
-            try std.fmt.format(string.writer(),
-                "        var __method_name = gd.stringNameFromUtf8(\"{s}\");\n",
-                .{ escaped_method_name.items });
-
-            try string.appendSlice(
-                "        defer __method_name.deinit();\n");
-
-            try std.fmt.format(string.writer(), 
-                "        const _gde_method_bind = gd.interface.?.classdb_get_method_bind.?(__class_name._nativePtr(), __method_name._nativePtr(), {});\n", 
-                .{ method_hash });
-
-            // Method call args
-            const args_tuple = stringArgs(arg_arguments);
-            defer args_tuple.deinit();
-
-            if (is_vararg) {
-                try std.fmt.format(string.writer(), "        return gd.callMbRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+                        const arg_name = argument.get("name").?.string;
+                        try std.fmt.format(string.writer(), "        _ = p_{s};\n", .{ arg_name });
+                    }
+                }
+                if (method.get("return_value")) |_| {
+                    try std.fmt.format(string.writer(), "        return std.mem.zeroes({s});\n", .{ converted_return_type.items });
+                }
             } else {
-                if (std.mem.eql(u8, return_type, "void")) { // No return
-                    try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
+                try string.appendSlice("        const __class_name = Self.getClassStatic();\n");
+
+                try std.fmt.format(string.writer(),
+                    "        var __method_name = gd.stringNameFromUtf8(\"{s}\");\n",
+                    .{ escaped_method_name.items });
+
+                try string.appendSlice(
+                    "        defer __method_name.deinit();\n");
+
+                try std.fmt.format(string.writer(), 
+                    "        const _gde_method_bind = gd.interface.?.classdb_get_method_bind.?(__class_name._nativePtr(), __method_name._nativePtr(), {});\n", 
+                    .{ method_hash });
+
+                // Method call args
+                const args_tuple = stringArgs(arg_arguments);
+                defer args_tuple.deinit();
+
+                if (is_vararg) {
+                    try std.fmt.format(string.writer(), "        return gd.callMbRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
                 } else {
-                    if (isClassType(return_type)) {
-                        try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                    if (std.mem.eql(u8, return_type, "void")) { // No return
+                        try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
                     } else {
-                        try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                        if (isClassType(return_type)) {
+                            try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                        } else {
+                            try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ converted_return_type.items, args_tuple.items });
+                        }
                     }
                 }
             }
@@ -758,6 +785,11 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
             // Method end
             try string.appendSlice("    }\n\n");
         }
+    }
+
+    {
+        try virtuals_string.appendSlice("    }\n\n"); // bindVirtuals end
+        try string.appendSlice(virtuals_string.items);
     }
 
     // Class struct end
