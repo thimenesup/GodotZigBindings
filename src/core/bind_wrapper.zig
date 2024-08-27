@@ -34,9 +34,9 @@ inline fn ptrCall(comptime class: type, comptime function: anytype, comptime is_
     }
 
     const result = @call(.auto, function, arg_tuple);
-    const r_variant: ?*Variant = @ptrCast(r_return);
-    if (r_variant != null) {
-        r_variant.?.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+    const r_result: ?*fn_info.return_type.? = @alignCast(@ptrCast(r_return));
+    if (r_result != null) {
+        r_result.?.* = result;
     }
 }
 

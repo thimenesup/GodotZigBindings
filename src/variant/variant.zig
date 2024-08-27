@@ -450,24 +450,28 @@ pub const Variant = struct {
     }
 
 
+    pub inline fn defaultConstruct(comptime T: type) T {
+        if (@hasDecl(T, "init")) {
+            const fn_info = @typeInfo(@TypeOf(T.init)).Fn;
+            if (fn_info.params.len == 0) {
+                return T.init();
+            }
+        } else if (@hasDecl(T, "new")) {
+            const fn_info = @typeInfo(@TypeOf(T.new)).Fn;
+            if (fn_info.params.len == 0) {
+                return T.new();
+            }
+        }
+        return std.mem.zeroes(T);
+    }
+
     inline fn builtinConversion(self: *const Self, comptime T: type) T { // Converts to struct type if it matches, else returns a default constructed struct, for safe conversion
         if (self.getType() == Variant.typeToVariantType(T)) {
             var result = std.mem.zeroes(T);
             toTypeConstructor(self.getType(), &result, self);
             return result;
         } else {
-            if (@hasDecl(T, "init")) {
-                const fn_info = @typeInfo(@TypeOf(T.init)).Fn;
-                if (fn_info.params.len == 0) {
-                    return T.init();
-                }
-            } else if (@hasDecl(T, "new")) {
-                const fn_info = @typeInfo(@TypeOf(T.new)).Fn;
-                if (fn_info.params.len == 0) {
-                    return T.new();
-                }
-            }
-            return std.mem.zeroes(T);
+            return defaultConstruct(T);
         }
     }
 

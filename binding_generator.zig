@@ -550,7 +550,6 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
 
     // Import api
     {
-        try string.appendSlice("const std = @import(\"std\");\n");
         try string.appendSlice("const gi = @import(\"../../gdextension_interface.zig\");\n");
         try string.appendSlice("const gd = @import(\"../../godot.zig\");\n\n");
 
@@ -747,7 +746,7 @@ fn generateClass(class: *const std.json.ObjectMap, global_enums: *const std.json
                     }
                 }
                 if (method.get("return_value")) |_| {
-                    try std.fmt.format(string.writer(), "        return std.mem.zeroes({s});\n", .{ converted_return_type.items });
+                    try std.fmt.format(string.writer(), "        return Variant.defaultConstruct({s});\n", .{ converted_return_type.items });
                 }
             } else {
                 try string.appendSlice("        const __class_name = Self.getClassStatic();\n");
