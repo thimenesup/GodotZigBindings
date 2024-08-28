@@ -44,52 +44,16 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 
         var class_string_name: StringName = undefined;
 
-        pub fn _notification(self: *Wrapped, what: i32) callconv(.C) void { _ = self; _ = what; }
-        pub fn _set(self: *Wrapped, name: *const StringName, property: *const Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
-        pub fn _get(self: *const Wrapped, name: *const StringName, property: *Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
-        pub fn _getPropertyList(self: *const Wrapped, list: ?*anyopaque) callconv(.C) void { _ = self; _ = list; }
-        pub fn _propertyCanRevert(self: *const Wrapped, name: *const StringName) callconv(.C) bool { _ = self; _ = name; return false; }
-        pub fn _propertyGetRevert(self: *const Wrapped, name: *const StringName, property: *Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
-        pub fn _toString(self: *const Wrapped) callconv(.C) String { _ = self; const string = String.init(); return string; }
-
         pub fn _notificationBind(instance: gi.GDExtensionClassInstancePtr, what: i32) callconv(.C) void { _ = instance; _ = what; }
         pub fn _setBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, value: gi.GDExtensionConstVariantPtr) callconv(.C) gi.GDExtensionBool { _ = instance; _ = name; _ = value; return false; }
         pub fn _getBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, value: gi.GDExtensionVariantPtr) callconv(.C) gi.GDExtensionBool { _ = instance; _ = name; _ = value; return false; }
-        pub fn _getPropertyListBind(instance: gi.GDExtensionClassInstancePtr, count: [*c]u32) callconv(.C) [*c]gi.GDExtensionPropertyInfo { _ = instance; _ = count; return null; }
-        pub fn _freePropertyListBind(instance: gi.GDExtensionClassInstancePtr, list: [*]const gi.GDExtensionPropertyInfo) callconv(.C) void { _ = instance; _ = list; }
         pub fn _propertyCanRevertBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr) callconv(.C) gi.GDExtensionBool { _ = instance; _ = name; return false; }
         pub fn _propertyGetRevertBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, value: gi.GDExtensionVariantPtr) callconv(.C) gi.GDExtensionBool { _ = instance; _ = name; _ = value; return false; }
         pub fn _toStringBind(instance: gi.GDExtensionClassInstancePtr, is_valid: *gi.GDExtensionBool, out: gi.GDExtensionStringPtr) callconv(.C) void { _ = instance; _ = is_valid; _ = out; }
+        pub fn _getPropertyListBind(instance: gi.GDExtensionClassInstancePtr, count: [*c]u32) callconv(.C) [*c]gi.GDExtensionPropertyInfo { _ = instance; count.* = 0; return null; }
+        pub fn _freePropertyListBind(instance: gi.GDExtensionClassInstancePtr, list: [*]const gi.GDExtensionPropertyInfo) callconv(.C) void { _ = instance; _ = list; }
 
         pub fn _getBindMembers() callconv(.C) ?*const fn() callconv(.C) void {
-            return null;
-        }
-
-        pub fn _getNotification() callconv(.C) ?*const fn(*Wrapped, i32) callconv(.C) void {
-            return null;
-        }
-
-        pub fn _getSet() callconv(.C) ?*const fn(*Wrapped, *const StringName, *const Variant) callconv(.C) bool {
-            return null;
-        }
-
-        pub fn _getGet() callconv(.C) ?*const fn(*const Wrapped, *const StringName, *Variant) callconv(.C) bool {
-            return null;
-        }
-
-        pub fn _getGetPropertyList() callconv(.C) ?*const fn(*const Wrapped, ?*anyopaque) callconv(.C) void {
-            return null;
-        }
-
-        pub fn _getPropertyCanRevert() callconv(.C) ?*const fn(*const Wrapped, *const StringName) callconv(.C) bool {
-            return null;
-        }
-
-        pub fn _getPropertyGetRevert() callconv(.C) ?*const fn(*const Wrapped, *const StringName, *Variant) callconv(.C) bool {
-            return null;
-        }
-
-        pub fn _getToString() callconv(.C) ?*const fn(*const Wrapped) callconv(.C) String {
             return null;
         }
 
@@ -175,15 +139,6 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
             }
         }
 
-
-        pub fn _notification(self: *Wrapped, what: i32) callconv(.C) void { _ = self; _ = what; }
-        pub fn _set(self: *Wrapped, name: *const StringName, property: *const Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
-        pub fn _get(self: *const Wrapped, name: *const StringName, property: *Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
-        pub fn _getPropertyList(self: *const Wrapped, list: ?*anyopaque) callconv(.C) void { _ = self; _ = list; }
-        pub fn _propertyCanRevert(self: *const Wrapped, name: *const StringName) callconv(.C) bool { _ = self; _ = name; return false; }
-        pub fn _propertyGetRevert(self: *const Wrapped, name: *const StringName, property: *Variant) callconv(.C) bool { _ = self; _ = name; _ = property; return false; }
-        pub fn _toString(self: *const Wrapped) callconv(.C) String { _ = self; const string = String.init(); return string; }
-
         pub fn _getExtensionClassName() callconv(.C) ?*const StringName {
             class_string_name = gd.stringNameFromUtf8(classTypeName(class));
             return &class_string_name;
@@ -191,34 +146,6 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _getBindMembers() callconv(.C) ?*const fn() callconv(.C) void {
             return class._bindMembers;
-        }
-
-        pub fn _getNotification() callconv(.C) ?*const fn(*Wrapped, i32) callconv(.C) void {
-            return _notification;
-        }
-
-        pub fn _getSet() callconv(.C) ?*const fn(*Wrapped, *const StringName, *const Variant) callconv(.C) bool {
-            return _set;
-        }
-
-        pub fn _getGet() callconv(.C) ?*const fn(*const Wrapped, *const StringName, *Variant) callconv(.C) bool {
-            return _get;
-        }
-
-        pub fn _getGetPropertyList() callconv(.C) ?*const fn(*const Wrapped, ?*anyopaque) callconv(.C) void {
-            return _getPropertyList;
-        }
-
-        pub fn _getPropertyCanRevert() callconv(.C) ?*const fn(*const Wrapped, *const StringName) callconv(.C) bool {
-            return _propertyCanRevert;
-        }
-
-        pub fn _getPropertyGetRevert() callconv(.C) ?*const fn(*const Wrapped, *const StringName, *Variant) callconv(.C) bool {
-            return _propertyGetRevert;
-        }
-
-        pub fn _getToString() callconv(.C) ?*const fn(*const Wrapped) callconv(.C) String {
-            return _toString;
         }
 
         pub fn bindVirtuals(comptime T: type, comptime B: type) void {
@@ -283,40 +210,97 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
         }
 
         pub fn _notificationBind(instance: gi.GDExtensionClassInstancePtr, what: i32) callconv(.C) void {
-            _notification(@alignCast(@ptrCast(instance)), what);
+            if (instance == null) {
+                return;
+            }
+            if (@hasDecl(class, "_notification")) {
+                class._notification(@alignCast(@ptrCast(instance)), what);
+            } else {
+                base_class._notificationBind(instance, what);
+            }
         }
 
         pub fn _setBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, value: gi.GDExtensionConstVariantPtr) callconv(.C) gi.GDExtensionBool {
-            return _set(@alignCast(@ptrCast(instance)), @ptrCast(name), @ptrCast(value));
+            if (instance == null) {
+                return false;
+            }
+            if (@hasDecl(class, "_set")) {
+                return class._set(@alignCast(@ptrCast(instance)), @ptrCast(name), @ptrCast(value));
+            } else {
+                return base_class._setBind(instance, name, value);
+            }
         }
 
         pub fn _getBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, ret: gi.GDExtensionVariantPtr) callconv(.C) gi.GDExtensionBool {
-            return _get(@alignCast(@ptrCast(instance)), @ptrCast(name), @ptrCast(ret));
+            if (instance == null) {
+                return false;
+            }
+            if (@hasDecl(class, "_get")) {
+                return class._get(@alignCast(@ptrCast(instance)), @ptrCast(name), @ptrCast(ret));
+            } else {
+                return base_class._getBind(instance, name, ret);
+            }
         }
 
         pub fn _propertyCanRevertBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr) callconv(.C) gi.GDExtensionBool {
-            return _propertyCanRevert(@alignCast(@ptrCast(instance)), @ptrCast(name));
+            if (instance == null) {
+                return false;
+            }
+            if (@hasDecl(class, "_propertyCanRevert")) {
+                return class._propertyCanRevert(@alignCast(@ptrCast(instance)), @ptrCast(name));
+            } else {
+                return base_class._propertyCanRevertBind(instance, name);
+            }
         }
 
         pub fn _propertyGetRevertBind(instance: gi.GDExtensionClassInstancePtr, name: gi.GDExtensionConstStringNamePtr, ret: gi.GDExtensionVariantPtr) callconv(.C) gi.GDExtensionBool {
-            return _propertyGetRevert(@alignCast(@ptrCast(instance)), @ptrCast(name), @ptrCast(ret));
+            if (instance == null) {
+                return false;
+            }
+            if (@hasDecl(class, "_propertyGetRevert")) {
+                return class._propertyGetRevert(@alignCast(@ptrCast(instance)), @ptrCast(name), @ptrCast(ret));
+            } else {
+                return base_class._propertyGetRevertBind(instance, name, ret);
+            }
         }
 
         pub fn _toStringBind(instance: gi.GDExtensionClassInstancePtr, is_valid: [*c]gi.GDExtensionBool, out: gi.GDExtensionStringPtr) callconv(.C) void {
-            const string_out: *String = @ptrCast(out);
-            string_out.* = _toString(@alignCast(@ptrCast(instance)));
-            is_valid.* = true;
+            const string_out: *String = @alignCast(@ptrCast(out));
+            if (instance == null) {
+                return;
+            }
+            if (@hasDecl(class, "_toString")) {
+                var string: String = class._toString(instance);
+                defer string.deinit();
+                string_out.* = string;
+                is_valid.* = true;
+            } else {
+                base_class._toStringBind(instance, is_valid, out);
+            }
         }
 
         pub fn _getPropertyListBind(instance: gi.GDExtensionClassInstancePtr, count: [*c]u32) callconv(.C) [*c]gi.GDExtensionPropertyInfo {
-            _getPropertyList(@alignCast(@ptrCast(instance)), count);
-            return null;
+            if (instance == null) {
+                return null;
+            }
+            if (@hasDecl(class, "_getPropertyList")) {
+                const properties: []const gi.GDExtensionPropertyInfo = class._getPropertyList(instance);
+                const allocation = gd.interface.?.mem_alloc.?(@sizeOf(gi.GDExtensionPropertyInfo * properties.len));
+                for (properties, 0..) |property, i| {
+                    allocation[i] = property;
+                }
+                count.* = properties.len;
+                return allocation;
+            } else {
+                return base_class._getPropertyListBind(instance, count);
+            }
         }
 
         pub fn _freePropertyListBind(instance: gi.GDExtensionClassInstancePtr, list: [*c]const gi.GDExtensionPropertyInfo) callconv(.C) void {
             _ = instance;
-            _ = list;
-            // TODO: Implement
+            if (list != null) {
+                gd.interface.?.mem_free.?(@constCast(@ptrCast(list)));
+            }
         }
 
         pub fn _bindingCreateCallback(token: ?*anyopaque, instance: ?*anyopaque) callconv(.C) ?*anyopaque {

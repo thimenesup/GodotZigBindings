@@ -41,12 +41,19 @@ pub const TestNode2D = struct {
         ClassDB.bindMethod(Self, testVararg, "test_vararg", .{});
     }
 
-    pub fn _ready(self: *Self) void { // Virtual methods are automatically binded if defined/overriden
+    pub fn _notification(self: *Self, what: i32) void { // Virtual methods are automatically binded if defined/overriden
+        _ = self;
+        if (what == gdextension.classes.node.Node.notification_parented) {
+            std.debug.print("parented\n", .{});
+        }
+    }
+
+    pub fn _ready(self: *Self) void {
         _ = self;
         std.debug.print("_ready\n", .{});
     }
 
-    pub fn _process(self: *Self, delta: f64) void { // Same as above
+    pub fn _process(self: *Self, delta: f64) void {
         self.base.rotate(delta);
     }
 
