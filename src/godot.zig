@@ -81,9 +81,32 @@ pub fn callBuiltinMbRet(comptime T: type, method: gi.GDExtensionPtrBuiltInMethod
     inline for (args, 0..) |arg, i| {
         payload[i] = @ptrCast(arg);
     }
-    var ret: T = undefined;
-    method.?(base, &payload, &ret, payload.len);
-    return ret;
+
+    // Godot calling convention handles all integers, floats and bool to have certain size, so we must handle conversion...
+    const type_info = @typeInfo(T);
+    const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
+    switch (type_info) {
+        type_tag.Bool => {
+            var ret: u8 = undefined;
+            method.?(base, &payload, &ret, payload.len);
+            return @as(bool, ret);
+        },
+        type_tag.Int => {
+            var ret: u64 = undefined;
+            method.?(base, &payload, &ret, payload.len);
+            return @truncate(@as(u64, @bitCast(ret)));
+        },
+        type_tag.Float => {
+            var ret: f64 = undefined;
+            method.?(base, &payload, &ret, payload.len);
+            return @floatCast(ret);
+        },
+        else => {
+            var ret: T = undefined;
+            method.?(base, &payload, &ret, payload.len);
+            return ret;
+        }
+    }
 }
 
 pub fn callBuiltinOperatorPtr(comptime T: type, op: gi.GDExtensionPtrOperatorEvaluator, left: gi.GDExtensionConstTypePtr, right: gi.GDExtensionConstTypePtr) T {
@@ -135,9 +158,32 @@ pub fn callNativeMbRet(comptime T: type, mb: gi.GDExtensionMethodBindPtr, instan
     inline for (args, 0..) |arg, i| {
         payload[i] = @ptrCast(arg);
     }
-    var ret: T = undefined;
-    interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
-    return ret;
+
+    // Godot calling convention handles all integers, floats and bool to have certain size, so we must handle conversion...
+    const type_info = @typeInfo(T);
+    const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
+    switch (type_info) {
+        type_tag.Bool => {
+            var ret: u8 = undefined;
+            interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
+            return @as(bool, ret);
+        },
+        type_tag.Int => {
+            var ret: u64 = undefined;
+            interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
+            return @truncate(@as(u64, @bitCast(ret)));
+        },
+        type_tag.Float => {
+            var ret: f64 = undefined;
+            interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
+            return @floatCast(ret);
+        },
+        else => {
+            var ret: T = undefined;
+            interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
+            return ret;
+        }
+    }
 }
 
 pub fn callNativeMbRetObj(comptime O: type, mb: gi.GDExtensionMethodBindPtr, instance: ?*anyopaque, args: anytype) O {

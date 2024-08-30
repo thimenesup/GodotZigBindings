@@ -54,7 +54,7 @@ pub const TestNode2D = struct {
     }
 
     pub fn _process(self: *Self, delta: f64) void {
-        self.base.rotate(delta);
+        self.base.rotate(@floatCast(delta));
     }
 
     pub fn testMethod(self: *const Self, a: i32, b: bool) f32 {
