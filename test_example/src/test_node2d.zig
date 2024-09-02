@@ -3,8 +3,8 @@ const ClassDB = gdextension.class_db.ClassDB;
 const Wrapped = gdextension.wrapped.Wrapped;
 const GDClass = gdextension.wrapped.GDClass;
 
-const UtilityFunctions = gdextension.classes.utility_functions.UtilityFunctions;
-const Node2D = gdextension.classes.node2d.Node2D;
+const UtilityFunctions = gdextension.classes.UtilityFunctions;
+const Node2D = gdextension.classes.Node2D;
 
 const std = @import("std");
 
@@ -44,7 +44,7 @@ pub const TestNode2D = struct {
 
     pub fn _notification(self: *Self, what: i32) void { // Virtual methods are automatically binded if defined/overriden
         _ = self;
-        if (what == gdextension.classes.node.Node.notification_parented) {
+        if (what == gdextension.classes.Node.notification_parented) {
             std.debug.print("parented\n", .{});
         }
     }
@@ -81,7 +81,7 @@ pub const TestNode2D = struct {
     }
 
     pub fn testMemnewCast(self: *const Self) void {
-        const Node3D = gdextension.classes.node3d.Node3D;
+        const Node3D = gdextension.classes.Node3D;
         {
             const cast = ClassDB.castTo(self, Node2D);
             std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});

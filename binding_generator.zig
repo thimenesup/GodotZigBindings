@@ -1311,7 +1311,7 @@ fn writeImportString(string: *String, class: *const std.json.ObjectMap) !void {
     const convention_name = toSnakeCase(stripped_name.items);
     defer convention_name.deinit();
 
-    try std.fmt.format(string.writer(), "pub const {s} = @import(\"{s}.zig\");\n", .{ convention_name.items, convention_name.items });
+    try std.fmt.format(string.writer(), "pub const {s} = @import(\"{s}.zig\").{s};\n", .{ stripped_name.items, convention_name.items, stripped_name.items });
 }
 
 fn generatePackageClassImports(classes: *const std.json.Array, native_structs: *const std.json.Array) !void {
@@ -1323,7 +1323,7 @@ fn generatePackageClassImports(classes: *const std.json.Array, native_structs: *
     var string = String.init(std.heap.page_allocator);
     defer string.deinit();
 
-    try string.appendSlice("pub const utility_functions = @import(\"utility_functions.zig\");");
+    try string.appendSlice("pub const UtilityFunctions = @import(\"utility_functions.zig\").UtilityFunctions;");
 
     //Class imports
     for (classes.items) |item| {
