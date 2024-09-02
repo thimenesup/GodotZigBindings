@@ -502,12 +502,13 @@ const ParsedType = struct {
 };
 
 
-fn stringMethodSignature(method_name: []const u8, parsed_return_type_string: []const u8, is_const: bool, is_vararg: bool, arguments: ?*const std.json.Array) String { //Must deinit string
+fn stringFunctionSignatureBase(is_method: bool, function_name: []const u8, parsed_return_type_string: []const u8, is_const: bool, is_vararg: bool, arguments: ?*const std.json.Array) String { //Must deinit string
     var signature_args = String.init(std.heap.page_allocator);
     defer signature_args.deinit();
 
     if (arguments != null) {
-        for (arguments.?.items) |arguments_item| {
+        const arg_begin: usize = if (is_method) 1 else 0;
+        for (arguments.?.items, arg_begin..) |arguments_item, arg_index| {
             const argument = arguments_item.object;
 
             const arg_name = argument.get("name").?.string;
@@ -519,25 +520,47 @@ fn stringMethodSignature(method_name: []const u8, parsed_return_type_string: []c
             // const arg_has_default = argument.get("has_default_value").?.bool;
             // const arg_default_value = argument.get("default_value").?.string;
 
-            std.fmt.format(signature_args.writer(), ", p_{s}: {s}", .{ arg_name, string_type.items }) catch {};
+            if (arg_index > 0) {
+                signature_args.appendSlice(", ") catch {};
+            }
+            std.fmt.format(signature_args.writer(), "p_{s}: {s}", .{ arg_name, string_type.items }) catch {};
         }
     }
     if (is_vararg) {
-        signature_args.appendSlice(", p_vararg: anytype") catch {};
+        const arg_count = if (arguments != null) arguments.?.items.len else 0;
+        const total_arg_count = if (is_method) arg_count + 1 else arg_count;
+        if (total_arg_count > 0) {
+            signature_args.appendSlice(", ") catch {};
+        }
+        signature_args.appendSlice("p_vararg: anytype") catch {};
     }
 
-    const camel_method_name = toCamelCase(method_name);
-    defer camel_method_name.deinit();
+    const camel_function_name = toCamelCase(function_name);
+    defer camel_function_name.deinit();
 
-    const constness_string = if (is_const) "const " else "";
     const return_string = if (is_vararg) "Variant" else parsed_return_type_string;
 
     var string = String.init(std.heap.page_allocator);
-    std.fmt.format(string.writer(),
-        "    pub fn {s}(self: *{s}Self{s}) {s} {{\n",
-        .{ camel_method_name.items, constness_string, signature_args.items, return_string }) catch {};
+    if (is_method) {
+        const constness_string = if (is_const) "const " else "";
+        std.fmt.format(string.writer(),
+            "    pub fn {s}(self: *{s}Self{s}) {s} {{\n",
+            .{ camel_function_name.items, constness_string, signature_args.items, return_string }) catch {};
+    } else {
+        std.fmt.format(string.writer(),
+            "    pub fn {s}({s}) {s} {{\n",
+            .{ camel_function_name.items, signature_args.items, return_string }) catch {};
+    }
 
     return string;
+}
+
+inline fn stringFunctionSignature(function_name: []const u8, parsed_return_type_string: []const u8, is_vararg: bool, arguments: ?*const std.json.Array) String { //Must deinit string
+    return stringFunctionSignatureBase(false, function_name, parsed_return_type_string, false, is_vararg, arguments);
+}
+
+inline fn stringMethodSignature(method_name: []const u8, parsed_return_type_string: []const u8, is_const: bool, is_vararg: bool, arguments: ?*const std.json.Array) String { //Must deinit string
+    return stringFunctionSignatureBase(true, method_name, parsed_return_type_string, is_const, is_vararg, arguments);
 }
 
 fn stringArgsEncoding(arguments: ?*const std.json.Array) String { //Must deinit string
@@ -689,6 +712,26 @@ fn filterPutUniqueGlobalEnums(parsed_type: *const ParsedType, used: *std.StringH
     }
 }
 
+
+fn getUsedTypesByFunction(function: *const std.json.ObjectMap, json_types: *std.ArrayList([]const u8)) void {
+    if (function.get("return_type")) |get_return_type| {
+        json_types.append(get_return_type.string) catch {};
+    } else if (function.get("return_value")) |get_return_value| {
+        const return_value_object = get_return_value.object;
+        const return_type = return_value_object.get("type").?.string;
+        json_types.append(return_type) catch {};
+    }
+
+    if (function.get("arguments")) |get_arguments| {
+        const arguments = get_arguments.array;
+        for (arguments.items) |arguments_item| {
+            const argument = arguments_item.object;
+            const arg_type = argument.get("type").?.string;
+            json_types.append(arg_type) catch {};
+        }
+    }
+}
+
 fn getUsedTypesByClass(class: *const std.json.ObjectMap, json_types: *std.ArrayList([]const u8)) void {
     if (class.get("inherits")) |get_inherits| {
         json_types.append(get_inherits.string) catch {};
@@ -698,21 +741,7 @@ fn getUsedTypesByClass(class: *const std.json.ObjectMap, json_types: *std.ArrayL
         const methods = get_methods.array;
         for (methods.items) |item| {
             const method = item.object;
-
-            if (method.get("return_value")) |get_return_value| {
-                const return_value_object = get_return_value.object;
-                const return_type = return_value_object.get("type").?.string;
-                json_types.append(return_type) catch {};
-            }
-
-            if (method.get("arguments")) |get_arguments| {
-                const arguments = get_arguments.array;
-                for (arguments.items) |arguments_item| {
-                    const argument = arguments_item.object;
-                    const arg_type = argument.get("type").?.string;
-                    json_types.append(arg_type) catch {};
-                }
-            }
+            getUsedTypesByFunction(&method, json_types);
         }
     }
 }
@@ -1294,6 +1323,8 @@ fn generatePackageClassImports(classes: *const std.json.Array, native_structs: *
     var string = String.init(std.heap.page_allocator);
     defer string.deinit();
 
+    try string.appendSlice("pub const utility_functions = @import(\"utility_functions.zig\");");
+
     //Class imports
     for (classes.items) |item| {
         try writeImportString(&string, &item.object);
@@ -1821,6 +1852,127 @@ fn generateBuiltinClassBindings(classes: *const std.json.Array, class_sizes: *co
 }
 
 
+fn generateUtilityFunction(function: *const std.json.ObjectMap) !String {
+    var string = String.init(std.heap.page_allocator);
+
+    const function_name = function.get("name").?.string;
+    const escaped_function_name = escapeFunctionName(function_name);
+    defer escaped_function_name.deinit();
+
+    const parsed_return_type = blk: {
+        var json_return_type: []const u8 = "void";
+        if (function.get("return_type")) |get_return_type| {
+            json_return_type = get_return_type.string;
+        }
+        break :blk ParsedType.new(json_return_type);
+    };
+    const return_string_type = parsed_return_type.stringConverted(true);
+    defer return_string_type.deinit();
+
+    const is_vararg = function.get("is_vararg").?.bool;
+    const method_hash = if (function.get("hash")) |get_hash| get_hash.integer else 0;
+
+    const arg_arguments = if (function.get("arguments")) |get_arguments| &get_arguments.array else null;
+
+    // Function signature
+    const function_signature = stringFunctionSignature(escaped_function_name.items, return_string_type.items, is_vararg, arg_arguments);
+    defer function_signature.deinit();
+    try string.appendSlice(function_signature.items);
+
+    // Function content
+    try std.fmt.format(string.writer(), "        var __function_name = gd.stringNameFromUtf8(\"{s}\");\n", .{ escaped_function_name.items });
+    try string.appendSlice("        defer __function_name.deinit();\n");
+    try std.fmt.format(string.writer(),"        const _gde_function_bind = gd.interface.?.variant_get_ptr_utility_function.?(__function_name._nativePtr(), {});\n", .{ method_hash });
+
+    // Function call args
+    const args_encoding = stringArgsEncoding(arg_arguments);
+    defer args_encoding.deinit();
+    try string.appendSlice(args_encoding.items);
+
+    const args_tuple = stringArgs(arg_arguments);
+    defer args_tuple.deinit();
+
+    if (is_vararg) {
+        try std.fmt.format(string.writer(), "        return gd.callUtilityRet(Variant, _gde_function_bind, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+    } else {
+        if (std.mem.eql(u8, return_string_type.items, "void")) { // No return
+            try std.fmt.format(string.writer(), "        gd.callUtilityNoRet(_gde_function_bind, .{{ {s} }});\n", .{ args_tuple.items });
+        } else {
+            if (parsed_return_type.type_kind == TypeKind.class) {
+                try std.fmt.format(string.writer(), "        return gd.callUtilityRetObj({s}, _gde_function_bind, .{{ {s} }});\n", .{ return_string_type.items, args_tuple.items });
+            } else {
+                try std.fmt.format(string.writer(), "        return gd.callUtilityRet({s}, _gde_function_bind, .{{ {s} }});\n", .{ return_string_type.items, args_tuple.items });
+            }
+        }
+    }
+
+    try string.appendSlice("    }\n\n"); // Function end
+
+    return string;
+}
+
+fn generateUtilityFunctions(functions: *const std.json.Array) !void {
+    var string = String.init(std.heap.page_allocator);
+    defer string.deinit();
+
+    // Imports
+    {
+        try string.appendSlice("const gd = @import(\"../../godot.zig\");\n\n");
+        try string.appendSlice("const Object = @import(\"../../gen/classes/object.zig\").Object;\n\n");
+
+        var json_types = std.ArrayList([]const u8).init(std.heap.page_allocator);
+        defer json_types.deinit();
+        for (functions.items) |item| {
+            const function = item.object;
+            getUsedTypesByFunction(&function, &json_types);
+        }
+
+        var parsed_types = std.ArrayList(ParsedType).init(std.heap.page_allocator);
+        defer parsed_types.deinit();
+        try parsed_types.resize(json_types.items.len);
+        for (json_types.items, 0..) |json_type, i| {
+            parsed_types.items[i] = ParsedType.new(json_type);
+        }
+
+        var used_builtin = std.StringHashMap(void).init(std.heap.page_allocator);
+        defer used_builtin.deinit();
+        for (parsed_types.items) |parsed_type| {
+            filterPutUniqueBuiltinClass(&parsed_type, &used_builtin);
+        }
+
+        if (used_builtin.count() > 0) {
+            try string.appendSlice("const ct = @import(\"../../core/core_types.zig\");\n");
+        }
+
+        var iterator = used_builtin.iterator();
+        while (iterator.next()) |entry| {
+            const used_builtin_name = entry.key_ptr.*;
+            try std.fmt.format(string.writer(), "const {s} = ct.{s};\n", .{ used_builtin_name, used_builtin_name });
+        }
+
+        if (used_builtin.count() > 0) {
+            try string.appendSlice("\n");
+        }
+    }
+
+    try string.appendSlice("pub const UtilityFunctions = struct {\n\n");
+
+    for (functions.items) |item| {
+        const function = item.object;
+        const function_string = try generateUtilityFunction(&function);
+        defer function_string.deinit();
+        try string.appendSlice(function_string.items);
+    }
+
+    try string.appendSlice("};\n"); // Struct end
+
+    const gen_dir = try std.fs.cwd().makeOpenPath("src/gen/classes", .{});
+    const class_file = try gen_dir.createFile("utility_functions.zig", .{});
+    defer class_file.close();
+    try class_file.writeAll(string.items);
+}
+
+
 fn generateGlobalEnums(global_enums: *const std.json.Array) !void {
     var string = String.init(std.heap.page_allocator);
     defer string.deinit();
@@ -1894,6 +2046,9 @@ pub fn generateGDExtensionAPI(api_path: []const u8, selected_build_configuration
             break;
         }
     }
+
+    const utility_functions = parsed.value.object.get("utility_functions").?.array;
+    try generateUtilityFunctions(&utility_functions);
 
     try generateClassBindings(&classes);
     try generateNativeStructs(&native_structs);

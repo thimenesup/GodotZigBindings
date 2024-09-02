@@ -3,6 +3,7 @@ const ClassDB = gdextension.class_db.ClassDB;
 const Wrapped = gdextension.wrapped.Wrapped;
 const GDClass = gdextension.wrapped.GDClass;
 
+const UtilityFunctions = gdextension.classes.utility_functions.UtilityFunctions;
 const Node2D = gdextension.classes.node2d.Node2D;
 
 const std = @import("std");
@@ -50,7 +51,12 @@ pub const TestNode2D = struct {
 
     pub fn _ready(self: *Self) void {
         _ = self;
-        std.debug.print("_ready\n", .{});
+
+        var string = gdextension.godot.stringFromUtf8("_ready");
+        defer string.deinit();
+        var string_var = gdextension.core_types.Variant.initString(&string);
+        defer string_var.deinit();
+        _ = UtilityFunctions.print(&string_var, .{});
     }
 
     pub fn _process(self: *Self, delta: f64) void {

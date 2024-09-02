@@ -200,6 +200,61 @@ pub fn callNativeMbRetObj(comptime O: type, mb: gi.GDExtensionMethodBindPtr, ins
 }
 
 
+pub fn callUtilityNoRet(func: gi.GDExtensionPtrUtilityFunction, args: anytype) void {
+    var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
+    inline for (args, 0..) |arg, i| {
+        payload[i] = @ptrCast(arg);
+    }
+    func.?(null, &payload, payload.len);
+}
+
+pub fn callUtilityRet(comptime T: type, func: gi.GDExtensionPtrUtilityFunction, args: anytype) T {
+    var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
+    inline for (args, 0..) |arg, i| {
+        payload[i] = @ptrCast(arg);
+    }
+
+    // Godot calling convention handles all integers, floats and bool to have certain size, so we must handle conversion...
+    const type_info = @typeInfo(T);
+    const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
+    switch (type_info) {
+        type_tag.Bool => {
+            var ret: u8 = undefined;
+            func.?(&ret, &payload, payload.len);
+            return @as(bool, ret);
+        },
+        type_tag.Int => {
+            var ret: u64 = undefined;
+            func.?(&ret, &payload, payload.len);
+            return @truncate(@as(u64, @bitCast(ret)));
+        },
+        type_tag.Float => {
+            var ret: f64 = undefined;
+            func.?(&ret, &payload, payload.len);
+            return @floatCast(ret);
+        },
+        else => {
+            var ret: T = undefined;
+            func.?(&ret, &payload, payload.len);
+            return ret;
+        }
+    }
+}
+
+pub fn callUtilityRetObj(comptime O: type, func: gi.GDExtensionPtrUtilityFunction, args: anytype) O {
+    var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
+    inline for (args, 0..) |arg, i| {
+        payload[i] = @ptrCast(arg);
+    }
+    var ret: ?*anyopaque = null;
+    func.?(&ret, &payload, payload.len);
+    if (ret == null) {
+        return null;
+    }
+    return @ptrCast(interface.?.object_get_instance_binding(ret, token, O.GodotClass.getBindingCallBacks()));
+}
+
+
 const String = @import("gen/builtin_classes/string.zig").String;
 const StringName = @import("gen/builtin_classes/string_name.zig").StringName;
 
