@@ -546,18 +546,16 @@ fn stringFunctionSignatureBase(is_method: bool, function_name: []const u8, parse
     const camel_function_name = toCamelCase(function_name);
     defer camel_function_name.deinit();
 
-    const return_string = if (is_vararg) "Variant" else parsed_return_type_string;
-
     var string = String.init(std.heap.page_allocator);
     if (is_method) {
         const constness_string = if (is_const) "const " else "";
         std.fmt.format(string.writer(),
             "    pub fn {s}(self: *{s}Self{s}) {s} {{\n",
-            .{ camel_function_name.items, constness_string, signature_args.items, return_string }) catch {};
+            .{ camel_function_name.items, constness_string, signature_args.items, parsed_return_type_string }) catch {};
     } else {
         std.fmt.format(string.writer(),
             "    pub fn {s}({s}) {s} {{\n",
-            .{ camel_function_name.items, signature_args.items, return_string }) catch {};
+            .{ camel_function_name.items, signature_args.items, parsed_return_type_string }) catch {};
     }
 
     return string;
@@ -1038,8 +1036,18 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 const args_tuple = stringArgs(arg_arguments);
                 defer args_tuple.deinit();
 
+                const no_return = std.mem.eql(u8, return_string_type.items, "void");
                 if (is_vararg) {
-                    try std.fmt.format(string.writer(), "        return gd.callMbRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+                    try std.fmt.format(string.writer(), "        const ret = gd.callMbRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+                    if (no_return) {
+                        try string.appendSlice("        _ = ret;\n");
+                    } else {
+                        if (std.mem.eql(u8, return_string_type.items, "Variant")) {
+                            try string.appendSlice("        return ret;\n");
+                        } else {
+                            try std.fmt.format(string.writer(), "        return ret.as({s});\n", .{ return_string_type.items });
+                        }
+                    }
                 } else {
                     if (std.mem.eql(u8, return_string_type.items, "void")) { // No return
                         try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
@@ -1731,12 +1739,20 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             const args_tuple = stringArgs(arg_arguments);
             defer args_tuple.deinit();
 
+            const no_return = std.mem.eql(u8, return_string_type.items, "void");
             if (is_vararg) {
-                try std.fmt.format(impl_binds.writer(),
-                    "        return gd.callMbRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }} ++ p_vararg);\n",
-                    .{ escaped_method_name.items, args_tuple.items });
+                try std.fmt.format(impl_binds.writer(), "        const ret = gd.callMbRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }} ++ p_vararg);\n", .{ escaped_method_name.items, args_tuple.items });
+                if (no_return) {
+                    try impl_binds.appendSlice("        _ = ret;\n");
+                } else {
+                    if (std.mem.eql(u8, return_string_type.items, "Variant")) {
+                        try impl_binds.appendSlice("        return ret;\n");
+                    } else {
+                        try std.fmt.format(impl_binds.writer(), "        return ret.as({s});\n", .{ return_string_type.items });
+                    }
+                }
             } else {
-                if (std.mem.eql(u8, return_string_type.items, "void")) { // No return
+                if (no_return) { // No return
                     try std.fmt.format(impl_binds.writer(),
                         "        gd.callBuiltinMbNoRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
                         .{ escaped_method_name.items, args_tuple.items });
@@ -1931,10 +1947,20 @@ fn generateUtilityFunction(function: *const std.json.ObjectMap) !String {
     const args_tuple = stringArgs(arg_arguments);
     defer args_tuple.deinit();
 
+    const no_return = std.mem.eql(u8, return_string_type.items, "void");
     if (is_vararg) {
-        try std.fmt.format(string.writer(), "        return gd.callUtilityRet(Variant, _gde_function_bind, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+        try std.fmt.format(string.writer(), "        const ret = gd.callUtilityRet(Variant, _gde_function_bind, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+        if (no_return) {
+            try string.appendSlice("        _ = ret;\n");
+        } else {
+            if (std.mem.eql(u8, return_string_type.items, "Variant")) {
+                try string.appendSlice("        return ret;\n");
+            } else {
+                try std.fmt.format(string.writer(), "        return ret.as({s});\n", .{ return_string_type.items });
+            }
+        }
     } else {
-        if (std.mem.eql(u8, return_string_type.items, "void")) { // No return
+        if (no_return) {
             try std.fmt.format(string.writer(), "        gd.callUtilityNoRet(_gde_function_bind, .{{ {s} }});\n", .{ args_tuple.items });
         } else {
             if (parsed_return_type.type_kind == TypeKind.class) {

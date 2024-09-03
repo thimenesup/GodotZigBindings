@@ -700,6 +700,14 @@ pub const Variant = struct {
         };
     }
 
+    fn VariantAsEnum(comptime T: type) type {
+        return struct {
+            fn function(variant: *const Variant) T {
+                return @enumFromInt(variant.asInt());
+            }
+        };
+    }
+
 
     pub fn variantAsType(comptime T: type) (fn(*const Variant) T) {
         const type_info = @typeInfo(T);
@@ -716,6 +724,9 @@ pub const Variant = struct {
             },
             type_tag.Float => {
                 return VariantAsFloat(T).function;
+            },
+            type_tag.Enum => {
+                return VariantAsEnum(T).function;
             },
             else => {},
         }
@@ -829,6 +840,10 @@ pub const Variant = struct {
         }
 
         return null;
+    }
+
+    pub fn as(self: *const Self, comptime T: type) T {
+        return variantAsType(T)(self);
     }
 
     pub fn typeAsVariant(comptime T: type) (fn(*const T) Variant) {

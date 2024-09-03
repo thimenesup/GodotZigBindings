@@ -56,7 +56,7 @@ pub const TestNode2D = struct {
         defer string.deinit();
         var string_var = gdextension.core_types.Variant.initString(&string);
         defer string_var.deinit();
-        _ = UtilityFunctions.print(&string_var, .{});
+        UtilityFunctions.print(&string_var, .{});
     }
 
     pub fn _process(self: *Self, delta: f64) void {
