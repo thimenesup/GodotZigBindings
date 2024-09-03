@@ -98,6 +98,15 @@ fn escapeFunctionName(string: []const u8) String { //Must deinit string
 
 fn convertIntPrimitive(base_type: []const u8) ?[]const u8 {
     const int_conversions = [_][2][]const u8 {
+        .{ "int", "i64" }, //NOTE: Godot int is 64bit //WARNING: Except on NativeStructs...
+        .{ "int8", "i8" },
+        .{ "int16", "i16" },
+        .{ "int32", "i32" },
+        .{ "int64", "i64" },
+        .{ "uint8", "u8" },
+        .{ "uint16", "u16" },
+        .{ "uint32", "u32" },
+        .{ "uint64", "u64" },
         .{ "uint8_t", "u8" },
         .{ "uint16_t", "u16" },
         .{ "uint32_t", "u32" },
@@ -106,7 +115,6 @@ fn convertIntPrimitive(base_type: []const u8) ?[]const u8 {
         .{ "int16_t", "i16" },
         .{ "int32_t", "i32" },
         .{ "int64_t", "i64" },
-        .{ "int", "i32" },
     };
 
     var i: usize = 0;
@@ -120,9 +128,9 @@ fn convertIntPrimitive(base_type: []const u8) ?[]const u8 {
 
 fn convertFloatPrimitive(base_type: []const u8) ?[]const u8 {
     const float_conversions = [_][2][]const u8 {
-        .{ "float", "f32" },
+        .{ "float", "f64" }, //NOTE: Godot float is 64bit //WARNING: Except on NativeStructs...
         .{ "double", "f64" },
-        .{ "real_t", "f32" },
+        .{ "float32", "f32" },
     };
 
     var i: usize = 0;
@@ -135,23 +143,22 @@ fn convertFloatPrimitive(base_type: []const u8) ?[]const u8 {
 }
 
 fn convertPrimitiveBaseTypeToZig(base_type: []const u8) ?[]const u8 {
-    if (convertIntPrimitive(base_type)) |converted| {
-        return converted;
-    }
-    if (convertFloatPrimitive(base_type)) |converted| {
-        return converted;
-    }
-
     const other_conversions = [_][2][]const u8 {
         .{ "void", "void" },
         .{ "bool", "bool" },
     };
-
     var i: usize = 0;
     while (i < other_conversions.len) : (i += 1) {
         if (std.mem.eql(u8, base_type, other_conversions[i][0])) {
             return other_conversions[i][1];
         }
+    }
+
+    if (convertFloatPrimitive(base_type)) |converted| {
+        return converted;
+    }
+    if (convertIntPrimitive(base_type)) |converted| {
+        return converted;
     }
     return null;
 }
@@ -512,7 +519,8 @@ fn stringFunctionSignatureBase(is_method: bool, function_name: []const u8, parse
             const argument = arguments_item.object;
 
             const arg_name = argument.get("name").?.string;
-            const parsed_arg_type = ParsedType.new(argument.get("type").?.string);
+            const raw_type = if (argument.get("meta")) |meta| meta.string else argument.get("type").?.string;
+            const parsed_arg_type = ParsedType.new(raw_type);
             const string_type = parsed_arg_type.stringConverted(false);
             defer string_type.deinit();
 
@@ -959,13 +967,18 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 var json_return_type: []const u8 = "void";
                 if (method.get("return_value")) |get_return_value| {
                     const return_value_object = get_return_value.object;
-                    json_return_type = return_value_object.get("type").?.string;
+                    if (return_value_object.get("meta")) |meta| {
+                        json_return_type = meta.string;
+                    } else {
+                        json_return_type = return_value_object.get("type").?.string;
+                    }
                 }
                 break :blk ParsedType.new(json_return_type);
             };
             const return_string_type = parsed_return_type.stringConverted(true);
             defer return_string_type.deinit();
 
+            const has_return_value = method.get("return_value") != null;
             const is_vararg = method.get("is_vararg").?.bool;
             const is_const = method.get("is_const").?.bool;
             const is_virtual = method.get("is_virtual").?.bool;
@@ -1000,7 +1013,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                         try std.fmt.format(string.writer(), "        _ = p_{s};\n", .{ arg_name });
                     }
                 }
-                if (method.get("return_value")) |_| {
+                if (has_return_value) {
                     try std.fmt.format(string.writer(), "        return _Variant.defaultConstruct({s});\n", .{ return_string_type.items });
                 }
             } else {
@@ -1088,6 +1101,11 @@ const StructField = struct {
     identifier: []const u8,
 };
 
+var real_t_32bits = false;
+inline fn isReal32Bits() bool {
+    return real_t_32bits;
+}
+
 fn extractFormatFields(format: []const u8, fields: *std.ArrayList(StructField)) void {
     var slice = format;
     while (true) {
@@ -1097,6 +1115,23 @@ fn extractFormatFields(format: []const u8, fields: *std.ArrayList(StructField)) 
             const index = std.mem.indexOf(u8, slice, needle);
             raw_type = slice[0..index.?];
             slice = slice[(index.? + needle.len)..slice.len];
+        }
+
+        {
+            //NOTE: Godot int and float are always 64 bit, except on struct fields where they are 32bit... so we must convert them for proper layout sizes...
+            if (std.mem.eql(u8, raw_type, "int")) {
+                raw_type = "int32";
+            } else if (std.mem.eql(u8, raw_type, "float")) {
+                raw_type = "float32";
+            }
+            //Also real_t can be either 32bit or 64bit depending on build config...
+            if (std.mem.eql(u8, raw_type, "real_t")) {
+                if (isReal32Bits()) {
+                    raw_type = "float32";
+                } else {
+                    raw_type = "double";
+                }
+            }
         }
 
         var pointer: usize = 0;
@@ -1667,7 +1702,11 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
                 var json_return_type: []const u8 = "void";
                 if (method.get("return_value")) |get_return_value| {
                     const return_value_object = get_return_value.object;
-                    json_return_type = return_value_object.get("type").?.string;
+                    if (return_value_object.get("meta")) |meta| {
+                        json_return_type = meta.string;
+                    } else {
+                        json_return_type = return_value_object.get("type").?.string;
+                    }
                 }
                 break :blk ParsedType.new(json_return_type);
             };
@@ -2046,6 +2085,8 @@ pub fn generateGDExtensionAPI(api_path: []const u8, selected_build_configuration
             break;
         }
     }
+
+    real_t_32bits = selected_build_configuration == BuildConfiguration.float_32 or selected_build_configuration == BuildConfiguration.float_64;
 
     const utility_functions = parsed.value.object.get("utility_functions").?.array;
     try generateUtilityFunctions(&utility_functions);
