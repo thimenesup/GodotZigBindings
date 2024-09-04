@@ -8,22 +8,26 @@ fn toSnakeCase(string: []const u8) String { //Must deinit string
     var i: usize = 0;
     while (i < string.len) : (i += 1) {
         const char = string[i];
-        if (i > 0) {
-            if (i + 1 < string.len) {
-                const next = string[i + 1];
-                if (std.ascii.isLower(char) or std.ascii.isDigit(char)) {
-                    if (std.ascii.isUpper(next) and next != 'D') { // NOTE: Arbitrary 'D' check so strings like "Body2DState" dont become "body_2_d_state"
-                        snake_case.append(std.ascii.toLower(char)) catch {};
-                        snake_case.append('_') catch {};
-                        continue;
-                    }
-                } else {
-                    const previous = string[i - 1];
-                    if (std.ascii.isLower(next) and std.ascii.isUpper(previous) and previous != '_') {
-                        snake_case.append('_') catch {};
-                        snake_case.append(std.ascii.toLower(char)) catch {};
-                        continue;
-                    }
+        if (i > 0 and (i + 1) < string.len) {
+            const next = string[i + 1];
+            if (std.ascii.isLower(char) or std.ascii.isDigit(char)) {
+                // NOTE: Arbitrary 'D' check so strings like "Body2DState" dont become "body_2_d_state", therefore matching C++ GDExtension naming convention
+                if (std.ascii.isDigit(char) and next == 'D') {
+                    snake_case.append(std.ascii.toLower(char)) catch {};
+                    continue;
+                }
+
+                if (std.ascii.isUpper(next)) {
+                    snake_case.append(std.ascii.toLower(char)) catch {};
+                    snake_case.append('_') catch {};
+                    continue;
+                }
+            } else {
+                const previous = string[i - 1];
+                if (std.ascii.isLower(next) and std.ascii.isUpper(previous) and previous != '_') {
+                    snake_case.append('_') catch {};
+                    snake_case.append(std.ascii.toLower(char)) catch {};
+                    continue;
                 }
             }
         }
