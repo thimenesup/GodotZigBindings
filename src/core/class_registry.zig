@@ -333,56 +333,19 @@ fn FunctionWrapper(comptime function: anytype) type {
 
             const fn_info = @typeInfo(@TypeOf(function)).Fn;
 
-            switch(fn_info.params.len) { //TODO: Find if its possible to this automatically
-                1 => {
-                    const result = @call(.auto, function, .{
-                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
-                    });
-                    
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                2 => {
-                    const result = @call(.auto, function, .{
-                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
-                    });
-                    
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                3 => {
-                    const result = @call(.auto, function, .{
-                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
-                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
-                    });
-                    
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                4 => {
-                    const result = @call(.auto, function, .{
-                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
-                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
-                        Variant.variantAsType(fn_info.params[3].type.?)(args[3]),
-                    });
-
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                5 => {
-                    const result = @call(.auto, function, .{
-                        Variant.variantAsType(fn_info.params[0].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[1]),
-                        Variant.variantAsType(fn_info.params[2].type.?)(args[2]),
-                        Variant.variantAsType(fn_info.params[3].type.?)(args[3]),
-                        Variant.variantAsType(fn_info.params[4].type.?)(args[4]),
-                    });
-
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                else => {
-                    @compileError("Unsupported arg count");
-                },
+            comptime var arg_types: [fn_info.params.len]type = undefined;
+            inline for (fn_info.params, 0..) |param, i| {
+                arg_types[i] = param.type.?;
             }
+
+            const TupleType = std.meta.Tuple(&arg_types);
+            var arg_tuple: TupleType = undefined;
+            inline for (fn_info.params, 0..) |_, i| {
+                arg_tuple[i] = Variant.variantAsType(fn_info.params[i].type.?)(args[i]);
+            }
+
+            const result = @call(.auto, function, arg_tuple);
+            return Variant.typeAsVariant(fn_info.return_type.?)(result);
         }
 
     };
@@ -428,56 +391,23 @@ fn MethodWrapper(comptime class: type, comptime function: anytype) type {
                 @compileError("The first parameter of a method should be the struct");
             };
 
-            switch(fn_info.params.len) { //TODO: Find if its possible to this automatically
-                1 => {
-                    const result = @call(.auto, function, .{
-                        struct_instance,
-                    });
-                    
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                2 => {
-                    const result = @call(.auto, function, .{
-                        struct_instance,
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
-                    });
-                    
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                3 => {
-                    const result = @call(.auto, function, .{
-                        struct_instance,
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
-                    });
-                    
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                4 => {
-                    const result = @call(.auto, function, .{
-                        struct_instance,
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
-                        Variant.variantAsType(fn_info.params[3].type.?)(args[2]),
-                    });
-
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                5 => {
-                    const result = @call(.auto, function, .{
-                        struct_instance,
-                        Variant.variantAsType(fn_info.params[1].type.?)(args[0]),
-                        Variant.variantAsType(fn_info.params[2].type.?)(args[1]),
-                        Variant.variantAsType(fn_info.params[3].type.?)(args[2]),
-                        Variant.variantAsType(fn_info.params[4].type.?)(args[3]),
-                    });
-
-                    return Variant.typeAsVariant(fn_info.return_type.?)(result);
-                },
-                else => {
-                    @compileError("Unsupported arg count");
-                },
+            comptime var arg_types: [fn_info.params.len]type = undefined;
+            inline for (fn_info.params, 0..) |param, i| {
+                arg_types[i] = param.type.?;
             }
+
+            const TupleType = std.meta.Tuple(&arg_types);
+            var arg_tuple: TupleType = undefined;
+            inline for (fn_info.params, 0..) |_, i| {
+                if (i == 0) {
+                    arg_tuple[i] = struct_instance;
+                } else {
+                    arg_tuple[i] = Variant.variantAsType(fn_info.params[i].type.?)(args[i - 1]);
+                }
+            }
+
+            const result = @call(.auto, function, arg_tuple);
+            return Variant.typeAsVariant(fn_info.return_type.?)(result);
         }
 
     };
