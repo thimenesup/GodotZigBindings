@@ -168,7 +168,7 @@ pub const Vector3 = extern struct {
     }
 
     pub inline fn abs(self: *const Self) Self {
-        return Vector3.new(@fabs(self.x), @fabs(self.y), @fabs(self.z));
+        return Vector3.new(@abs(self.x), @abs(self.y), @abs(self.z));
     }
 
     pub inline fn ceil(self: *const Self) Self {
@@ -259,7 +259,7 @@ pub const Vector3 = extern struct {
     }
 
     pub inline fn isNormalized(self: *const Self) bool {
-        return @fabs(self.lengthSquared() - 1.0) < 0.00001;
+        return @abs(self.lengthSquared() - 1.0) < 0.00001;
     }
 
     pub inline fn maxAxis(self: *const Self) i32 {

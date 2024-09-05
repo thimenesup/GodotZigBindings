@@ -154,7 +154,7 @@ pub const Basis = extern struct {
         while (i < 3) : (i += 1) {
             var j: usize = 0;
             while (j < 3) : (j += 1) {
-                if (@fabs(self.elements[i].axis(j) - other.elements[i].axis(j)) > epsilon) {
+                if (@abs(self.elements[i].axis(j) - other.elements[i].axis(j)) > epsilon) {
                     return false;
                 }
             }
@@ -170,7 +170,7 @@ pub const Basis = extern struct {
     }
 
     pub inline fn isRotation(self: *const Self) bool {
-        return @fabs(self.determinant() - 1.0) < epsilon and self.isOrthogonal();
+        return @abs(self.determinant() - 1.0) < epsilon and self.isOrthogonal();
     }
 
     pub inline fn determinant(self: *const Self) f32 {
@@ -481,11 +481,11 @@ pub const Basis = extern struct {
     }
 
     pub inline fn isSymmetric(self: *const Self) bool {
-        if (@fabs(self.elements[0].y - self.elements[1].x) > epsilon)
+        if (@abs(self.elements[0].y - self.elements[1].x) > epsilon)
             return false;
-        if (@fabs(self.elements[0].z - self.elements[2].x) > epsilon)
+        if (@abs(self.elements[0].z - self.elements[2].x) > epsilon)
             return false;
-        if (@fabs(self.elements[1].z - self.elements[2].y) > epsilon)
+        if (@abs(self.elements[1].z - self.elements[2].y) > epsilon)
             return false;
 
         return true;
@@ -531,7 +531,7 @@ pub const Basis = extern struct {
             }
 
             var angle: f32 = 0.0;
-            if (@fabs(self.elements[j].axis(j) - self.elements[i].axis(i)) < epsilon) {
+            if (@abs(self.elements[j].axis(j) - self.elements[i].axis(i)) < epsilon) {
                 angle = std.math.pi / 4.0;
             }
             else {

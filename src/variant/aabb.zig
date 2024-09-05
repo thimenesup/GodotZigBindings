@@ -248,10 +248,10 @@ pub const AABB = extern struct {
     }
 
     pub fn mergeWith(self: *Self, other: *const AABB) void {
-        var beg_1 = self.position;
-        var beg_2 = other.position;
-        var end_1 = Vector3.new(self.size.x, self.size.y, self.size.z).plus(beg_1);
-        var end_2 = Vector3.new(other.size.x, other.size.y, other.size.z).plus(beg_2);
+        const beg_1 = self.position;
+        const beg_2 = other.position;
+        const end_1 = Vector3.new(self.size.x, self.size.y, self.size.z).plus(beg_1);
+        const end_2 = Vector3.new(other.size.x, other.size.y, other.size.z).plus(beg_2);
 
         var min = Vector3.new(0, 0, 0);
         min.x = if (beg_1.x < beg_2.x) beg_1.x else beg_2.x;

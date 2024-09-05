@@ -1,8 +1,8 @@
 # Zig lang bindings for Godot GDExtension
 
-For Zig Version 0.11.0 and Godot 4.0.0 (Work In Progress)
+For Zig Version 0.12.0 and Godot 4.0.0
 
-If you are looking for the GDNative Godot 3.0.0 bindings [**click here**](https://github.com/thimenesup/GodotZigBindings/commit/e49363b4035fc7dac5e53da0dccdd9455704b51c)
+If you are looking for the GDNative Godot 3.0.0 bindings [**click here**](https://github.com/thimenesup/GodotZigBindings/tree/3.x)
 
 ## Package Usage
 

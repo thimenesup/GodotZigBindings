@@ -47,7 +47,7 @@ pub const Plane = extern struct {
 
         var p: Vector3 = undefined;
 
-        if (@fabs(self.normal.dot(p0)) > 0.99) {
+        if (@abs(self.normal.dot(p0)) > 0.99) {
             p = p1;
         }
         else {
@@ -69,7 +69,7 @@ pub const Plane = extern struct {
 
         const denom = normal0.cross(normal1).dot(normal2);
 
-        if (@fabs(denom) <= epsilon) {
+        if (@abs(denom) <= epsilon) {
             return false;
         }
 
@@ -88,7 +88,7 @@ pub const Plane = extern struct {
         const segment = dir;
         const den = self.normal.dot(segment);
 
-        if (@fabs(den) <= epsilon) {
+        if (@abs(den) <= epsilon) {
             return false;
         }
 
@@ -108,7 +108,7 @@ pub const Plane = extern struct {
         const segment = begin.minus(end);
         const den = self.normal.dot(segment);
 
-        if (@fabs(den) <= epsilon) {
+        if (@abs(den) <= epsilon) {
             return false;
         }
 
@@ -125,7 +125,7 @@ pub const Plane = extern struct {
     }
 
     pub inline fn isAlmostLike(self: *const Self, other: *const Plane) bool {
-        return self.normal.dot(other.normal) > epsilon and @fabs(self.d - other.d) < epsilon;
+        return self.normal.dot(other.normal) > epsilon and @abs(self.d - other.d) < epsilon;
     }
 
     pub inline fn isPointOver(self: *const Self, point: *const Vector3) bool {
@@ -138,7 +138,7 @@ pub const Plane = extern struct {
 
     pub inline fn hasPoint(self: *const Self, point: *const Vector3, p_epsilon: f32) bool {
         var dist = self.normal.dot(point) - self.d;
-        dist = @fabs(dist);
+        dist = @abs(dist);
         return dist <= p_epsilon;
     }
 

@@ -2,7 +2,7 @@ const std = @import("std");
 
 const BindingGenerator = @import("binding_generator.zig");
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.Build) !void {
     const gdextension_api_file = b.option([]const u8, "gdextension", "Specify GDExtension API json file") orelse "";
     if (gdextension_api_file.len == 0) {
         std.debug.print("You must specify the GDExtension API file path to generate\n", .{});
