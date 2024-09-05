@@ -222,7 +222,7 @@ pub const Quat = struct {
 
         const d = from.dot(q);
 
-        if (@fabs(d) > 0.9999)
+        if (@abs(d) > 0.9999)
             return from;
         
         const theta = acos(d);

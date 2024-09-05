@@ -1,10 +1,10 @@
 # Zig lang bindings for Godot GDNative
 
-For Zig Version 0.11.0 and Godot 3.2.0+
+For Zig Version 0.12.0 and Godot 3.2.0+
 
 ## Package Usage
 
-Before you use this as a package, you must generate the GDNative and class files for Zig, this is done by bulding with the following options
+Before you use this as a package, you must generate the GDNative and class files for Zig, this is done by building with the following options
 
 ```
 zig build -Dgdnative="mydir/gdnative_api.json" -Dclasses="mydir/api.json"

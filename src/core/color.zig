@@ -384,7 +384,7 @@ pub const Color = extern struct {
 
         const i: usize = @intFromFloat(h / 60.0);
         const c = p_v * p_s;
-        const x = c * (1.0 - @fabs(@mod(h / 60.0, 2.0) - 1.0));
+        const x = c * (1.0 - @abs(@mod(h / 60.0, 2.0) - 1.0));
 
         var r: T = 0.0;
         var g: T = 0.0;

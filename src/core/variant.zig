@@ -637,7 +637,7 @@ pub const Variant = struct {
             return @ptrCast(@alignCast(custom_instance_data));
         }
         else {
-            var instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, godot_object);
+            const instance_data = api.nativescript_1_1.godot_nativescript_get_instance_binding_data.?(api.language_index, godot_object);
             return @ptrCast(@alignCast(instance_data));
         }
     }

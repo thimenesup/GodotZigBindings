@@ -35,7 +35,7 @@ pub const Array = struct {
     }
 
     pub fn initGodotArray(p_godot_array: gd.godot_array) Self {
-        var self = Self {
+        const self = Self {
             .godot_array = p_godot_array,
         };
 

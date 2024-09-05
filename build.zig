@@ -2,7 +2,7 @@ const std = @import("std");
 
 const BindingGenerator = @import("binding_generator.zig");
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.Build) !void {
     const gdnative_api_file = b.option([]const u8, "gdnative", "Specify GDNative API json file") orelse "";
     if (gdnative_api_file.len == 0) {
         std.debug.print("You must specify the GDNative API file path to generate\n", .{});

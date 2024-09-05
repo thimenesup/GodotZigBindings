@@ -264,7 +264,7 @@ pub const Vector2 = extern struct {
     }
 
     pub inline fn abs(self: *const Self) Self {
-        return Vector2.new(@fabs(self.x), @fabs(self.y));
+        return Vector2.new(@abs(self.x), @abs(self.y));
     }
 
     pub inline fn rotated(self: *const Self, by: T) Self {

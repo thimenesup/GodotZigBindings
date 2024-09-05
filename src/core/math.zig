@@ -25,12 +25,12 @@ pub inline fn isEqualApprox(T: type, a: T, b: T) bool {
         return true;
     }
 
-    var tolerance = std.math.epsilon * @fabs(a);
+    var tolerance = std.math.epsilon * @abs(a);
     if (tolerance < std.math.epsilon) {
         tolerance = std.math.epsilon;
     }
 
-    return @fabs(a - b) < tolerance;
+    return @abs(a - b) < tolerance;
 }
 
 pub inline fn isEqualApproxTolerance(T: type, a: T, b: T, tolerance: T) bool {
@@ -38,11 +38,11 @@ pub inline fn isEqualApproxTolerance(T: type, a: T, b: T, tolerance: T) bool {
         return true;
     }
 
-    return @fabs(a - b) < tolerance;
+    return @abs(a - b) < tolerance;
 }
 
 pub inline fn isZeroApprox(T: type, x: T) bool {
-    return @fabs(x) < std.math.epsilon;
+    return @abs(x) < std.math.epsilon;
 }
 
 pub inline fn sign(T: type, x: T) T {
@@ -66,7 +66,7 @@ pub inline fn db2linear(T: type, db: T) T {
 }
 
 pub inline fn moveToward(T: type, from: T, to: T, delta: T) T {
-    return if (@fabs(to - from) <= delta) to else from + sign(to - from) * delta;
+    return if (@abs(to - from) <= delta) to else from + sign(to - from) * delta;
 }
 
 pub inline fn stepify(T: type, value: T, step: T) T {
