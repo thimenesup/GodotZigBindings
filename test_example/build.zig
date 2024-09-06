@@ -8,7 +8,10 @@ pub fn build(b: *std.Build) !void {
         .{
             .name = "gdnative_example",
             .root_source_file = .{
-                .path = "src/lib.zig"
+                .src_path = .{
+                    .owner = b,
+                    .sub_path = "src/lib.zig",
+                },
             },
             .version = .{
                 .major = 1,
@@ -25,7 +28,10 @@ pub fn build(b: *std.Build) !void {
         "gdnative",
         b.createModule(.{
             .root_source_file = .{
-                .path = gdnative_package_path
+                .src_path = .{
+                    .owner = b,
+                    .sub_path = gdnative_package_path,
+                },
             },
         }),
     );

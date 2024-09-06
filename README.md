@@ -1,6 +1,6 @@
 # Zig lang bindings for Godot GDNative
 
-For Zig Version 0.12.0 and Godot 3.2.0+
+For Zig Version 0.13.0 and Godot 3.2.0+
 
 ## Package Usage
 
