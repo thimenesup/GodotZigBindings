@@ -8,7 +8,10 @@ pub fn build(b: *std.Build) !void {
         .{
             .name = "gdextension_example",
             .root_source_file = .{
-                .path = "src/lib.zig"
+                .src_path = .{
+                    .owner = b,
+                    .sub_path = "src/lib.zig",
+                },
             },
             .version = .{
                 .major = 1,
@@ -25,7 +28,10 @@ pub fn build(b: *std.Build) !void {
         "gdextension",
         b.createModule(.{
             .root_source_file = .{
-                .path = gdextension_package_path
+                .src_path = .{
+                    .owner = b,
+                    .sub_path = gdextension_package_path,
+                },
             },
         }),
     );
