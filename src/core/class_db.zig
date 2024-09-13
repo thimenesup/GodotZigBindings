@@ -93,7 +93,7 @@ pub const ClassDB = struct {
                 const variant_type = Variant.typeToVariantType(base_type);
 
                 var storage = &signature.storage[i];
-                storage.name = gd.stringNameFromUtf8(arg_name);
+                storage.name = StringName.initUtf8(arg_name);
                 storage.class = classStringName(base_type);
                 storage.hint = String.init();
 
@@ -119,7 +119,7 @@ pub const ClassDB = struct {
                 const variant_type = Variant.typeToVariantType(base_type);
 
                 var storage = &signature.storage[max_argument_count];
-                storage.name = gd.stringNameFromUtf8(name);
+                storage.name = StringName.initUtf8(name);
                 storage.class = classStringName(base_type);
                 storage.hint = String.init();
 
@@ -216,7 +216,7 @@ pub const ClassDB = struct {
         const wrapper_call = BindWrapper.MethodCall(class, function);
         const wrapper_ptrcall = BindWrapper.MethodPtrCall(class, function);
 
-        var string_name = gd.stringNameFromUtf8(name);
+        var string_name = StringName.initUtf8(name);
         defer string_name.deinit();
 
         const method_info = gi.GDExtensionClassMethodInfo {
@@ -248,7 +248,7 @@ pub const ClassDB = struct {
         const wrapper_call = BindWrapper.FunctionCall(function);
         const wrapper_ptrcall = BindWrapper.FunctionPtrCall(function);
 
-        var string_name = gd.stringNameFromUtf8(name);
+        var string_name = StringName.initUtf8(name);
         defer string_name.deinit();
 
         const method_info = gi.GDExtensionClassMethodInfo {
@@ -306,9 +306,9 @@ pub const ClassDB = struct {
         // Must create and bind setter and getter methods
         const setter_name = "set_" ++ field;
         const getter_name = "get_" ++ field;
-        var setter_string = gd.stringNameFromUtf8(setter_name);
+        var setter_string = StringName.initUtf8(setter_name);
         defer setter_string.deinit();
-        var getter_string = gd.stringNameFromUtf8(getter_name);
+        var getter_string = StringName.initUtf8(getter_name);
         defer getter_string.deinit();
 
         const setter_func = if (@TypeOf(setter) == @TypeOf(null)) PropertyDefaultSetter(class, field).function else setter;
@@ -317,7 +317,7 @@ pub const ClassDB = struct {
         bindMethod(class, setter_func, setter_name, .{});
         bindMethod(class, getter_func, getter_name, .{});
 
-        var name_string = gd.stringNameFromUtf8(name);
+        var name_string = StringName.initUtf8(name);
         defer name_string.deinit();
         var property_class_name = classStringName(field_type);
         defer property_class_name.deinit();
@@ -346,7 +346,7 @@ pub const ClassDB = struct {
             const variant_type = Variant.typeToVariantType(base_type);
 
             var storage = &string_storage[i];
-            storage.name = gd.stringNameFromUtf8(arg_name);
+            storage.name = StringName.initUtf8(arg_name);
             storage.class = classStringName(base_type);
             storage.hint = String.init();
 
@@ -360,7 +360,7 @@ pub const ClassDB = struct {
             args_info[i] = info;
         }
 
-        var string_name = gd.stringNameFromUtf8(name);
+        var string_name = StringName.initUtf8(name);
         defer string_name.deinit();
 
         const class_name = class.getClassStatic();

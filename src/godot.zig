@@ -253,25 +253,3 @@ pub fn callUtilityRetObj(comptime O: type, func: gi.GDExtensionPtrUtilityFunctio
     }
     return @ptrCast(interface.?.object_get_instance_binding(ret, token, O.GodotClass.getBindingCallBacks()));
 }
-
-
-const String = @import("gen/builtin_classes/string.zig").String;
-const StringName = @import("gen/builtin_classes/string_name.zig").StringName;
-
-pub fn stringFromUtf8(chars: []const u8) String {
-    var string = std.mem.zeroes(String);
-    interface.?.string_new_with_utf8_chars_and_len.?(@ptrCast(&string), @ptrCast(chars.ptr), @intCast(chars.len));
-    return string;
-}
-
-pub fn stringNameFromUtf8(chars: []const u8) StringName {
-    var string = stringFromUtf8(chars);
-    defer string.deinit();
-
-    const string_name_type = gi.GDExtensionVariantType.GDEXTENSION_VARIANT_TYPE_STRING_NAME;
-    const string_constructor_index = 2;
-    const string_ctor = interface.?.variant_get_ptr_constructor.?(string_name_type, string_constructor_index);
-    var string_name = std.mem.zeroes(StringName);
-    callBuiltinConstructor(string_ctor, string_name._nativePtr(), .{ string._nativePtr() });
-    return string_name;
-}

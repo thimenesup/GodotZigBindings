@@ -3,6 +3,10 @@ const ClassDB = gdextension.class_db.ClassDB;
 const Wrapped = gdextension.wrapped.Wrapped;
 const GDClass = gdextension.wrapped.GDClass;
 
+const Variant = gdextension.core_types.Variant;
+const String = gdextension.core_types.String;
+const StringName = gdextension.core_types.StringName;
+
 const UtilityFunctions = gdextension.classes.UtilityFunctions;
 const Node2D = gdextension.classes.Node2D;
 
@@ -52,9 +56,9 @@ pub const TestNode2D = struct {
     pub fn _ready(self: *Self) void {
         _ = self;
 
-        var string = gdextension.godot.stringFromUtf8("_ready");
+        var string = String.initUtf8("_ready");
         defer string.deinit();
-        var string_var = gdextension.core_types.Variant.initString(&string);
+        var string_var = Variant.initString(&string);
         defer string_var.deinit();
         UtilityFunctions.print(&string_var, .{});
     }
@@ -105,7 +109,7 @@ pub const TestNode2D = struct {
     }
 
     pub fn testVararg(self: *Self) void {
-        var signal_name = gdextension.godot.stringNameFromUtf8("test_signal");
+        var signal_name = StringName.initUtf8("test_signal");
         defer signal_name.deinit();
         _ = self.base.base.base.base.emitSignal(&signal_name, .{ 123, 3.21 });
     }

@@ -801,6 +801,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         for (parsed_types.items) |parsed_type| {
             filterPutUniqueBuiltinClass(&parsed_type, &used_builtin);
         }
+        try used_builtin.put("StringName", {}); // Always import StringName, since its used for binds
 
         if (used_builtin.count() > 0) {
             try string.appendSlice("const ct = @import(\"../../core/core_types.zig\");\n");
@@ -1022,7 +1023,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                 try string.appendSlice("        const __class_name = Self.getClassStatic();\n");
 
                 try std.fmt.format(string.writer(),
-                    "        var __method_name = gd.stringNameFromUtf8(\"{s}\");\n",
+                    "        var __method_name = StringName.initUtf8(\"{s}\");\n",
                     .{ escaped_method_name.items });
 
                 try string.appendSlice(
@@ -1564,22 +1565,15 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
         try class_string.appendSlice("const Object = @import(\"../../gen/classes/object.zig\").Object;\n");
         try class_string.appendSlice("const ct = @import(\"../../core/core_types.zig\");\n");
 
-        if (!std.mem.eql(u8, class_name, "StringName")) {
-            try class_string.appendSlice("const StringName = ct.StringName;\n");
-        }
+        var used_builtin = getUsedBuiltinClasses(class);
+        defer used_builtin.deinit();
+        try used_builtin.put("StringName", {}); // Always import StringName, since its used for binds
 
-        var used_classes = getUsedBuiltinClasses(class);
-        defer used_classes.deinit();
-
-        var iterator = used_classes.iterator();
+        var iterator = used_builtin.iterator();
         while (iterator.next()) |entry| {
             const used_class_name = entry.key_ptr.*;
 
             if (std.mem.eql(u8, used_class_name, class_name)) { // Dont import self
-                continue;
-            }
-
-            if (std.mem.eql(u8, used_class_name, "StringName")) { // Exclude StringName since its imported by default due bindings relying on it
                 continue;
             }
 
@@ -1598,6 +1592,9 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
         const class_size = getBuiltinClassSize(class_name, class_sizes);
         try std.fmt.format(class_string.writer(), "    _opaque: [{}]u8,\n\n", .{ class_size }); // Extra { to escape it
+
+        // Import extension methods namespaced here, so we can use them as if they were builtin
+        try std.fmt.format(class_string.writer(), "    pub usingnamespace @import(\"../../variant/_extension_methods.zig\").{s}Ext;\n\n", .{ class_name });
 
         try class_string.appendSlice("    const Self = @This();\n\n");
     }
@@ -1707,7 +1704,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             try std.fmt.format(def_binds.writer(), "        {s}: gi.GDExtensionPtrBuiltInMethod,\n", .{ escaped_method_name.items });
 
             try std.fmt.format(init_mb_binds.writer(),
-                "        {{ var __method_name = gd.stringNameFromUtf8(\"{s}\"); defer __method_name.deinit(); binds.{s} = ptr_mb(this_vt, __method_name._nativePtr(), {}); }}\n",
+                "        {{ var __method_name = StringName.initUtf8(\"{s}\"); defer __method_name.deinit(); binds.{s} = ptr_mb(this_vt, __method_name._nativePtr(), {}); }}\n",
                 . { method_name, escaped_method_name.items, method_hash });
 
             const parsed_return_type = blk: {
@@ -1939,7 +1936,7 @@ fn generateUtilityFunction(function: *const std.json.ObjectMap) !String {
     try string.appendSlice(function_signature.items);
 
     // Function content
-    try std.fmt.format(string.writer(), "        var __function_name = gd.stringNameFromUtf8(\"{s}\");\n", .{ escaped_function_name.items });
+    try std.fmt.format(string.writer(), "        var __function_name = StringName.initUtf8(\"{s}\");\n", .{ escaped_function_name.items });
     try string.appendSlice("        defer __function_name.deinit();\n");
     try std.fmt.format(string.writer(),"        const _gde_function_bind = gd.interface.?.variant_get_ptr_utility_function.?(__function_name._nativePtr(), {});\n", .{ method_hash });
 
@@ -2008,6 +2005,7 @@ fn generateUtilityFunctions(functions: *const std.json.Array) !void {
         for (parsed_types.items) |parsed_type| {
             filterPutUniqueBuiltinClass(&parsed_type, &used_builtin);
         }
+        try used_builtin.put("StringName", {}); // Always import StringName, since its used for binds
 
         if (used_builtin.count() > 0) {
             try string.appendSlice("const ct = @import(\"../../core/core_types.zig\");\n");

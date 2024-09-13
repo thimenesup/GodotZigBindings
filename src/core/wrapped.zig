@@ -62,7 +62,7 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
         }
 
         pub fn getClassStatic() callconv(.C) *StringName {
-            class_string_name = gd.stringNameFromUtf8(classTypeName(class));
+            class_string_name = StringName.initUtf8(classTypeName(class));
             return &class_string_name;
         }
 
@@ -124,7 +124,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
         }
 
         pub fn _addVirtualMethod(name: []const u8, function_ptr: gi.GDExtensionClassCallVirtual) void {
-            const string_name = gd.stringNameFromUtf8(name);
+            const string_name = StringName.initUtf8(name);
             virtual_methods.putNoClobber(string_name, function_ptr) catch {};
         }
 
@@ -140,7 +140,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
         }
 
         pub fn _getExtensionClassName() callconv(.C) ?*const StringName {
-            class_string_name = gd.stringNameFromUtf8(classTypeName(class));
+            class_string_name = StringName.initUtf8(classTypeName(class));
             return &class_string_name;
         }
 
@@ -173,7 +173,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
         }
 
         pub fn getClassStatic() callconv(.C) *StringName {
-            class_string_name = gd.stringNameFromUtf8(classTypeName(class));
+            class_string_name = StringName.initUtf8(classTypeName(class));
             return &class_string_name;
         }
 
