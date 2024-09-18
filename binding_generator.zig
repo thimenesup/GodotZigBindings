@@ -586,7 +586,7 @@ fn stringArgsEncoding(arguments: ?*const std.json.Array) String { //Must deinit 
                 if (isBool(parsed_arg_type.undecorated_json_type)) {
                     std.fmt.format(string.writer(), "        const p_{s}_encoded: u8 = @intFromBool(p_{s});\n", .{ arg_name, arg_name }) catch {};
                 } else if (isInt(parsed_arg_type.undecorated_json_type)) {
-                    std.fmt.format(string.writer(), "        const p_{s}_encoded: u64 = @bitCast(p_{s});\n", .{ arg_name, arg_name }) catch {};
+                    std.fmt.format(string.writer(), "        const p_{s}_encoded: u64 = @as(u64, @intCast(p_{s}));\n", .{ arg_name, arg_name }) catch {};
                 } else if (isFloat(parsed_arg_type.undecorated_json_type)) {
                     std.fmt.format(string.writer(), "        const p_{s}_encoded: f64 = @floatCast(p_{s});\n", .{ arg_name, arg_name }) catch {};
                 } else {
@@ -610,12 +610,19 @@ fn stringArgs(arguments: ?*const std.json.Array) String { //Must deinit string
             if (parsed_arg_type.pointer > 0) {
                 std.fmt.format(string.writer(), "p_{s}", .{ arg_name }) catch {};
             } else {
-                if (parsed_arg_type.type_kind == TypeKind.class) {
-                    std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*const Wrapped, @ptrCast(p_{s}))._owner else null)", .{ arg_name, arg_name }) catch {};
-                } else if (parsed_arg_type.type_kind == TypeKind.primitive) {
-                    std.fmt.format(string.writer(), "&p_{s}_encoded", .{ arg_name }) catch {};
-                } else {
-                    std.fmt.format(string.writer(), "p_{s}", .{ arg_name }) catch {};
+                switch (parsed_arg_type.type_kind) {
+                    TypeKind.class => {
+                        std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*const Wrapped, @ptrCast(p_{s}))._owner else null)", .{ arg_name, arg_name }) catch {};
+                    },
+                    TypeKind.primitive => {
+                        std.fmt.format(string.writer(), "&p_{s}_encoded", .{ arg_name }) catch {};
+                    },
+                    TypeKind.enum_, TypeKind.bitfield => {
+                        std.fmt.format(string.writer(), "&p_{s}", .{ arg_name }) catch {};
+                    },
+                    else => {
+                        std.fmt.format(string.writer(), "p_{s}", .{ arg_name }) catch {};
+                    }
                 }
             }
 

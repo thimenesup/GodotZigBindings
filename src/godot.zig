@@ -89,7 +89,7 @@ pub fn callBuiltinMbRet(comptime T: type, method: gi.GDExtensionPtrBuiltInMethod
         type_tag.Bool => {
             var ret: u8 = undefined;
             method.?(base, &payload, &ret, payload.len);
-            return @as(bool, ret);
+            return @as(bool, ret != 0);
         },
         type_tag.Int => {
             var ret: u64 = undefined;
@@ -166,7 +166,7 @@ pub fn callNativeMbRet(comptime T: type, mb: gi.GDExtensionMethodBindPtr, instan
         type_tag.Bool => {
             var ret: u8 = undefined;
             interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
-            return @as(bool, ret);
+            return @as(bool, ret != 0);
         },
         type_tag.Int => {
             var ret: u64 = undefined;
@@ -221,7 +221,7 @@ pub fn callUtilityRet(comptime T: type, func: gi.GDExtensionPtrUtilityFunction, 
         type_tag.Bool => {
             var ret: u8 = undefined;
             func.?(&ret, &payload, payload.len);
-            return @as(bool, ret);
+            return @as(bool, ret != 0);
         },
         type_tag.Int => {
             var ret: u64 = undefined;
