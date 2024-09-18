@@ -72,7 +72,10 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _bindingCreateCallback(token: ?*anyopaque, instance: ?*anyopaque) callconv(.C) ?*anyopaque {
             _ = token;
-            return instance;
+            const allocation = gd.interface.?.mem_alloc.?(@sizeOf(class));
+            const new_wrapped: *Wrapped = @alignCast(@ptrCast(allocation));
+            new_wrapped._owner = instance;
+            return allocation;
         }
 
         pub fn _bindingFreeCallback(token: ?*anyopaque, instance: ?*anyopaque, binding: ?*anyopaque) callconv(.C) void {
