@@ -287,10 +287,18 @@ fn isBuiltinType(raw_type: []const u8) bool {
 }
 
 // NOTE: Make sure there are initialized before using either functions
+var singletons_map: std.StringHashMap(void) = undefined;
 var classes_map: std.StringHashMap(void) = undefined;
 var native_structs_map: std.StringHashMap(void) = undefined;
 
-fn initClassStructMaps(classes: *const std.json.Array, native_structs: *const std.json.Array) void {
+fn initClassStructMaps(singletons: *const std.json.Array, classes: *const std.json.Array, native_structs: *const std.json.Array) void {
+    singletons_map = std.StringHashMap(void).init(std.heap.page_allocator);
+    for (singletons.items) |item| {
+        const singleton = item.object;
+        const class_name = singleton.get("name").?.string;
+        singletons_map.putNoClobber(class_name, {}) catch {};
+    }
+
     classes_map = std.StringHashMap(void).init(std.heap.page_allocator);
     for (classes.items) |item| {
         const class = item.object;
@@ -306,6 +314,10 @@ fn initClassStructMaps(classes: *const std.json.Array, native_structs: *const st
     }
 }
 
+fn isClassSingleton(raw_type: []const u8) bool {
+    return singletons_map.contains(raw_type);
+}
+
 fn isClassType(raw_type: []const u8) bool {
     return classes_map.contains(raw_type);
 }
@@ -313,6 +325,7 @@ fn isClassType(raw_type: []const u8) bool {
 fn isNativeStructType(raw_type: []const u8) bool {
     return native_structs_map.contains(raw_type);
 }
+
 
 fn isUnformattedEnum(raw_type: []const u8) bool { // NOTE: Need this for native structs, which contain unformatted enum types...
     const enum_index = std.mem.indexOf(u8, raw_type, "enum::");
@@ -960,6 +973,16 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
         } else {
             try virtuals_string.appendSlice("        _ = T; _ = B;\n");
         }
+    }
+
+    if (isClassSingleton(class_name)) {
+        try string.appendSlice(
+            "    pub fn _getSingleton() *Self {\n" ++
+            "        const __class_name = Self.getClassStatic();\n" ++
+            "        const __singleton_obj = gd.interface.?.global_get_singleton.?(__class_name._nativePtr());\n" ++
+            "        return @alignCast(@ptrCast(gd.interface.?.object_get_instance_binding.?(__singleton_obj, gd.token, Self._getBindingCallbacks())));\n" ++
+            "    }\n\n"
+        );
     }
 
     if (class.get("methods")) |get_methods| {
@@ -2101,9 +2124,10 @@ pub fn generateGDExtensionAPI(api_path: []const u8, selected_build_configuration
     var parsed = try std.json.parseFromSlice(std.json.Value, std.heap.page_allocator, api_file_buffer, .{});
     defer parsed.deinit();
 
+    const singletons = parsed.value.object.get("singletons").?.array;
     const classes = parsed.value.object.get("classes").?.array;
     const native_structs = parsed.value.object.get("native_structures").?.array;
-    initClassStructMaps(&classes, &native_structs);
+    initClassStructMaps(&singletons, &classes, &native_structs);
 
     const global_enums = parsed.value.object.get("global_enums").?.array;
     try generateGlobalEnums(&global_enums);
