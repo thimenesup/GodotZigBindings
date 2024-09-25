@@ -102,7 +102,7 @@ pub fn callBuiltinMbRet(comptime T: type, method: gi.GDExtensionPtrBuiltInMethod
             return @floatCast(ret);
         },
         else => {
-            var ret: T = undefined;
+            var ret: T = Variant.defaultConstruct(T);
             method.?(base, &payload, &ret, payload.len);
             return ret;
         }
@@ -110,13 +110,13 @@ pub fn callBuiltinMbRet(comptime T: type, method: gi.GDExtensionPtrBuiltInMethod
 }
 
 pub fn callBuiltinOperatorPtr(comptime T: type, op: gi.GDExtensionPtrOperatorEvaluator, left: gi.GDExtensionConstTypePtr, right: gi.GDExtensionConstTypePtr) T {
-    var ret: T = undefined;
+    var ret: T = Variant.defaultConstruct(T);
     op.?(left, right, &ret);
     return ret;
 }
 
 pub fn callBuiltinPtrGetter(comptime T: type, getter: gi.GDExtensionPtrGetter, base: gi.GDExtensionConstTypePtr) T {
-    var ret: T = undefined;
+    var ret: T = Variant.defaultConstruct(T);
     getter.?(base, &ret);
     return ret;
 }
@@ -179,24 +179,25 @@ pub fn callNativeMbRet(comptime T: type, mb: gi.GDExtensionMethodBindPtr, instan
             return @floatCast(ret);
         },
         else => {
-            var ret: T = undefined;
+            var ret: T = Variant.defaultConstruct(T);
             interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
             return ret;
         }
     }
 }
 
-pub fn callNativeMbRetObj(comptime O: type, mb: gi.GDExtensionMethodBindPtr, instance: ?*anyopaque, args: anytype) O {
+pub fn callNativeMbRetObj(comptime ObjectPtr: type, mb: gi.GDExtensionMethodBindPtr, instance: ?*anyopaque, args: anytype) ObjectPtr {
     var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
     inline for (args, 0..) |arg, i| {
         payload[i] = @ptrCast(arg);
     }
     var ret: ?*anyopaque = null;
-    interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
+    interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, @ptrCast(&ret));
     if (ret == null) {
         return null;
     }
-    return @ptrCast(interface.?.object_get_instance_binding(ret, token, O.GodotClass.getBindingCallBacks()));
+    const ObjectType = type_utils.BaseType(ObjectPtr);
+    return @alignCast(@ptrCast(interface.?.object_get_instance_binding.?(ret, token, ObjectType._getBindingCallbacks())));
 }
 
 
@@ -234,22 +235,23 @@ pub fn callUtilityRet(comptime T: type, func: gi.GDExtensionPtrUtilityFunction, 
             return @floatCast(ret);
         },
         else => {
-            var ret: T = undefined;
+            var ret: T = Variant.defaultConstruct(T);
             func.?(&ret, &payload, payload.len);
             return ret;
         }
     }
 }
 
-pub fn callUtilityRetObj(comptime O: type, func: gi.GDExtensionPtrUtilityFunction, args: anytype) O {
+pub fn callUtilityRetObj(comptime ObjectPtr: type, func: gi.GDExtensionPtrUtilityFunction, args: anytype) ObjectPtr {
     var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
     inline for (args, 0..) |arg, i| {
         payload[i] = @ptrCast(arg);
     }
     var ret: ?*anyopaque = null;
-    func.?(&ret, &payload, payload.len);
+    func.?(@ptrCast(&ret), &payload, payload.len);
     if (ret == null) {
         return null;
     }
-    return @ptrCast(interface.?.object_get_instance_binding(ret, token, O.GodotClass.getBindingCallBacks()));
+    const ObjectType = type_utils.BaseType(ObjectPtr);
+    return @alignCast(@ptrCast(interface.?.object_get_instance_binding(ret, token, ObjectType._getBindingCallBacks())));
 }

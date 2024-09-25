@@ -8,7 +8,7 @@ pub inline fn BaseType(comptime T: type) type {
             return type_info.Pointer.child;
         },
         type_tag.Optional => {
-            return type_info.Optional.child;
+            return BaseType(type_info.Optional.child);
         },
         else => {
             return T;
@@ -24,7 +24,7 @@ pub inline fn isPointerType(comptime T: type) bool {
             return true;
         },
         type_tag.Optional => {
-            return true;
+            return isPointerType(type_info.Optional.child);
         },
         else => {
             return false;
