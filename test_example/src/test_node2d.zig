@@ -6,6 +6,7 @@ const GDClass = gdextension.wrapped.GDClass;
 const Variant = gdextension.core_types.Variant;
 const String = gdextension.core_types.String;
 const StringName = gdextension.core_types.StringName;
+const Object = gdextension.classes.Object;
 
 const UtilityFunctions = gdextension.classes.UtilityFunctions;
 const Node2D = gdextension.classes.Node2D;
@@ -37,7 +38,7 @@ pub const TestNode2D = struct {
     }
 
     pub fn _bindMembers() callconv(.C) void { // This must be defined, you register your custom class methods, functions, properties, and signals here
-        ClassDB.bindMethod(Self, testMethod, "test_method", .{ "a", "b" });
+        ClassDB.bindMethod(Self, testMethod, "test_method", .{ "a", "b", "c" });
         ClassDB.bindStaticMethod(Self, testStaticMethod, "test_static_method", .{ "a", "b" });
         ClassDB.bindProperty(Self, "test_property", "test_property", null, null);
         ClassDB.bindProperty(Self, "setget_property", "setget_property", setSetgetProperty, getSetgetProperty);
@@ -67,8 +68,8 @@ pub const TestNode2D = struct {
         self.base.rotate(delta);
     }
 
-    pub fn testMethod(self: *const Self, a: i32, b: bool) f32 {
-        std.debug.print("testMethod a:{} b:{}\n", .{a + self.data, b});
+    pub fn testMethod(self: *const Self, a: i32, b: bool, c: ?*Object) f32 {
+        std.debug.print("testMethod a:{} b:{} c.instance_id:{}\n", .{a + self.data, b, c.?.getInstanceId()});
         return -42.24;
     }
 

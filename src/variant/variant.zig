@@ -3,6 +3,8 @@ const std = @import("std");
 const gi = @import("../gdextension_interface.zig");
 const gd = @import("../godot.zig");
 
+const type_utils = @import("../core/type_utils.zig");
+
 const Object = @import("../gen/classes/object.zig").Object;
 
 const AABB = @import("aabb.zig").AABB;
@@ -657,7 +659,23 @@ pub const Variant = struct {
         if (object == null) {
             return null;
         }
-        return @ptrCast(gd.interface.?.object_get_instance_binding.?(object, gd.token, &Object._binding_callbacks));
+        return @alignCast(@ptrCast(gd.interface.?.object_get_instance_binding.?(object, gd.token, Object._getBindingCallbacks())));
+    }
+
+    fn VariantAsObjectClass(comptime T: type) type {
+        return struct {
+            fn function(variant: *const Variant) ?*T {
+                return @ptrCast(variant.asObject());
+            }
+        };
+    }
+
+    fn VariantAsObjectClassNonNull(comptime T: type) type {
+        return struct {
+            fn function(variant: *const Variant) *T {
+                return @ptrCast(variant.asObject());
+            }
+        };
     }
 
 
@@ -713,12 +731,19 @@ pub const Variant = struct {
         const type_info = @typeInfo(T);
         const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
 
-        switch (type_info) {
-            type_tag.Struct => {
-                if (@hasDecl(T, "GodotClass")) {
-                    return Variant.asObject;
+        if (type_utils.isTypeGodotObjectClass(T)) {
+            const base_type = type_utils.BaseType(T);
+            switch (type_info) {
+                type_tag.Optional => {
+                    return VariantAsObjectClass(base_type).function;
+                },
+                else => {
+                    return VariantAsObjectClassNonNull(base_type).function; //For convenience, but Godot class pointers may be null, no guarantees
                 }
-            },
+            }
+        }
+
+        switch (type_info) {
             type_tag.Int => {
                 return VariantAsInt(T).function;
             },

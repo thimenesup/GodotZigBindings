@@ -34,15 +34,9 @@ pub const ClassDB = struct {
 
 
     fn classStringName(comptime T: type) StringName {
-        const type_info = @typeInfo(T);
-        const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
-        switch (type_info) {
-            type_tag.Struct => {
-                if (@hasDecl(T, "GodotClass")) {
-                    return T.getClassStatic();
-                }
-            },
-            else => { }
+        if (type_utils.isTypeGodotObjectClass(T)) {
+            const string_name = StringName.initStringName(T.getClassStatic());
+            return string_name;
         }
         return StringName.init();
     }

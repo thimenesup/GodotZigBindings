@@ -59,7 +59,15 @@ inline fn variantCall(comptime class: type, comptime function: anytype, comptime
         if (is_method and i == 0) {
             arg_base_types[i] = param.type.?;
         } else {
-            arg_base_types[i] = type_utils.BaseType(param.type.?);
+            if (type_utils.isTypeGodotObjectClass(param.type.?)) {
+                if (!type_utils.isPointerType(param.type.?)) {
+                    @compileError("Godot Object Classes are always meant to be passed as pointers");
+                }
+                arg_base_types[i] = param.type.?; //Store pointer as is
+            } else {
+                const param_base_type = type_utils.BaseType(param.type.?);
+                arg_base_types[i] = param_base_type;
+            }
         }
     }
 
@@ -90,7 +98,11 @@ inline fn variantCall(comptime class: type, comptime function: anytype, comptime
             arg_tuple[i] = @ptrCast(struct_instance);
         } else {
             if (type_utils.isPointerType(param.type.?)) {
-                arg_tuple[i] = &arg_storage[i];
+                if (type_utils.isTypeGodotObjectClass(param.type.?)) {
+                    arg_tuple[i] = arg_storage[i];
+                } else {
+                    arg_tuple[i] = &arg_storage[i];
+                }
             } else {
                 arg_tuple[i] = arg_storage[i];
             }
