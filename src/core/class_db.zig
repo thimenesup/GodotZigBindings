@@ -11,6 +11,7 @@ const StringName = @import("../gen/builtin_classes/string_name.zig").StringName;
 const String = @import("../gen/builtin_classes/string.zig").String;
 
 // From GlobalConstants
+const property_usage_default = 6;
 const method_flag_default = 1;
 const method_flag_editor = 2;
 const method_flag_const = 4;
@@ -324,7 +325,7 @@ pub const ClassDB = struct {
         info.class_name = property_class_name._nativePtr();
         info.hint = 0;
         info.hint_string = hint_string._nativePtr();
-        info.usage = 0;
+        info.usage = property_usage_default;
 
         const class_name = class.getClassStatic();
         gd.interface.?.classdb_register_extension_class_property.?(gd.library, class_name._nativePtr(), &info, setter_string._nativePtr(), getter_string._nativePtr());
