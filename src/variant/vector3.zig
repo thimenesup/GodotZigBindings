@@ -24,16 +24,16 @@ pub const Vector3 = extern struct {
         axis_count,
     };
 
-    const zero = Vector3.new(0, 0, 0);
-    const one = Vector3.new(1, 1, 1);
-    const inf = Vector3.new(stdinf, stdinf, stdinf);
+    pub const zero = Vector3.new(0, 0, 0);
+    pub const one = Vector3.new(1, 1, 1);
+    pub const inf = Vector3.new(stdinf, stdinf, stdinf);
 
-    const left = Vector3.new(-1, 0, 0);
-    const right = Vector3.new(1, 0, 0);
-    const up = Vector3.new(0, -1, 0);
-    const down = Vector3.new(0, 1, 0);
-    const forward = Vector3.new(0, 0, -1);
-    const back = Vector3.new(0, 0, 1);
+    pub const left = Vector3.new(-1, 0, 0);
+    pub const right = Vector3.new(1, 0, 0);
+    pub const up = Vector3.new(0, -1, 0);
+    pub const down = Vector3.new(0, 1, 0);
+    pub const forward = Vector3.new(0, 0, -1);
+    pub const back = Vector3.new(0, 0, 1);
 
     pub inline fn new(p_x: T, p_y: T, p_z: T) Self {
         const self = Self {

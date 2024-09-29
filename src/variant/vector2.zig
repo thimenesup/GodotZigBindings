@@ -20,14 +20,14 @@ pub const Vector2 = extern struct {
         axis_count,
     };
 
-    const zero = Vector2.new(0, 0);
-    const one = Vector2.new(1, 1);
-    const inf = Vector2.new(stdinf, stdinf);
+    pub const zero = Vector2.new(0, 0);
+    pub const one = Vector2.new(1, 1);
+    pub const inf = Vector2.new(stdinf, stdinf);
 
-    const left = Vector2.new(-1, 0);
-    const right = Vector2.new(1, 0);
-    const up = Vector2.new(0, -1);
-    const down = Vector2.new(0, 1);
+    pub const left = Vector2.new(-1, 0);
+    pub const right = Vector2.new(1, 0);
+    pub const up = Vector2.new(0, -1);
+    pub const down = Vector2.new(0, 1);
 
     pub inline fn new(p_x: T, p_y: T) Self {
         const self = Self {
