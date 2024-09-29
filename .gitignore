@@ -7,5 +7,7 @@ zig-out
 .vscode
 
 #Auto generated files
-src/core/gdnative_api.zig
-src/classes
+/src/core/gdnative_api.zig
+/src/classes
+/src/gen
+/docs
