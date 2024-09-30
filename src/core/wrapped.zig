@@ -117,6 +117,7 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 pub fn GDClass(comptime class: type, comptime base_class: type) type {
     return struct {
 
+        var class_initialized: bool = false;
         var class_string_name: StringName = undefined;
 
         // These will be used by ClassDB
@@ -156,10 +157,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
         }
 
         pub fn _initializeClass() callconv(.C) void {
-            const static = struct {
-                var initialized = false;
-            };
-            if (static.initialized) {
+            if (class_initialized) {
                 return;
             }
 
@@ -172,7 +170,7 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
                 base_class.bindVirtuals(class, base_class);
             }
 
-            static.initialized = true;
+            class_initialized = true;
         }
 
         pub fn getClassStatic() callconv(.C) *StringName {
