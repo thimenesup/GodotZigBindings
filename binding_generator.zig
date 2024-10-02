@@ -1739,13 +1739,8 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
             const parsed_return_type = blk: {
                 var json_return_type: []const u8 = "void";
-                if (method.get("return_value")) |get_return_value| {
-                    const return_value_object = get_return_value.object;
-                    if (return_value_object.get("meta")) |meta| {
-                        json_return_type = meta.string;
-                    } else {
-                        json_return_type = return_value_object.get("type").?.string;
-                    }
+                if (method.get("return_type")) |get_return_type| {
+                    json_return_type = get_return_type.string;
                 }
                 break :blk ParsedType.new(json_return_type);
             };
@@ -1772,7 +1767,7 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
 
             const no_return = std.mem.eql(u8, return_string_type.items, "void");
             if (is_vararg) {
-                try std.fmt.format(impl_binds.writer(), "        const ret = gd.callMbRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }} ++ p_vararg);\n", .{ escaped_method_name.items, args_tuple.items });
+                try std.fmt.format(impl_binds.writer(), "        const ret = gd.callMbRet(binds.{s}, self._nativePtr(), .{{ {s} }} ++ p_vararg);\n", .{ escaped_method_name.items, args_tuple.items });
                 if (no_return) {
                     try impl_binds.appendSlice("        _ = ret;\n");
                 } else {
@@ -1785,11 +1780,11 @@ fn generateBuiltinClass(class: *const std.json.ObjectMap, class_sizes: *const st
             } else {
                 if (no_return) { // No return
                     try std.fmt.format(impl_binds.writer(),
-                        "        gd.callBuiltinMbNoRet(binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
+                        "        gd.callBuiltinMbNoRet(binds.{s}, self._nativePtr(), .{{ {s} }});\n",
                         .{ escaped_method_name.items, args_tuple.items });
                 } else {
                     try std.fmt.format(impl_binds.writer(),
-                        "        return gd.callBuiltinMbRet({s}, binds.{s}, @ptrCast(&self._opaque), .{{ {s} }});\n",
+                        "        return gd.callBuiltinMbRet({s}, binds.{s}, self._nativePtr(), .{{ {s} }});\n",
                         .{ return_string_type.items, escaped_method_name.items, args_tuple.items });
                 }
             }
