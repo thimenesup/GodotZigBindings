@@ -19,6 +19,11 @@ const method_flag_vararg = 16;
 const method_flag_static = 32;
 const method_flag_object_core = 64;
 
+const property_hint_none = 0;
+const property_hint_resource_type = 17;
+
+const property_usage_default = 0;
+
 
 pub const ClassDB = struct {
 
@@ -292,10 +297,11 @@ pub const ClassDB = struct {
         };
     }
 
-    pub fn bindProperty(comptime class: type, comptime field: []const u8, name: []const u8, comptime setter: anytype, comptime getter: anytype) void {
+    pub fn bindPropertyInfo(comptime class: type, comptime field: []const u8, name: []const u8, comptime setter: anytype, comptime getter: anytype, usage: u32, hint: u32, hint_string: []const u8) void {
         const class_instance: class = undefined;
         const field_type = @TypeOf(@field(class_instance, field));
-        const variant_type = Variant.typeToVariantType(field_type);
+        const base_field_type = type_utils.BaseType(field_type);
+        const variant_type = Variant.typeToVariantType(base_field_type);
 
         // Must create and bind setter and getter methods
         const setter_name = "set_" ++ field;
@@ -311,23 +317,27 @@ pub const ClassDB = struct {
         bindMethod(class, setter_func, setter_name, .{});
         bindMethod(class, getter_func, getter_name, .{});
 
-        var name_string = StringName.initUtf8(name);
-        defer name_string.deinit();
-        var property_class_name = classStringName(field_type);
+        var name_gdstring = StringName.initUtf8(name);
+        defer name_gdstring.deinit();
+        var property_class_name = classStringName(base_field_type);
         defer property_class_name.deinit();
-        var hint_string = String.init();
-        defer hint_string.deinit();
+        var hint_gdstring = String.initUtf8(hint_string);
+        defer hint_gdstring.deinit();
 
         var info: gi.GDExtensionPropertyInfo = undefined;
-        info.name = name_string._nativePtr();
+        info.name = name_gdstring._nativePtr();
         info._type = @enumFromInt(@intFromEnum(variant_type));
-        info.class_name = property_class_name._nativePtr();
-        info.hint = 0;
-        info.hint_string = hint_string._nativePtr();
-        info.usage = 0;
+        info.class_name = if (hint == property_hint_resource_type) hint_gdstring._nativePtr() else property_class_name._nativePtr();
+        info.hint = hint;
+        info.hint_string = hint_gdstring._nativePtr();
+        info.usage = usage;
 
         const class_name = class.getClassStatic();
         gd.interface.?.classdb_register_extension_class_property.?(gd.library, class_name._nativePtr(), &info, setter_string._nativePtr(), getter_string._nativePtr());
+    }
+
+    pub fn bindProperty(comptime class: type, comptime field: []const u8, name: []const u8, comptime setter: anytype, comptime getter: anytype) void {
+        bindPropertyInfo(class, field, name, setter, getter, property_usage_default, property_hint_none, "");
     }
 
     pub fn bindSignal(comptime class: type, name: []const u8, comptime arg_types: anytype, comptime arg_names: anytype) void {

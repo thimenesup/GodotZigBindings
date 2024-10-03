@@ -7,6 +7,7 @@ const Variant = gdextension.core_types.Variant;
 const String = gdextension.core_types.String;
 const StringName = gdextension.core_types.StringName;
 const Object = gdextension.classes.Object;
+const Texture2D = gdextension.classes.Texture2D;
 
 const UtilityFunctions = gdextension.classes.UtilityFunctions;
 const Node2D = gdextension.classes.Node2D;
@@ -19,6 +20,7 @@ pub const TestNode2D = struct {
     data: i64,
     test_property: f32,
     setget_property: u16,
+    object_property: ?*Texture2D,
 
     pub const GodotClass = GDClass(TestNode2D, Node2D); // This must be defined with the type class and inherited one, the name has to always be "GodotClass"
     pub usingnamespace GodotClass; // This is a must too
@@ -30,6 +32,7 @@ pub const TestNode2D = struct {
         self.data = 42;
         self.test_property = 1.23;
         self.setget_property = 1;
+        self.object_property = null;
         return self;
     }
 
@@ -42,6 +45,7 @@ pub const TestNode2D = struct {
         ClassDB.bindStaticMethod(Self, testStaticMethod, "test_static_method", .{ "a", "b" });
         ClassDB.bindProperty(Self, "test_property", "test_property", null, null);
         ClassDB.bindProperty(Self, "setget_property", "setget_property", setSetgetProperty, getSetgetProperty);
+        ClassDB.bindProperty(Self, "object_property", "object_property", null, null);
         ClassDB.bindSignal(Self, "test_signal", .{ i32, f32 }, .{ "a", "b" });
         ClassDB.bindMethod(Self, testMemnewCast, "test_memnew_cast", .{});
         ClassDB.bindMethod(Self, testVararg, "test_vararg", .{});

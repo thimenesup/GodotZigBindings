@@ -112,7 +112,14 @@ inline fn variantCall(comptime class: type, comptime function: anytype, comptime
     const result = @call(.auto, function, arg_tuple);
     const r_variant: ?*Variant = @ptrCast(r_return);
     if (r_variant != null) {
-        r_variant.?.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+        if (type_utils.isTypeGodotObjectClass(fn_info.return_type.?)) {
+            if (!type_utils.isPointerType(fn_info.return_type.?)) {
+                @compileError("Godot Object Classes are always meant to be returned as pointers");
+            }
+            r_variant.?.* = Variant.initObject(@ptrCast(result));
+        } else {
+            r_variant.?.* = Variant.typeAsVariant(fn_info.return_type.?)(&result);
+        }
     }
 }
 
