@@ -197,8 +197,37 @@ pub const Variant = struct {
     }
 
     pub fn initAny(any: anytype) Self {
-        var self = std.mem.zeroes(Self);
-        self = typeAsVariant(@TypeOf(any))(any);
+        const T = @TypeOf(any);
+        var self: Self = undefined;
+        if (type_utils.isTypeGodotObjectClass(T)) {
+            if (!type_utils.isPointerType(T)) {
+                @compileError("Godot Object Classes are always meant to be pointers");
+            }
+            self = Variant.initObject(@ptrCast(any));
+        } else {
+            const func = typeAsVariant(type_utils.BaseType(T));
+            const type_info = @typeInfo(T);
+            const type_tag = @typeInfo(std.builtin.Type).Union.tag_type.?;
+            switch (type_info) {
+                type_tag.Optional => {
+                    const child_type_info = @typeInfo(type_info.Optional.child);
+                    switch (child_type_info) {
+                        type_tag.Pointer => {
+                            self = func(@ptrCast(any));
+                        },
+                        else => {
+                            self = func(&any.?);
+                        }
+                    }
+                },
+                type_tag.Pointer => {
+                    self = func(any);
+                },
+                else => {
+                    self = func(&any);
+                }
+            }
+        }
         return self;
     }
 
