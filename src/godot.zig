@@ -92,9 +92,10 @@ pub fn callBuiltinMbRet(comptime T: type, method: gi.GDExtensionPtrBuiltInMethod
             return @as(bool, ret != 0);
         },
         type_tag.Int => {
-            var ret: u64 = undefined;
+            const Int = if (type_info.Int.signedness == .unsigned) u64 else i64;
+            var ret: Int = undefined;
             method.?(base, &payload, &ret, payload.len);
-            return @truncate(@as(u64, @bitCast(ret)));
+            return @truncate(ret);
         },
         type_tag.Float => {
             var ret: f64 = undefined;
@@ -169,9 +170,10 @@ pub fn callNativeMbRet(comptime T: type, mb: gi.GDExtensionMethodBindPtr, instan
             return @as(bool, ret != 0);
         },
         type_tag.Int => {
-            var ret: u64 = undefined;
+            const Int = if (type_info.Int.signedness == .unsigned) u64 else i64;
+            var ret: Int = undefined;
             interface.?.object_method_bind_ptrcall.?(mb, instance, &payload, &ret);
-            return @truncate(@as(u64, @bitCast(ret)));
+            return @truncate(ret);
         },
         type_tag.Float => {
             var ret: f64 = undefined;
@@ -225,9 +227,10 @@ pub fn callUtilityRet(comptime T: type, func: gi.GDExtensionPtrUtilityFunction, 
             return @as(bool, ret != 0);
         },
         type_tag.Int => {
-            var ret: u64 = undefined;
+            const Int = if (type_info.Int.signedness == .unsigned) u64 else i64;
+            var ret: Int = undefined;
             func.?(&ret, &payload, payload.len);
-            return @truncate(@as(u64, @bitCast(ret)));
+            return @truncate(ret);
         },
         type_tag.Float => {
             var ret: f64 = undefined;
