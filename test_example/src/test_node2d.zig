@@ -46,7 +46,7 @@ pub const TestNode2D = struct {
         ClassDB.bindProperty(Self, "test_property", "test_property", null, null);
         ClassDB.bindProperty(Self, "setget_property", "setget_property", setSetgetProperty, getSetgetProperty);
         ClassDB.bindProperty(Self, "object_property", "object_property", null, null);
-        ClassDB.bindSignal(Self, "test_signal", .{ i32, f32 }, .{ "a", "b" });
+        ClassDB.bindSignal(Self, "test_signal", .{ i32, f32, ?*Node2D }, .{ "a", "b", "c" });
         ClassDB.bindMethod(Self, testMemnewCast, "test_memnew_cast", .{});
         ClassDB.bindMethod(Self, testVararg, "test_vararg", .{});
     }
@@ -116,7 +116,7 @@ pub const TestNode2D = struct {
     pub fn testVararg(self: *Self) void {
         var signal_name = StringName.initUtf8("test_signal");
         defer signal_name.deinit();
-        _ = self.base.base.base.base.emitSignal(&signal_name, .{ 123, 3.21 });
+        _ = self.base.base.base.base.emitSignal(&signal_name, .{ 123, 3.2, self });
     }
 
 };

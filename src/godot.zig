@@ -126,14 +126,7 @@ pub fn callBuiltinPtrGetter(comptime T: type, getter: gi.GDExtensionPtrGetter, b
 pub fn callMbRet(mb: gi.GDExtensionMethodBindPtr, instance: ?*anyopaque, args: anytype) Variant {
     var variants: [args.len]Variant = undefined;
     inline for (args, 0..) |arg, i| {
-        const arg_type = @TypeOf(arg);
-        const base_type = type_utils.BaseType(arg_type);
-        const convert_fn = Variant.typeAsVariant(base_type);
-        if (type_utils.isPointerType(arg_type)) {
-            variants[i] = convert_fn(arg);
-        } else {
-            variants[i] = convert_fn(&arg);
-        }
+        variants[i] = Variant.initAny(arg);
     }
 
     var payload: [args.len]gi.GDExtensionConstTypePtr = undefined;
