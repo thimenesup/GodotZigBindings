@@ -10,6 +10,7 @@ const Object = gdextension.classes.Object;
 const Texture2D = gdextension.classes.Texture2D;
 
 const UtilityFunctions = gdextension.classes.UtilityFunctions;
+const Node = gdextension.classes.Node;
 const Node2D = gdextension.classes.Node2D;
 
 const std = @import("std");
@@ -69,7 +70,7 @@ pub const TestNode2D = struct {
     }
 
     pub fn _process(self: *Self, delta: f64) void {
-        self.base.rotate(delta);
+        self.as(Node2D).rotate(delta);
     }
 
     pub fn testMethod(self: *const Self, a: i32, b: bool, c: ?*Object) f32 {
@@ -101,13 +102,13 @@ pub const TestNode2D = struct {
         }
         {
             const node = TestNode2D._memnew();
-            defer node.base.base.base.queueFree();
+            defer node.as(Node).queueFree();
             const cast = ClassDB.castTo(node, Node2D);
             std.debug.print("Cast:{}\n", .{@intFromPtr(cast)});
         }
         {
             const node = Node3D._memnew();
-            defer node.base.queueFree();
+            defer node.as(Node).queueFree();
             const cast = ClassDB.castTo(node, Node2D);
             std.debug.print("Cast:{}\n", .{@intFromPtr(cast)}); //Null
         }
@@ -116,7 +117,7 @@ pub const TestNode2D = struct {
     pub fn testVararg(self: *Self) void {
         var signal_name = StringName.initUtf8("test_signal");
         defer signal_name.deinit();
-        _ = self.base.base.base.base.emitSignal(&signal_name, .{ 123, 3.2, self });
+        _ = self.as(Object).emitSignal(&signal_name, .{ 123, 3.2, self });
     }
 
 };

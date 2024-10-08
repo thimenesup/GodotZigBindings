@@ -38,9 +38,29 @@ fn classTypeName(comptime class: type) []const u8 {
     return class_name;
 }
 
+fn classInherits(comptime class: type, comptime base_class: type) bool {
+    var c = class;
+    while (true) {
+        if (!@hasDecl(c, "BaseClass")) {
+            return false;
+        }
+        if (c.BaseClass == Wrapped) {
+            return false;
+        }
+        if (c.BaseClass == base_class) {
+            return true;
+        }
+        c = c.BaseClass;
+    }
+    return false;
+}
+
 // This is for generated classes
 pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
     return struct {
+
+        pub const Class = class;
+        pub const BaseClass = base_class;
 
         var class_string_name: StringName = undefined;
 
@@ -109,6 +129,13 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
             return @alignCast(@ptrCast(allocation));
         }
 
+        pub inline fn as(self: *class, comptime inherited: type) *inherited {
+            comptime if (!classInherits(class, inherited)) {
+                @compileError("Incorrect inherit cast");
+            };
+            return @ptrCast(self);
+        }
+
     };
 }
 
@@ -116,6 +143,9 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 // This is for custom classes
 pub fn GDClass(comptime class: type, comptime base_class: type) type {
     return struct {
+
+        pub const Class = class;
+        pub const BaseClass = base_class;
 
         var class_initialized: bool = false;
         var class_string_name: StringName = undefined;
@@ -331,6 +361,13 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _getBindingCallbacks() callconv(.C) *const gi.GDExtensionInstanceBindingCallbacks {
             return &_binding_callbacks;
+        }
+
+        pub inline fn as(self: *class, comptime inherited: type) *inherited {
+            comptime if (!classInherits(class, inherited)) {
+                @compileError("Incorrect cast, class doesn't inherit given type");
+            };
+            return @ptrCast(self);
         }
 
     };
