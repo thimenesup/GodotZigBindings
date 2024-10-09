@@ -17,14 +17,14 @@ const std = @import("std");
 
 pub const TestNode2D = struct {
 
-    base: Node2D, // The inherited class must be defined
+    pub const GodotClass = GDClass(TestNode2D, Node2D); // This must be defined with the type class and inherited one, the name has to always be "GodotClass"
+    pub usingnamespace GodotClass; // This is a must too
+    _godot_class: GodotClass, // This must be defined, the name has to always be "_godot_class"
+
     data: i64,
     test_property: f32,
     setget_property: u16,
     object_property: ?*Texture2D,
-
-    pub const GodotClass = GDClass(TestNode2D, Node2D); // This must be defined with the type class and inherited one, the name has to always be "GodotClass"
-    pub usingnamespace GodotClass; // This is a must too
 
     const Self = @This();
 

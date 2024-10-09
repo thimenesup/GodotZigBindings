@@ -625,7 +625,7 @@ fn stringArgs(arguments: ?*const std.json.Array) String { //Must deinit string
             } else {
                 switch (parsed_arg_type.type_kind) {
                     TypeKind.class => {
-                        std.fmt.format(string.writer(), "(if (p_{s} != null) @as(*const Wrapped, @ptrCast(p_{s}))._owner else null)", .{ arg_name, arg_name }) catch {};
+                        std.fmt.format(string.writer(), "(if (p_{s} != null) p_{s}._wrappedOwner() else null)", .{ arg_name, arg_name }) catch {};
                     },
                     TypeKind.primitive => {
                         std.fmt.format(string.writer(), "&p_{s}_encoded", .{ arg_name }) catch {};
@@ -894,12 +894,11 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     {
         try std.fmt.format(string.writer(), "pub const {s} = struct {{\n\n", .{ stripped_class_name.items }); // Extra { to escape it
 
-        try std.fmt.format(string.writer(), "    base: {s},\n\n", .{ stripped_base_name.items });
-
         try string.appendSlice("    const Self = @This();\n\n");
 
         try std.fmt.format(string.writer(),"    pub const GodotClass = GDExtensionClass(Self, {s});\n", .{ stripped_base_name.items });
-        try string.appendSlice("    pub usingnamespace GodotClass;\n\n");
+        try string.appendSlice("    pub usingnamespace GodotClass;\n");
+        try string.appendSlice("    _godot_class: GodotClass,\n\n");
     }
 
     // Enums
@@ -1073,7 +1072,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
 
                 const no_return = std.mem.eql(u8, return_string_type.items, "void");
                 if (is_vararg) {
-                    try std.fmt.format(string.writer(), "        const ret = gd.callMbRet(_gde_method_bind, @as(*const Wrapped, @ptrCast(self))._owner, .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
+                    try std.fmt.format(string.writer(), "        const ret = gd.callMbRet(_gde_method_bind, self._wrappedOwner(), .{{ {s} }} ++ p_vararg);\n", .{ args_tuple.items });
                     if (no_return) {
                         try string.appendSlice("        _ = ret;\n");
                     } else {
@@ -1085,12 +1084,12 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
                     }
                 } else {
                     if (std.mem.eql(u8, return_string_type.items, "void")) { // No return
-                        try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, @as(*const Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ args_tuple.items });
+                        try std.fmt.format(string.writer(), "        gd.callNativeMbNoRet(_gde_method_bind, self._wrappedOwner(), .{{ {s} }});\n", .{ args_tuple.items });
                     } else {
                         if (parsed_return_type.type_kind == TypeKind.class) {
-                            try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, @as(*const Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ return_string_type.items, args_tuple.items });
+                            try std.fmt.format(string.writer(), "        return gd.callNativeMbRetObj({s}, _gde_method_bind, self._wrappedOwner(), .{{ {s} }});\n", .{ return_string_type.items, args_tuple.items });
                         } else {
-                            try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, @as(*const Wrapped, @ptrCast(self))._owner, .{{ {s} }});\n", .{ return_string_type.items, args_tuple.items });
+                            try std.fmt.format(string.writer(), "        return gd.callNativeMbRet({s}, _gde_method_bind, self._wrappedOwner(), .{{ {s} }});\n", .{ return_string_type.items, args_tuple.items });
                         }
                     }
                 }

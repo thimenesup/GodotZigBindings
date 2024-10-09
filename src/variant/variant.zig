@@ -472,7 +472,8 @@ pub const Variant = struct {
     pub fn initObject(p_object: ?*const Object) Self {
         var self = std.mem.zeroes(Self);
         if (p_object != null) {
-            fromTypeConstructor(Type.object, &self, &p_object.?.base._owner);
+            const object = p_object.?._wrappedOwner();
+            fromTypeConstructor(Type.object, &self, &object);
         } else {
             const null_object: ?*anyopaque = null;
             fromTypeConstructor(Type.object, &self, &null_object);

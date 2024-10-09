@@ -386,11 +386,10 @@ pub const ClassDB = struct {
             if (@hasDecl(class, method_name)) {
                 return class;
             }
-            if (!@hasField(class, "base")) {
+            if (!@hasDecl(class, "class")) {
                 return null;
             }
-            const instance: class = undefined;
-            class = @TypeOf(@field(instance, "base"));
+            class = class.class;
         }
         return null;
     }

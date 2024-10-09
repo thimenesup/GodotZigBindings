@@ -59,6 +59,8 @@ fn classInherits(comptime class: type, comptime base_class: type) bool {
 pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
     return struct {
 
+        _wrapped: Wrapped,
+
         pub const Class = class;
         pub const BaseClass = base_class;
 
@@ -129,6 +131,10 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
             return @alignCast(@ptrCast(allocation));
         }
 
+        pub inline fn _wrappedOwner(self: *const class) ?*anyopaque {
+            return self._godot_class._wrapped._owner;
+        }
+
         pub inline fn as(self: *class, comptime inherited: type) *inherited {
             comptime if (!classInherits(class, inherited)) {
                 @compileError("Incorrect inherit cast");
@@ -143,6 +149,8 @@ pub fn GDExtensionClass(comptime class: type, comptime base_class: type) type {
 // This is for custom classes
 pub fn GDClass(comptime class: type, comptime base_class: type) type {
     return struct {
+
+        _wrapped: Wrapped,
 
         pub const Class = class;
         pub const BaseClass = base_class;
@@ -361,6 +369,11 @@ pub fn GDClass(comptime class: type, comptime base_class: type) type {
 
         pub fn _getBindingCallbacks() callconv(.C) *const gi.GDExtensionInstanceBindingCallbacks {
             return &_binding_callbacks;
+        }
+
+
+        pub inline fn _wrappedOwner(self: *const class) ?*anyopaque {
+            return self._godot_class._wrapped._owner;
         }
 
         pub inline fn as(self: *class, comptime inherited: type) *inherited {
