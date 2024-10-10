@@ -11,10 +11,10 @@ pub const Transform3D = extern struct {
 
     const Self = @This();
 
-    const identity = Transform3D.newIdentity();
-    const flip_x = Transform3D.new(-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0);
-    const flip_y = Transform3D.new(1, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0);
-    const flip_z = Transform3D.new(1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0);
+    pub const identity = Transform3D.newIdentity();
+    pub const flip_x = Transform3D.new(-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0);
+    pub const flip_y = Transform3D.new(1, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0);
+    pub const flip_z = Transform3D.new(1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0);
 
     pub inline fn new(basis: *const Basis, origin: *const Vector3) Self {
         const self = Self {

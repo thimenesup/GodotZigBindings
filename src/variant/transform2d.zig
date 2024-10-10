@@ -11,9 +11,9 @@ pub const Transform2D = extern struct {
 
     const Self = @This();
 
-    const identity = Transform2D.newIdentity();
-    const flip_x = Transform2D.new(-1, 0, 0, 1, 0, 0);
-    const flip_y = Transform2D.new(1, 0, 0, -1, 0, 0);
+    pub const identity = Transform2D.newIdentity();
+    pub const flip_x = Transform2D.new(-1, 0, 0, 1, 0, 0);
+    pub const flip_y = Transform2D.new(1, 0, 0, -1, 0, 0);
 
     pub inline fn new(xx: f32, xy: f32, yx: f32, yy: f32, ox: f32, oy: f32) Self {
         var self: Self = undefined;

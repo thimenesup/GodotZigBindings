@@ -16,7 +16,7 @@ pub const Quaternion = struct {
 
     const Self = @This();
 
-    const identity = Quaternion.newIdentity();
+    pub const identity = Quaternion.newIdentity();
 
     pub inline fn new(x: T, y: T, z: T, w: T) Self {
         const self = Self {
