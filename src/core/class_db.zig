@@ -386,10 +386,10 @@ pub const ClassDB = struct {
             if (@hasDecl(class, method_name)) {
                 return class;
             }
-            if (!@hasDecl(class, "class")) {
+            if (!@hasDecl(class, "BaseClass")) {
                 return null;
             }
-            class = class.class;
+            class = class.BaseClass;
         }
         return null;
     }
