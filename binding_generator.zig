@@ -777,6 +777,49 @@ fn getUsedTypesByClass(class: *const std.json.ObjectMap, json_types: *std.ArrayL
 }
 
 
+fn generateEnumValues(values: *const std.json.Array, string: *String, identation: comptime_int) !void {
+    //NOTE: Zig disallows multiple enumerations with the same value unlike C so we need to handle it...
+    var unique_values = std.AutoHashMap(i64, void).init(std.heap.page_allocator);
+
+    for (values.items) |values_item| {
+        const value_object = values_item.object;
+        const value_name = value_object.get("name").?.string;
+        const value = value_object.get("value").?.integer;
+
+        const convention_name = toSnakeCase(value_name);
+        defer convention_name.deinit();
+
+        const whitespace = "    " ** identation;
+        if (!unique_values.contains(value)) {
+            try std.fmt.format(string.writer(), whitespace ++ "{s} = {},\n", .{ convention_name.items, value });
+            try unique_values.putNoClobber(value, {});
+        } else {
+            // Leave the enum value commented out, so it still remains somewhat helpful
+            try std.fmt.format(string.writer(), whitespace ++ "// {s} = {},\n", .{ convention_name.items, value });
+        }
+    }
+}
+
+fn generateEnums(enums: *const std.json.Array, string: *String, identation: comptime_int, comptime ignore_variant_enums: bool) !void {
+    for (enums.items) |enum_item| {
+        const enum_object = enum_item.object;
+        const enum_name = enum_object.get("name").?.string;
+        const values = enum_object.get("values").?.array;
+
+        if (ignore_variant_enums) {
+            if (std.mem.indexOf(u8, enum_name, "Variant.") != null) {
+                continue; // Ignore Variant.ENUM enums (Expected for GlobalConstants)
+            }
+        }
+
+        const whitespace = "    " ** identation;
+        try std.fmt.format(string.writer(), whitespace ++ "pub const {s} = enum(i32) {{\n", .{ enum_name });
+        try generateEnumValues(&values, string, identation + 1);
+        try string.appendSlice(whitespace ++ "};\n\n"); // Enum end
+    }
+}
+
+
 fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit string
     var string = String.init(std.heap.page_allocator);
 
@@ -904,26 +947,7 @@ fn generateClass(class: *const std.json.ObjectMap) !String { //Must deinit strin
     // Enums
     if (class.get("enums")) |get_enums| {
         const enums = get_enums.array;
-        for (enums.items) |enum_item| {
-            const enum_object = enum_item.object;
-            const enum_name = enum_object.get("name").?.string;
-            try std.fmt.format(string.writer(), "    pub const {s} = enum(i32) {{\n", .{ enum_name });
-
-            const values = enum_object.get("values").?.array;
-            for (values.items) |values_item| {
-                const value_object = values_item.object;
-                const value_name = value_object.get("name").?.string;
-                const value = value_object.get("value").?.integer;
-
-                const convention_name = toSnakeCase(value_name);
-                defer convention_name.deinit();
-
-                try std.fmt.format(string.writer(), "        {s} = {},\n", .{ convention_name.items, value });
-            }
-
-            // Enum end
-            try string.appendSlice("    };\n\n");
-        }
+        try generateEnums(&enums, &string, 1, false);
     }
 
     // Constants
@@ -2067,32 +2091,7 @@ fn generateUtilityFunctions(functions: *const std.json.Array) !void {
 fn generateGlobalEnums(global_enums: *const std.json.Array) !void {
     var string = String.init(std.heap.page_allocator);
     defer string.deinit();
-
-    for (global_enums.items) |enum_item| {
-        const enum_object = enum_item.object;
-        const enum_name = enum_object.get("name").?.string;
-
-        if (std.mem.indexOf(u8, enum_name, "Variant.") != null) {
-            continue; // Ignore Variant.ENUM enums
-        }
-
-        try std.fmt.format(string.writer(), "pub const {s} = enum(i32) {{\n", .{ enum_name });
-
-        const values = enum_object.get("values").?.array;
-        for (values.items) |values_item| {
-            const value_object = values_item.object;
-            const value_name = value_object.get("name").?.string;
-            const value = value_object.get("value").?.integer;
-
-            const convention_name = toSnakeCase(value_name);
-            defer convention_name.deinit();
-
-            try std.fmt.format(string.writer(), "    {s} = {},\n", .{ convention_name.items, value });
-        }
-
-        // Enum end
-        try string.appendSlice("};\n\n");
-    }
+    try generateEnums(global_enums, &string, 0, true);
 
     const gen_dir = try std.fs.cwd().makeOpenPath("src/gen/classes", .{});
     const class_file = try gen_dir.createFile("global_constants.zig", .{});
